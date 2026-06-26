@@ -38,7 +38,7 @@ public class GlobAsymmCrypto {
             if (crypto == null) {
                 return false;
             }
-            return crypto.checkPublicKey(parsed.pubKey());
+            return crypto.checkPublicKey(parsed.pubKey(), parsed.type());
         } catch (IllegalArgumentException e) {
             return false;
         }
@@ -48,7 +48,7 @@ public class GlobAsymmCrypto {
         AsymmCrypto crypto = forType(type);
         if (crypto == null || privSeed == null)
             throw new IllegalArgumentException("Invalid type or privSeed");
-        byte[] pubKey = crypto.generatePublicKey(privSeed.getBytes(StandardCharsets.UTF_8));
+        byte[] pubKey = crypto.generatePublicKey(privSeed.getBytes(StandardCharsets.UTF_8), type);
         return new ParsedPubKey(pubKey, type).serialize();
     }
 
@@ -58,21 +58,21 @@ public class GlobAsymmCrypto {
         AsymmCrypto crypto = forType(parsed.type());
         if (crypto == null || data == null)
             throw new IllegalArgumentException("Invalid type or data");
-        return crypto.encrypt(data, parsed.pubKey());
+        return crypto.encrypt(data, parsed.pubKey(), parsed.type());
     }
 
     public byte[] decrypt(byte[] data, String privSeed, AsymmCryptoType type) {
         AsymmCrypto crypto = forType(type);
         if (crypto == null || data == null || privSeed == null)
             throw new IllegalArgumentException("Invalid type, data or privSeed");
-        return crypto.decrypt(data, privSeed.getBytes(StandardCharsets.UTF_8));
+        return crypto.decrypt(data, privSeed.getBytes(StandardCharsets.UTF_8), type);
     }
 
     public byte[] sign(byte[] data, String privSeed, AsymmCryptoType type) {
         AsymmCrypto crypto = forType(type);
         if (crypto == null || data == null || privSeed == null)
             throw new IllegalArgumentException("Invalid type, data or privSeed");
-        return crypto.sign(data, privSeed.getBytes(StandardCharsets.UTF_8));
+        return crypto.sign(data, privSeed.getBytes(StandardCharsets.UTF_8), type);
     }
 
     public boolean verify(byte[] sig, String pubKey) {
@@ -80,8 +80,9 @@ public class GlobAsymmCrypto {
         AsymmCrypto crypto = forType(parsed.type());
         if (crypto == null || sig == null)
             throw new IllegalArgumentException("Invalid type or sig");
-        return crypto.verify(sig, parsed.pubKey());
+        return crypto.verify(sig, parsed.pubKey(), parsed.type());
     }
+
 
     public static final AsymmCryptoType DEFAULT_TYPE = AsymmCryptoType.ECC_256;
 
