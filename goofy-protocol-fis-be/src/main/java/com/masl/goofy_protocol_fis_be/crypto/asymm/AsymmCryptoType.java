@@ -5,9 +5,8 @@ public enum AsymmCryptoType {
     RSA_3072,
     RSA_4096,
 
-    ECC_224,
-    ECC_256,
-    ECC_384,
+    EC_256,
+    EC_384,
 
     MLKEMDSA_512_44,
     MLKEMDSA_768_65,

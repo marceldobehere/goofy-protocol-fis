@@ -71,7 +71,7 @@ public class GlobAsymmCrypto {
     }
 
 
-    public static final AsymmCryptoType DEFAULT_TYPE = AsymmCryptoType.ECC_256;
+    public static final AsymmCryptoType DEFAULT_TYPE = AsymmCryptoType.EC_256;
     public AsymmCrypto.AsymmFullKeyPair generateKeypair() {
         return generateKeypair(DEFAULT_TYPE);
     }

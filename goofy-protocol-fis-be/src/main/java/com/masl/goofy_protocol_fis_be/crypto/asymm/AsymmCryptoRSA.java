@@ -50,10 +50,9 @@ public class AsymmCryptoRSA implements AsymmCrypto {
         }
         generator.initialize(keySize(type));
         KeyPair sigPair = generator.generateKeyPair();
-        KeyPair encPair = generator.generateKeyPair();
         return AsymmFullKeyPair.fromParts(
-                sigPair.getPublic().getEncoded(), encPair.getPublic().getEncoded(),
-                sigPair.getPrivate().getEncoded(), encPair.getPrivate().getEncoded(),
+                sigPair.getPublic().getEncoded(), sigPair.getPublic().getEncoded(),
+                sigPair.getPrivate().getEncoded(), sigPair.getPrivate().getEncoded(),
                 this, type
         );
     }
@@ -66,8 +65,7 @@ public class AsymmCryptoRSA implements AsymmCrypto {
             Cipher encryptCipher = Cipher.getInstance("RSA");
             encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
             return encryptCipher.doFinal(data);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException |
-                 IllegalBlockSizeException | BadPaddingException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -80,8 +78,7 @@ public class AsymmCryptoRSA implements AsymmCrypto {
             Cipher decryptCipher = Cipher.getInstance("RSA");
             decryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
             return decryptCipher.doFinal(data);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException |
-                 IllegalBlockSizeException | BadPaddingException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -95,7 +92,7 @@ public class AsymmCryptoRSA implements AsymmCrypto {
             privateSignature.initSign(privateKey);
             privateSignature.update(data);
             return privateSignature.sign();
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException | SignatureException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -109,7 +106,7 @@ public class AsymmCryptoRSA implements AsymmCrypto {
             publicSignature.initVerify(publicKey);
             publicSignature.update(data);
             return publicSignature.verify(sig);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException | SignatureException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
