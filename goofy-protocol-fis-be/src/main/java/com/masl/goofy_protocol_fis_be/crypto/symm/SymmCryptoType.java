@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum SymmCryptoType {
     AES_GCM_128((short)0x0100),
     AES_GCM_192((short)0x0101),
-    AES_GCM_256((short)0x0102);
+    AES_GCM_256((short)0x0102),
+    CHACHA_20((short)0x0200);
 
     private final short value;
     SymmCryptoType(short value) {
