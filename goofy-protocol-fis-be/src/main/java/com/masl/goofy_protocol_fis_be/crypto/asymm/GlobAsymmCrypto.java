@@ -1,7 +1,5 @@
 package com.masl.goofy_protocol_fis_be.crypto.asymm;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 
 public class GlobAsymmCrypto {
@@ -15,86 +13,66 @@ public class GlobAsymmCrypto {
         return cryptoList.stream().filter(c -> c.getTypes().contains(type)).findFirst().orElse(null);
     }
 
-    public record ParsedPubKey(byte[] pubKey, AsymmCryptoType type) {
-        static ParsedPubKey parse(String value) {
-            String[] parts = value.split("#");
-            if (parts.length != 2)
-                throw new IllegalArgumentException("Invalid public key format");
-            AsymmCryptoType type = AsymmCryptoType.valueOf(parts[0]);
-            byte[] pubKey = Base64.getDecoder().decode(parts[1]);
-            return new ParsedPubKey(pubKey, type);
-        }
-
-        String serialize() {
-            return type.toString() + "#" + Base64.getEncoder().encodeToString(pubKey);
-        }
-    }
-
-
-    public boolean checkPublicKey(String pubKey) {
-        try {
-            ParsedPubKey parsed = ParsedPubKey.parse(pubKey);
-            AsymmCrypto crypto = forType(parsed.type());
-            if (crypto == null) {
-                return false;
-            }
-            return crypto.checkPublicKey(parsed.pubKey(), parsed.type());
-        } catch (IllegalArgumentException e) {
+    public boolean checkPublicSplitKey(String pubSplitKey) {
+        AsymmCrypto.AsymmPubKeyPair parsed = AsymmCrypto.AsymmPubKeyPair.parse(pubSplitKey);
+        AsymmCrypto crypto = forType(parsed.type());
+        if (crypto == null)
+            throw new IllegalArgumentException("Invalid type");
+        if (!crypto.checkPubKeyPair(parsed, parsed.type()))
             return false;
-        }
+        if (!parsed.isSigValid(crypto))
+            return false;
+        return true;
     }
 
-    public String generatePublicKey(String privSeed, AsymmCryptoType type) {
+    public AsymmCrypto.AsymmFullKeyPair generateKeypair(AsymmCryptoType type) {
         AsymmCrypto crypto = forType(type);
-        if (crypto == null || privSeed == null)
-            throw new IllegalArgumentException("Invalid type or privSeed");
-        byte[] pubKey = crypto.generatePublicKey(privSeed.getBytes(StandardCharsets.UTF_8), type);
-        return new ParsedPubKey(pubKey, type).serialize();
+        if (crypto == null)
+            throw new IllegalArgumentException("Invalid type");
+        return crypto.generateKeypair(type);
     }
 
-
-    public byte[] encrypt(byte[] data, String pubKey) {
-        ParsedPubKey parsed = ParsedPubKey.parse(pubKey);
+    public byte[] encrypt(byte[] data, String pubSplitKey) {
+        AsymmCrypto.AsymmPubKeyPair parsed = AsymmCrypto.AsymmPubKeyPair.parse(pubSplitKey);
         AsymmCrypto crypto = forType(parsed.type());
-        if (crypto == null || data == null)
-            throw new IllegalArgumentException("Invalid type or data");
-        return crypto.encrypt(data, parsed.pubKey(), parsed.type());
+        if (crypto == null)
+            throw new IllegalArgumentException("Invalid type");
+        if (!parsed.isSigValid(crypto))
+            throw new IllegalArgumentException("Public Key Sig is not valid");
+
+        return crypto.encrypt(data, parsed.encKey(), parsed.type());
     }
 
-    public byte[] decrypt(byte[] data, String privSeed, AsymmCryptoType type) {
-        AsymmCrypto crypto = forType(type);
-        if (crypto == null || data == null || privSeed == null)
-            throw new IllegalArgumentException("Invalid type, data or privSeed");
-        return crypto.decrypt(data, privSeed.getBytes(StandardCharsets.UTF_8), type);
-    }
-
-    public byte[] sign(byte[] data, String privSeed, AsymmCryptoType type) {
-        AsymmCrypto crypto = forType(type);
-        if (crypto == null || data == null || privSeed == null)
-            throw new IllegalArgumentException("Invalid type, data or privSeed");
-        return crypto.sign(data, privSeed.getBytes(StandardCharsets.UTF_8), type);
-    }
-
-    public boolean verify(byte[] sig, String pubKey) {
-        ParsedPubKey parsed = ParsedPubKey.parse(pubKey);
+    public byte[] decrypt(byte[] data, String privSplitKey) {
+        AsymmCrypto.AsymmPrivKeyPair parsed = AsymmCrypto.AsymmPrivKeyPair.parse(privSplitKey);
         AsymmCrypto crypto = forType(parsed.type());
-        if (crypto == null || sig == null)
-            throw new IllegalArgumentException("Invalid type or sig");
-        return crypto.verify(sig, parsed.pubKey(), parsed.type());
+        if (crypto == null)
+            throw new IllegalArgumentException("Invalid type");
+
+        return crypto.decrypt(data, parsed.encKey(), parsed.type());
+    }
+
+    public byte[] sign(byte[] data, String privSplitKey) {
+        AsymmCrypto.AsymmPrivKeyPair parsed = AsymmCrypto.AsymmPrivKeyPair.parse(privSplitKey);
+        AsymmCrypto crypto = forType(parsed.type());
+        if (crypto == null)
+            throw new IllegalArgumentException("Invalid type");
+
+        return crypto.sign(data, parsed.sigKey(), parsed.type());
+    }
+
+    public boolean verify(byte[] data, byte[] sig, String pubSplitKey) {
+        AsymmCrypto.AsymmPubKeyPair parsed = AsymmCrypto.AsymmPubKeyPair.parse(pubSplitKey);
+        AsymmCrypto crypto = forType(parsed.type());
+        if (crypto == null)
+            throw new IllegalArgumentException("Invalid type");
+
+        return crypto.verify(data, sig, parsed.sigKey(), parsed.type());
     }
 
 
     public static final AsymmCryptoType DEFAULT_TYPE = AsymmCryptoType.ECC_256;
-
-    public String generatePublicKey(String privSeed) {
-        return generatePublicKey(privSeed, DEFAULT_TYPE);
-    }
-
-    public byte[] decrypt(byte[] data, String privSeed) {
-        return decrypt(data, privSeed, DEFAULT_TYPE);
-    }
-
-    public byte[] sign(byte[] data, String privSeed) {
-        return sign(data, privSeed, DEFAULT_TYPE);
+    public AsymmCrypto.AsymmFullKeyPair generateKeypair() {
+        return generateKeypair(DEFAULT_TYPE);
     }
 }

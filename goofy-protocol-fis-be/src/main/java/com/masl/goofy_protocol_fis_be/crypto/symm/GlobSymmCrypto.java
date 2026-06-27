@@ -19,7 +19,7 @@ public class GlobSymmCrypto {
 
     public record ParsedEncData(byte[] data, SymmCryptoType type) {
         static ParsedEncData parse(String value) {
-            String[] parts = value.split("#");
+            String[] parts = value.split("-");
             if (parts.length != 2)
                 throw new IllegalArgumentException("Invalid data format");
             SymmCryptoType type = SymmCryptoType.valueOf(parts[0]);
@@ -28,7 +28,7 @@ public class GlobSymmCrypto {
         }
 
         String serialize() {
-            return type.toString() + "#" + Base64.getEncoder().encodeToString(data);
+            return type.toString() + "-" + Base64.getEncoder().encodeToString(data);
         }
     }
 
