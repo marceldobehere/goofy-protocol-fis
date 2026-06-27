@@ -6,12 +6,16 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.Security;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,7 +32,7 @@ class AsymmGlobTests {
 		Security.addProvider(new BouncyCastlePQCProvider());
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "Keygen & public split check (type={0})")
 	@EnumSource(AsymmCryptoType.class)
 	void testGlobalAsymmCryptoKeygen(AsymmCryptoType type) {
 		var keypair = crypto.generateKeypair(type);
@@ -38,7 +42,7 @@ class AsymmGlobTests {
 		assertThat(crypto.checkPublicSplitKey(keypair.pub().serialize())).isTrue();
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "Raw enc/dec roundtrip (type={0})")
 	@EnumSource(AsymmCryptoType.class)
 	void testGlobalAsymmCryptoRawEncDec(AsymmCryptoType type) {
 		// Create Keypair
@@ -56,7 +60,7 @@ class AsymmGlobTests {
 		assertThat(dec).isEqualTo(testMessageBytes);
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "Encoded enc/dec roundtrip (type={0})")
 	@EnumSource(AsymmCryptoType.class)
 	void testGlobalAsymmCryptoEncDec(AsymmCryptoType type) {
 		// Create Keypair
@@ -73,7 +77,7 @@ class AsymmGlobTests {
 		assertThat(dec).isEqualTo(testMessageBytes);
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "String enc/dec roundtrip (type={0})")
 	@EnumSource(AsymmCryptoType.class)
 	void testGlobalAsymmCryptoStrEncDec(AsymmCryptoType type) {
 		// Create Keypair
@@ -94,7 +98,7 @@ class AsymmGlobTests {
 		assertThat(dec).isEqualTo(testMessageStr);
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "Raw sign/verify (type={0})")
 	@EnumSource(AsymmCryptoType.class)
 	void testGlobalAsymmCryptoRawSignVerify(AsymmCryptoType type) {
 		var keypair = crypto.generateKeypair(type);
@@ -107,7 +111,7 @@ class AsymmGlobTests {
 		assertThat(valid).isTrue();
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "Encoded sign/verify (type={0})")
 	@EnumSource(AsymmCryptoType.class)
 	void testGlobalAsymmCryptoSignVerify(AsymmCryptoType type) {
 		var keypair = crypto.generateKeypair(type);
@@ -120,7 +124,7 @@ class AsymmGlobTests {
 		assertThat(valid).isTrue();
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "String sign/verify (type={0})")
 	@EnumSource(AsymmCryptoType.class)
 	void testGlobalAsymmCryptoStrSignVerify(AsymmCryptoType type) {
 		var keypair = crypto.generateKeypair(type);
@@ -130,6 +134,66 @@ class AsymmGlobTests {
 		assertThat(sig).isNotNull();
 
 		boolean valid = crypto.verifyStr(testMessageStr, sig, keypair.pub().serialize());
+		assertThat(valid).isTrue();
+	}
+
+	// Helper Method to get all Types and Sizes
+	static Stream<Arguments> cryptoTypeAndSizes() {
+		return Stream.of(AsymmCryptoType.values())
+				.flatMap(type -> Stream.of(
+						0,
+						1,
+						10,
+						100,
+						200,
+						1_000,
+						10_000,
+						100_000,
+						1_000_000,
+						10_000_000,
+						100_000_000
+				).map(size -> Arguments.of(type, size)));
+	}
+
+	@ParameterizedTest(name = "Raw enc/dec roundtrip with sizes (type={0}, size={1})")
+	@MethodSource("cryptoTypeAndSizes")
+	void testGlobalAsymmCryptoRawEncDecSizes(AsymmCryptoType type, int size) {
+		// Create data
+		byte[] data = new byte[size];
+		ThreadLocalRandom.current().nextBytes(data);
+
+		// Create Keypair
+		var keypair = crypto.generateKeypair(type);
+		assertThat(keypair).isNotNull();
+
+		// Encrypt with Public Enc Key
+		byte[] enc = crypto.encryptRaw(data, keypair.pub().serialize());
+		assertThat(enc).isNotNull();
+
+		// Decrypt with Private Enc Key
+		byte[] dec = crypto.decryptRaw(enc, keypair.priv().serialize());
+		assertThat(dec).isNotNull();
+		assertThat(dec).isNotEqualTo(enc);
+		assertThat(dec).isEqualTo(data);
+	}
+
+	@ParameterizedTest(name = "Raw sign/verify with sizes (type={0}, size={1})")
+	@MethodSource("cryptoTypeAndSizes")
+	void testGlobalAsymmCryptoRawSignVerifySizes(AsymmCryptoType type, int size) {
+		// Create Keypair
+		var keypair = crypto.generateKeypair(type);
+		assertThat(keypair).isNotNull();
+
+		// Create data
+		byte[] data = new byte[size];
+		ThreadLocalRandom.current().nextBytes(data);
+
+		// Sign with Private
+		byte[] sig = crypto.signRaw(data, keypair.priv().serialize());
+		assertThat(sig).isNotNull();
+
+		// Verify with Public
+		boolean valid = crypto.verifyRaw(data, sig, keypair.pub().serialize());
 		assertThat(valid).isTrue();
 	}
 }

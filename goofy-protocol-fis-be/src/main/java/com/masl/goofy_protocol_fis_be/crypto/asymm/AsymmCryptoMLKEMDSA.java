@@ -1,7 +1,6 @@
 package com.masl.goofy_protocol_fis_be.crypto.asymm;
 
 import com.masl.goofy_protocol_fis_be.crypto.symm.GlobSymmCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.symm.SymmCryptoType;
 
 import javax.crypto.KEM;
 import java.nio.charset.StandardCharsets;
@@ -12,6 +11,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.List;
 
+// TODO: Look into storing public keys / Signatures in some kind of compressed format because they are CHONKY
 public class AsymmCryptoMLKEMDSA implements AsymmCrypto {
     private final static GlobSymmCrypto crypto = new GlobSymmCrypto();
 
@@ -94,7 +94,7 @@ public class AsymmCryptoMLKEMDSA implements AsymmCrypto {
 
             byte[] senderSharedSecret = encapsulated.key().getEncoded();
             byte[] ciphertext = encapsulated.encapsulation();
-            byte[] res = crypto.encryptRaw(data, new String(senderSharedSecret, StandardCharsets.ISO_8859_1), SymmCryptoType.AES_GCM_128);
+            byte[] res = crypto.encryptRaw(data, new String(senderSharedSecret, StandardCharsets.ISO_8859_1));
             if (ciphertext.length > 0xFFFF)
                 throw new IllegalArgumentException("Ciphertext too large for short length: " + ciphertext.length);
 

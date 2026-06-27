@@ -6,12 +6,16 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.Security;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,7 +33,7 @@ class SymmGlobTests {
 		Security.addProvider(new BouncyCastlePQCProvider());
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "Raw enc/dec roundtrip (type={0})")
 	@EnumSource(SymmCryptoType.class)
 	void testGlobalSymmCryptoRawEncDec(SymmCryptoType type) {
 		// Encrypt with Secret
@@ -44,7 +48,7 @@ class SymmGlobTests {
 		assertThat(dec).isEqualTo(testMessageBytes);
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "Encoded enc/dec roundtrip (type={0})")
 	@EnumSource(SymmCryptoType.class)
 	void testGlobalSymmCryptoEncDec(SymmCryptoType type) {
 		// Encrypt with Secret
@@ -58,7 +62,7 @@ class SymmGlobTests {
 		assertThat(dec).isEqualTo(testMessageBytes);
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "String enc/dec roundtrip (type={0})")
 	@EnumSource(SymmCryptoType.class)
 	void testGlobalSymmCryptoStrEncDec(SymmCryptoType type) {
 		// Encrypt with Secret
@@ -76,7 +80,7 @@ class SymmGlobTests {
 		assertThat(dec).isEqualTo(testMessageStr);
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "Ciphertext differs across runs (type={0})")
 	@EnumSource(SymmCryptoType.class)
 	void testGlobalSymmCryptoEncNotIdentical(SymmCryptoType type) {
 		// Encrypt with Secret
@@ -90,5 +94,39 @@ class SymmGlobTests {
 
 		// Check
 		assertThat(enc1).isNotEqualTo(enc2);
+	}
+
+	// Helper Method to get all Types and Sizes
+	static Stream<Arguments> cryptoTypeAndSizes() {
+		return Stream.of(SymmCryptoType.values())
+				.flatMap(type -> Stream.of(
+						0,
+						1,
+						1_000,
+						10_000,
+						100_000,
+						1_000_000,
+						10_000_000,
+						100_000_000
+				).map(size -> Arguments.of(type, size)));
+	}
+
+	@ParameterizedTest(name = "Raw enc/dec roundtrip with sizes (type={0}, size={1})")
+	@MethodSource("cryptoTypeAndSizes")
+	void testGlobalSymmCryptoRawEncDecSizes(SymmCryptoType type, int size) {
+		// Create data
+		byte[] data = new byte[size];
+		ThreadLocalRandom.current().nextBytes(data);
+
+		// Encrypt with Secret
+		String randomSecret = randomSecretBase + type.toString() + size;
+		byte[] enc = crypto.encryptRaw(data, randomSecret, type);
+		assertThat(enc).isNotNull();
+
+		// Decrypt with Secret
+		byte[] dec = crypto.decryptRaw(enc, randomSecret);
+		assertThat(dec).isNotNull();
+		assertThat(dec).isNotEqualTo(enc);
+		assertThat(dec).isEqualTo(data);
 	}
 }
