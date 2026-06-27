@@ -17,7 +17,7 @@ public interface AsymmCrypto {
 
     // PUB-[TYPE]-[SIG KEY]-[ENC KEY]-[ENC SIG]
     record AsymmPubKeyPair(byte[] sigKey, byte[] encKey, byte[] encSig, AsymmCryptoType type) {
-        static AsymmPubKeyPair parse(String value) {
+        public static AsymmPubKeyPair parse(String value) {
             String[] parts = value.split("-");
             if (parts.length != 5)
                 throw new IllegalArgumentException("Invalid split key format");
@@ -34,7 +34,7 @@ public interface AsymmCrypto {
             }
         }
 
-        String serialize() {
+        public String serialize() {
             if (Arrays.equals(sigKey, encKey))
                 return "PUB-" + type.toString() +
                         "-" + Base64.getEncoder().encodeToString(sigKey) +
@@ -55,7 +55,7 @@ public interface AsymmCrypto {
 
     // PRIV-[TYPE]-[SIG KEY]-[ENC KEY]
     record AsymmPrivKeyPair(byte[] sigKey, byte[] encKey, AsymmCryptoType type) {
-        static AsymmPrivKeyPair parse(String value) {
+        public static AsymmPrivKeyPair parse(String value) {
             String[] parts = value.split("-");
             if (parts.length != 4)
                 throw new IllegalArgumentException("Invalid split key format");
@@ -71,7 +71,7 @@ public interface AsymmCrypto {
             }
         }
 
-        String serialize() {
+        public String serialize() {
             if (Arrays.equals(sigKey, encKey))
                 return "PRIV-" + type.toString() +
                         "-" + Base64.getEncoder().encodeToString(sigKey) +

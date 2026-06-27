@@ -9,12 +9,12 @@ public class SymmCryptoAES implements SymmCrypto {
     }
 
     @Override
-    public byte[] encrypt(byte[] data, byte[] privSeed, SymmCryptoType type) {
+    public byte[] encrypt(byte[] data, byte[] secret, SymmCryptoType type) {
         return new byte[0];
     }
 
     @Override
-    public byte[] decrypt(byte[] data, byte[] privSeed, SymmCryptoType type) {
+    public byte[] decrypt(byte[] data, byte[] secret, SymmCryptoType type) {
         return new byte[0];
     }
 }

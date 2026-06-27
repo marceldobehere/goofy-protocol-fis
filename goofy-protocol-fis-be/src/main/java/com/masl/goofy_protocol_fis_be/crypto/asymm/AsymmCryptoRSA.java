@@ -6,7 +6,9 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 import java.util.List;
 
 public class AsymmCryptoRSA implements AsymmCrypto {
@@ -26,7 +28,16 @@ public class AsymmCryptoRSA implements AsymmCrypto {
 
     @Override
     public boolean checkPubKeyPair(AsymmPubKeyPair pubKeyPair, AsymmCryptoType type) {
-        return false;
+        for (var pubKey : List.of(pubKeyPair.encKey(), pubKeyPair.sigKey()))
+            try {
+                KeyFactory kf = KeyFactory.getInstance("RSA");
+                PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pubKey));
+                Cipher encryptCipher = Cipher.getInstance("RSA");
+                encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException e) {
+                return false;
+            }
+        return true;
     }
 
     @Override
@@ -41,8 +52,8 @@ public class AsymmCryptoRSA implements AsymmCrypto {
         KeyPair sigPair = generator.generateKeyPair();
         KeyPair encPair = generator.generateKeyPair();
         return AsymmFullKeyPair.fromParts(
-                sigPair.getPublic().getEncoded(), sigPair.getPrivate().getEncoded(),
-                encPair.getPublic().getEncoded(), encPair.getPrivate().getEncoded(),
+                sigPair.getPublic().getEncoded(), encPair.getPublic().getEncoded(),
+                sigPair.getPrivate().getEncoded(), encPair.getPrivate().getEncoded(),
                 this, type
         );
     }
@@ -65,7 +76,7 @@ public class AsymmCryptoRSA implements AsymmCrypto {
     public byte[] decrypt(byte[] data, byte[] privEncKey, AsymmCryptoType type) {
         try {
             KeyFactory kf = KeyFactory.getInstance("RSA");
-            PrivateKey privateKey = kf.generatePrivate(new X509EncodedKeySpec(privEncKey));
+            PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(privEncKey));
             Cipher decryptCipher = Cipher.getInstance("RSA");
             decryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
             return decryptCipher.doFinal(data);
@@ -79,7 +90,7 @@ public class AsymmCryptoRSA implements AsymmCrypto {
     public byte[] sign(byte[] data, byte[] privSigKey, AsymmCryptoType type) {
         try {
             KeyFactory kf = KeyFactory.getInstance("RSA");
-            PrivateKey privateKey = kf.generatePrivate(new X509EncodedKeySpec(privSigKey));
+            PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(privSigKey));
             Signature privateSignature = Signature.getInstance("SHA256withRSA");
             privateSignature.initSign(privateKey);
             privateSignature.update(data);

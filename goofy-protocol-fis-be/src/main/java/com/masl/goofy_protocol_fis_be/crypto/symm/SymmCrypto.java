@@ -5,6 +5,6 @@ import java.util.List;
 public interface SymmCrypto {
     List<SymmCryptoType> getTypes();
 
-    byte[] encrypt(byte[] data, byte[] privSeed, SymmCryptoType type);
-    byte[] decrypt(byte[] data, byte[] privSeed, SymmCryptoType type);
+    byte[] encrypt(byte[] data, byte[] secret, SymmCryptoType type);
+    byte[] decrypt(byte[] data, byte[] secret, SymmCryptoType type);
 }
