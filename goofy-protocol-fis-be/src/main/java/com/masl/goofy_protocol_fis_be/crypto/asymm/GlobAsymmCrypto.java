@@ -59,12 +59,12 @@ public class GlobAsymmCrypto {
 
     // Encrypt Raw Byte Array into Base64 String
     public String encrypt(byte[] data, String pubSplitKey) {
-        return Base64.getEncoder().encodeToString(encryptRaw(data, pubSplitKey));
+        return Base64.getUrlEncoder().encodeToString(encryptRaw(data, pubSplitKey));
     }
 
     // Decrypt Base64 String into Byte Array
     public byte[] decrypt(String data, String privSplitKey) {
-        return decryptRaw(Base64.getDecoder().decode(data), privSplitKey);
+        return decryptRaw(Base64.getUrlDecoder().decode(data), privSplitKey);
 
     }
 
@@ -100,12 +100,12 @@ public class GlobAsymmCrypto {
 
     // Create a Base64 String Signature for Data in a Byte Array
     public String sign(byte[] data, String privSplitKey) {
-        return Base64.getEncoder().encodeToString(signRaw(data, privSplitKey));
+        return Base64.getUrlEncoder().encodeToString(signRaw(data, privSplitKey));
     }
 
     // Verify a Base64 String Signature for Data in a Byte Array
     public boolean verify(byte[] data, String sig, String pubSplitKey) {
-        return verifyRaw(data, Base64.getDecoder().decode(sig), pubSplitKey);
+        return verifyRaw(data, Base64.getUrlDecoder().decode(sig), pubSplitKey);
     }
 
     // Create a Base64 String Signature for Data in a String

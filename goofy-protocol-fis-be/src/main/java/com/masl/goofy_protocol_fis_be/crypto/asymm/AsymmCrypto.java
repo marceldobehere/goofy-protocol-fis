@@ -3,6 +3,9 @@ package com.masl.goofy_protocol_fis_be.crypto.asymm;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.regex.Pattern;
+
+import static com.masl.goofy_protocol_fis_be.crypto.SecretUtils.ENC_DELIMITER;
 
 public interface AsymmCrypto {
     List<AsymmCryptoType> getTypes();
@@ -15,35 +18,35 @@ public interface AsymmCrypto {
     byte[] sign(byte[] data, byte[] privSigKey, AsymmCryptoType type);
     boolean verify(byte[] data, byte[] sig, byte[] pubSigKey, AsymmCryptoType type);
 
-    // PUB-[TYPE]-[SIG KEY]-[ENC KEY]-[ENC SIG]
+    // PUB.[TYPE].[SIG KEY].[ENC KEY].[ENC SIG]
     record AsymmPubKeyPair(byte[] sigKey, byte[] encKey, byte[] encSig, AsymmCryptoType type) {
         public static AsymmPubKeyPair parse(String value) {
-            String[] parts = value.split("-");
+            String[] parts = value.split(Pattern.quote(ENC_DELIMITER));
             if (parts.length != 5)
                 throw new IllegalArgumentException("Invalid split key format");
             if (!parts[0].equals("PUB"))
                 throw new IllegalArgumentException("Invalid split key type");
             AsymmCryptoType type = AsymmCryptoType.valueOf(parts[1]);
-            byte[] sigKey = Base64.getDecoder().decode(parts[2]);
+            byte[] sigKey = Base64.getUrlDecoder().decode(parts[2]);
             if (parts[3].equals(parts[4]) && parts[3].equals("X")) {
                 return new AsymmPubKeyPair(sigKey, sigKey, null, type);
             } else {
-                byte[] encKey = Base64.getDecoder().decode(parts[3]);
-                byte[] encSig = Base64.getDecoder().decode(parts[4]);
+                byte[] encKey = Base64.getUrlDecoder().decode(parts[3]);
+                byte[] encSig = Base64.getUrlDecoder().decode(parts[4]);
                 return new AsymmPubKeyPair(sigKey, encKey, encSig, type);
             }
         }
 
         public String serialize() {
             if (Arrays.equals(sigKey, encKey))
-                return "PUB-" + type.toString() +
-                        "-" + Base64.getEncoder().encodeToString(sigKey) +
-                        "-" + "X" +
-                        "-" + "X";
-            return "PUB-" + type.toString() +
-                    "-" + Base64.getEncoder().encodeToString(sigKey) +
-                    "-" + Base64.getEncoder().encodeToString(encKey) +
-                    "-" + Base64.getEncoder().encodeToString(encSig);
+                return "PUB" + ENC_DELIMITER + type.toString() +
+                        ENC_DELIMITER + Base64.getUrlEncoder().encodeToString(sigKey) +
+                        ENC_DELIMITER + "X" +
+                        ENC_DELIMITER + "X";
+            return "PUB" + ENC_DELIMITER + type.toString() +
+                    ENC_DELIMITER + Base64.getUrlEncoder().encodeToString(sigKey) +
+                    ENC_DELIMITER + Base64.getUrlEncoder().encodeToString(encKey) +
+                    ENC_DELIMITER + Base64.getUrlEncoder().encodeToString(encSig);
         }
 
         boolean isSigValid(AsymmCrypto crypto) {
@@ -53,33 +56,33 @@ public interface AsymmCrypto {
         }
     }
 
-    // PRIV-[TYPE]-[SIG KEY]-[ENC KEY]
+    // PRIV.[TYPE].[SIG KEY].[ENC KEY]
     record AsymmPrivKeyPair(byte[] sigKey, byte[] encKey, AsymmCryptoType type) {
         public static AsymmPrivKeyPair parse(String value) {
-            String[] parts = value.split("-");
+            String[] parts = value.split(Pattern.quote(ENC_DELIMITER));
             if (parts.length != 4)
                 throw new IllegalArgumentException("Invalid split key format");
             if (!parts[0].equals("PRIV"))
                 throw new IllegalArgumentException("Invalid split key type");
             AsymmCryptoType type = AsymmCryptoType.valueOf(parts[1]);
-            byte[] sigKey = Base64.getDecoder().decode(parts[2]);
+            byte[] sigKey = Base64.getUrlDecoder().decode(parts[2]);
             if (parts[3].equals("X")) {
                 return new AsymmPrivKeyPair(sigKey, sigKey, type);
             } else {
-                byte[] encKey = Base64.getDecoder().decode(parts[3]);
+                byte[] encKey = Base64.getUrlDecoder().decode(parts[3]);
                 return new AsymmPrivKeyPair(sigKey, encKey, type);
             }
         }
 
         public String serialize() {
             if (Arrays.equals(sigKey, encKey))
-                return "PRIV-" + type.toString() +
-                        "-" + Base64.getEncoder().encodeToString(sigKey) +
-                        "-" + "X";
+                return "PRIV" + ENC_DELIMITER + type.toString() +
+                        ENC_DELIMITER + Base64.getUrlEncoder().encodeToString(sigKey) +
+                        ENC_DELIMITER + "X";
 
-            return "PRIV-" + type.toString() +
-                    "-" + Base64.getEncoder().encodeToString(sigKey) +
-                    "-" + Base64.getEncoder().encodeToString(encKey);
+            return "PRIV" + ENC_DELIMITER + type.toString() +
+                    ENC_DELIMITER + Base64.getUrlEncoder().encodeToString(sigKey) +
+                    ENC_DELIMITER + Base64.getUrlEncoder().encodeToString(encKey);
         }
     }
 

@@ -6,6 +6,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.regex.Pattern;
+
+import static com.masl.goofy_protocol_fis_be.crypto.SecretUtils.ENC_DELIMITER;
 
 public class GlobSymmCrypto {
     List<SymmCrypto> cryptoList = List.of(new SymmCryptoAES());
@@ -20,16 +23,16 @@ public class GlobSymmCrypto {
 
     public record ParsedEncData(byte[] data, SymmCryptoType type) {
         public static ParsedEncData parse(String value) {
-            String[] parts = value.split("-");
+            String[] parts = value.split(Pattern.quote(ENC_DELIMITER));
             if (parts.length != 2)
                 throw new IllegalArgumentException("Invalid data format");
             SymmCryptoType type = SymmCryptoType.valueOf(parts[0]);
-            byte[] data = Base64.getDecoder().decode(parts[1]);
+            byte[] data = Base64.getUrlDecoder().decode(parts[1]);
             return new ParsedEncData(data, type);
         }
 
         public String serialize() {
-            return type.toString() + "-" + Base64.getEncoder().encodeToString(data);
+            return type.toString() + ENC_DELIMITER + Base64.getUrlEncoder().encodeToString(data);
         }
     }
 
