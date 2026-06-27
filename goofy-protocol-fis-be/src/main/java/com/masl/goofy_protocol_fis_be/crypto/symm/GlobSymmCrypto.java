@@ -33,7 +33,17 @@ public class GlobSymmCrypto {
         }
     }
 
+    // Encrypt String into Parsed Data in Base64 Format
+    public String encryptStr(String data, String secret, SymmCryptoType type) {
+        return encrypt(data.getBytes(StandardCharsets.UTF_8), secret, type);
+    }
 
+    // Decrypt Parsed Data in Base64 Format into String
+    public String decryptStr(String data, String secret) {
+        return decrypt(data, secret) != null ? new String(decrypt(data, secret), StandardCharsets.UTF_8) : null;
+    }
+
+    // Encrypt Byte Array into Parsed Data in Base64 Format
     public String encrypt(byte[] data, String secret, SymmCryptoType type) {
         SymmCrypto crypto = forType(type);
         if (crypto == null || data == null || secret == null)
@@ -42,6 +52,7 @@ public class GlobSymmCrypto {
         return new ParsedEncData(res, type).serialize();
     }
 
+    // Decrypt Parsed Data in Base64 Format into Byte Array
     public byte[] decrypt(String data, String secret) {
         ParsedEncData parsed = ParsedEncData.parse(data);
         SymmCrypto crypto = forType(parsed.type());
@@ -50,6 +61,7 @@ public class GlobSymmCrypto {
         return crypto.decrypt(parsed.data, crypto.fromSecretString(secret, parsed.type()), parsed.type());
     }
 
+    // Encrypt Raw Byte Array into Byte Array (+ Crypto Type)
     public byte[] encryptRaw(byte[] data, String secret, SymmCryptoType type) {
         SymmCrypto crypto = forType(type);
         if (crypto == null || data == null || secret == null)
@@ -57,18 +69,18 @@ public class GlobSymmCrypto {
         byte[] res = crypto.encrypt(data, crypto.fromSecretString(secret, type), type);
 
         ByteBuffer buf = ByteBuffer.allocate(2 + res.length);
-        buf.putShort((short) type.ordinal());
+        buf.putShort(type.getValue());
         buf.put(res);
         return buf.array();
     }
 
+    // Decrypt Raw Byte Array into Byte Array
     public byte[] decryptRaw(byte[] data, String secret) {
         if (data == null || secret == null || data.length < 2)
             throw new IllegalArgumentException("Invalid type or secret");
 
         ByteBuffer buf = ByteBuffer.wrap(data);
-        int ordinal = buf.getShort() & 0xFFFF; // keep unsigned
-        SymmCryptoType type = SymmCryptoType.values()[ordinal];
+        SymmCryptoType type = SymmCryptoType.fromValue(buf.getShort());
 
         SymmCrypto crypto = forType(type);
         if (crypto == null)
@@ -81,9 +93,9 @@ public class GlobSymmCrypto {
     }
 
 
+    // Default Methods using the Default Symmetric Crypto Algo
     public static final SymmCryptoType DEFAULT_TYPE = SymmCryptoType.AES_GCM_192;
-
-    public String encrypt(byte[] data, String secret) {
-        return encrypt(data, secret, DEFAULT_TYPE);
-    }
+    public byte[] encryptRaw(byte[] data, String secret) {return encryptRaw(data, secret, DEFAULT_TYPE);}
+    public String encrypt(byte[] data, String secret) {return encrypt(data, secret, DEFAULT_TYPE);}
+    public String encryptStr(String data, String secret) {return encryptStr(data, secret, DEFAULT_TYPE);}
 }

@@ -1,5 +1,7 @@
 package com.masl.goofy_protocol_fis_be.crypto.asymm;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 
 public class GlobAsymmCrypto {
@@ -32,7 +34,9 @@ public class GlobAsymmCrypto {
         return crypto.generateKeypair(type);
     }
 
-    public byte[] encrypt(byte[] data, String pubSplitKey) {
+
+    // Encrypt Raw Byte Array into Byte Array
+    public byte[] encryptRaw(byte[] data, String pubSplitKey) {
         AsymmCrypto.AsymmPubKeyPair parsed = AsymmCrypto.AsymmPubKeyPair.parse(pubSplitKey);
         AsymmCrypto crypto = forType(parsed.type());
         if (crypto == null)
@@ -43,7 +47,8 @@ public class GlobAsymmCrypto {
         return crypto.encrypt(data, parsed.encKey(), parsed.type());
     }
 
-    public byte[] decrypt(byte[] data, String privSplitKey) {
+    // Decrypt Raw Byte Array into Byte Array
+    public byte[] decryptRaw(byte[] data, String privSplitKey) {
         AsymmCrypto.AsymmPrivKeyPair parsed = AsymmCrypto.AsymmPrivKeyPair.parse(privSplitKey);
         AsymmCrypto crypto = forType(parsed.type());
         if (crypto == null)
@@ -52,7 +57,29 @@ public class GlobAsymmCrypto {
         return crypto.decrypt(data, parsed.encKey(), parsed.type());
     }
 
-    public byte[] sign(byte[] data, String privSplitKey) {
+    // Encrypt Raw Byte Array into Base64 String
+    public String encrypt(byte[] data, String pubSplitKey) {
+        return Base64.getEncoder().encodeToString(encryptRaw(data, pubSplitKey));
+    }
+
+    // Decrypt Base64 String into Byte Array
+    public byte[] decrypt(String data, String privSplitKey) {
+        return decryptRaw(Base64.getDecoder().decode(data), privSplitKey);
+
+    }
+
+    // Encrypt String into Base64 String
+    public String encryptStr(String data, String pubSplitKey) {
+        return encrypt(data.getBytes(StandardCharsets.UTF_8), pubSplitKey);
+    }
+
+    // Decrypt Base64 String into String
+    public String decryptStr(String data, String privSplitKey) {
+        return new String(decrypt(data, privSplitKey), StandardCharsets.UTF_8);
+    }
+
+    // Create a Raw Byte Array Signature for Data in a Byte Array
+    public byte[] signRaw(byte[] data, String privSplitKey) {
         AsymmCrypto.AsymmPrivKeyPair parsed = AsymmCrypto.AsymmPrivKeyPair.parse(privSplitKey);
         AsymmCrypto crypto = forType(parsed.type());
         if (crypto == null)
@@ -61,7 +88,8 @@ public class GlobAsymmCrypto {
         return crypto.sign(data, parsed.sigKey(), parsed.type());
     }
 
-    public boolean verify(byte[] data, byte[] sig, String pubSplitKey) {
+    // Verify a Raw Byte Array Signature for Data in a Byte Array
+    public boolean verifyRaw(byte[] data, byte[] sig, String pubSplitKey) {
         AsymmCrypto.AsymmPubKeyPair parsed = AsymmCrypto.AsymmPubKeyPair.parse(pubSplitKey);
         AsymmCrypto crypto = forType(parsed.type());
         if (crypto == null)
@@ -70,9 +98,28 @@ public class GlobAsymmCrypto {
         return crypto.verify(data, sig, parsed.sigKey(), parsed.type());
     }
 
-
-    public static final AsymmCryptoType DEFAULT_TYPE = AsymmCryptoType.EC_256;
-    public AsymmCrypto.AsymmFullKeyPair generateKeypair() {
-        return generateKeypair(DEFAULT_TYPE);
+    // Create a Base64 String Signature for Data in a Byte Array
+    public String sign(byte[] data, String privSplitKey) {
+        return Base64.getEncoder().encodeToString(signRaw(data, privSplitKey));
     }
+
+    // Verify a Base64 String Signature for Data in a Byte Array
+    public boolean verify(byte[] data, String sig, String pubSplitKey) {
+        return verifyRaw(data, Base64.getDecoder().decode(sig), pubSplitKey);
+    }
+
+    // Create a Base64 String Signature for Data in a String
+    public String signStr(String data, String privSplitKey) {
+        return sign(data.getBytes(StandardCharsets.UTF_8), privSplitKey);
+    }
+
+    // Verify a Base64 String Signature for Data in a String
+    public boolean verifyStr(String data, String sig, String pubSplitKey) {
+        return verify(data.getBytes(StandardCharsets.UTF_8), sig, pubSplitKey);
+    }
+
+
+    // Default Methods using the Default Asymmetric Crypto Algo
+    public static final AsymmCryptoType DEFAULT_TYPE = AsymmCryptoType.EC_256;
+    public AsymmCrypto.AsymmFullKeyPair generateKeypair() {return generateKeypair(DEFAULT_TYPE);}
 }
