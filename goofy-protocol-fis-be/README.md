@@ -3,7 +3,6 @@
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## TODOs
-* Have known values for all crypto stuff (enc/dec, sign/verify, etc) and test against them
 * Implement Request Signing Stuff
 * Test Request Signing Stuff (Unit Test + Known values?)
 * Test Request Signing Stuff (Integration Test)
