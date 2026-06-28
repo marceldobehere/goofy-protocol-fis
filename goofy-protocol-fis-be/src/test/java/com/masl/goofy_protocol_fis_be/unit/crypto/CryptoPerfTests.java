@@ -6,6 +6,7 @@ import com.github.noconnor.junitperf.JUnitPerfTest;
 import com.github.noconnor.junitperf.JUnitPerfTestActiveConfig;
 import com.github.noconnor.junitperf.reporting.providers.ConsoleReportGenerator;
 import com.github.noconnor.junitperf.reporting.providers.HtmlReportGenerator;
+import com.masl.goofy_protocol_fis_be.crypto.SecretUtils;
 import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCrypto;
 import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_fis_be.crypto.asymm.GlobAsymmCrypto;
@@ -17,9 +18,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.Security;
@@ -33,7 +33,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Disabled // Don't run this during mvn clean install/test
 class CryptoPerfTests {
-	private static final Logger log = LoggerFactory.getLogger(CryptoPerfTests.class);
 	private static final String randomSecretBase = "bla bla bla randdom secret";
 	private final GlobSymmCrypto symmCrypto = new GlobSymmCrypto();
 	private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
@@ -76,8 +75,8 @@ class CryptoPerfTests {
 	// Helper Util
 	ConcurrentHashMap<AsymmCryptoType, AsymmCrypto.AsymmFullKeyPair> cachedKeypairs = new ConcurrentHashMap<>();
 	synchronized AsymmCrypto.AsymmFullKeyPair generateCachedKeypair(AsymmCryptoType type) {
-		return cachedKeypairs.computeIfAbsent(type, t -> {
-			var keypair = asymmCrypto.generateKeypair(t);
+		return cachedKeypairs.computeIfAbsent(type, _ -> {
+			var keypair = asymmCrypto.generateKeypair(type);
 			assertThat(keypair).isNotNull();
 			return keypair;
 		});
@@ -86,7 +85,7 @@ class CryptoPerfTests {
 	// Helper Util
 	ConcurrentHashMap<AsymmCryptoType, byte[]> cachedEncData = new ConcurrentHashMap<>();
 	synchronized byte[] generateCachedEncData(AsymmCryptoType type) {
-		return cachedEncData.computeIfAbsent(type, t -> {
+		return cachedEncData.computeIfAbsent(type, _ -> {
 			// Get Keypair & Random Data
 			var keypair = generateCachedKeypair(type);
 			var data = getCachedRandomData();
@@ -99,7 +98,7 @@ class CryptoPerfTests {
 	// Helper Util
 	ConcurrentHashMap<AsymmCryptoType, byte[]> cachedSigData = new ConcurrentHashMap<>();
 	synchronized byte[] generateCachedSigData(AsymmCryptoType type) {
-		return cachedSigData.computeIfAbsent(type, t -> {
+		return cachedSigData.computeIfAbsent(type, _ -> {
 			// Get Keypair & Random Data
 			var keypair = generateCachedKeypair(type);
 			var data = getCachedRandomData();
@@ -184,7 +183,6 @@ class CryptoPerfTests {
 	}
 
 
-
 	@ParameterizedTest(name = "PERF: Keygen with size 1MB (type={0})")
 	@EnumSource(AsymmCryptoType.class)
 	@JUnitPerfTest(threads = 32, durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
@@ -223,5 +221,23 @@ class CryptoPerfTests {
 		// Verify with Public
 		boolean valid = asymmCrypto.verifyRaw(data, sig, keypair.pub().serialize());
 		assertThat(valid).isTrue();
+	}
+
+	@ParameterizedTest(name = "PERF: Symmetric Key from Secret with size={0} and iterations={1}")
+	@CsvSource({
+			"128,1000",
+			"128,100000",
+			"128,500000",
+			"128,1000000",
+			"256,1000",
+			"256,50000",
+			"256,100000",
+			"256,400000",
+			"256,800000",
+			"256,1000000",
+	})
+	@JUnitPerfTest(threads = 32, durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
+	void testSecretSymmKey(int size, int iterations) {
+		SecretUtils.symmSecretFromSecret(randomSecretBase, SecretUtils.DEFAULT_DETERMINISTIC_SALT, size, iterations);
 	}
 }

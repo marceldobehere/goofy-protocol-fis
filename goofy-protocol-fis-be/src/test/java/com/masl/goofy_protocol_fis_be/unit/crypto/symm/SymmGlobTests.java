@@ -107,7 +107,8 @@ class SymmGlobTests {
 						100_000,
 						1_000_000,
 						10_000_000,
-						100_000_000
+						100_000_000,
+						300_000_000
 				).map(size -> Arguments.of(type, size)));
 	}
 

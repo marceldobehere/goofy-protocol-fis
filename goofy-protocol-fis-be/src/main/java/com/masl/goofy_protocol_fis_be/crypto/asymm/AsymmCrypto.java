@@ -49,7 +49,7 @@ public interface AsymmCrypto {
                     ENC_DELIMITER + Base64.getUrlEncoder().encodeToString(encSig);
         }
 
-        boolean isSigValid(AsymmCrypto crypto) {
+        public boolean isSigValid(AsymmCrypto crypto) {
             if (Arrays.equals(sigKey, encKey))
                 return true;
             return crypto.verify(encKey, encSig, sigKey, type);

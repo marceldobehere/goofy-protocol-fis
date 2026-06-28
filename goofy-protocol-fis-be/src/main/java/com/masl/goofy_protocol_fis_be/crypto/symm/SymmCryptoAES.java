@@ -1,13 +1,12 @@
 package com.masl.goofy_protocol_fis_be.crypto.symm;
 
+import com.masl.goofy_protocol_fis_be.crypto.SecretUtils;
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
-import java.security.spec.KeySpec;
 import java.util.List;
 
 public class SymmCryptoAES implements SymmCrypto {
@@ -19,9 +18,8 @@ public class SymmCryptoAES implements SymmCrypto {
     @Override
     public byte[] fromSecretString(String secretStr, SymmCryptoType type) {
         try {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            KeySpec spec = new PBEKeySpec(secretStr.toCharArray(), "salt".getBytes(), 65536, keySize(type));
-            SecretKey secret = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
+            byte[] secretSpecBytes = SecretUtils.symmSecretFromSecret(secretStr, SecretUtils.DEFAULT_DETERMINISTIC_SALT, keySize(type));
+            SecretKey secret = new SecretKeySpec(secretSpecBytes, "AES");
             return secret.getEncoded();
         } catch (Exception e) {
             throw new RuntimeException(e);

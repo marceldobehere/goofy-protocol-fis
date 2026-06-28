@@ -1,14 +1,13 @@
 package com.masl.goofy_protocol_fis_be.crypto.symm;
 
+import com.masl.goofy_protocol_fis_be.crypto.SecretUtils;
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.ChaCha20ParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
-import java.security.spec.KeySpec;
 import java.util.List;
 
 public class SymmCryptoChaCha20 implements SymmCrypto {
@@ -20,9 +19,8 @@ public class SymmCryptoChaCha20 implements SymmCrypto {
     @Override
     public byte[] fromSecretString(String secretStr, SymmCryptoType type) {
         try {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            KeySpec spec = new PBEKeySpec(secretStr.toCharArray(), "salt".getBytes(), 65536, keySize(type));
-            SecretKey secret = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "ChaCha20");
+            byte[] secretSpecBytes = SecretUtils.symmSecretFromSecret(secretStr, SecretUtils.DEFAULT_DETERMINISTIC_SALT, keySize(type));
+            SecretKey secret = new SecretKeySpec(secretSpecBytes, "ChaCha20");
             return secret.getEncoded();
         } catch (Exception e) {
             throw new RuntimeException(e);
