@@ -87,11 +87,15 @@ public interface AsymmCrypto {
     }
 
     record AsymmFullKeyPair(AsymmPubKeyPair pub, AsymmPrivKeyPair priv) {
-        static AsymmFullKeyPair fromParts(byte[] pubSigKey, byte[] pubEncKey, byte[] privSigKey, byte[] privEncKey, AsymmCrypto crypto, AsymmCryptoType type) {
+        public static AsymmFullKeyPair fromParts(byte[] pubSigKey, byte[] pubEncKey, byte[] privSigKey, byte[] privEncKey, AsymmCrypto crypto, AsymmCryptoType type) {
             AsymmPrivKeyPair priv = new AsymmPrivKeyPair(privSigKey, privEncKey, type);
             byte[] encSig = Arrays.equals(pubEncKey, pubSigKey) ? null : crypto.sign(pubEncKey, privSigKey, type);
             AsymmPubKeyPair pub = new AsymmPubKeyPair(pubSigKey, pubEncKey, encSig, type);
             return new AsymmFullKeyPair(pub, priv);
+        }
+
+        public static AsymmFullKeyPair fromParts(String pubSplitKey, String privSplitKey) {
+            return new AsymmFullKeyPair(AsymmPubKeyPair.parse(pubSplitKey), AsymmPrivKeyPair.parse(privSplitKey));
         }
     }
 }
