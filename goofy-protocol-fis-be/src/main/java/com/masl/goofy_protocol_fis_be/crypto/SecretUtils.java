@@ -15,7 +15,7 @@ public class SecretUtils {
     public static final String DEFAULT_DETERMINISTIC_SALT = "Goofy Protocol Default Salt";
 
     public static final int DEFAULT_HANDLE_ROOT_ITERATIONS = 300_000;
-    public static final int DEFAULT_HANDLE_WORD_ITERATIONS = 100_000;
+    public static final int DEFAULT_HANDLE_WORD_ITERATIONS = 50_000;
     public static final String DEFAULT_HANDLE_ROOT_SALT = "Goofy Protocol Root Salt";
     public static final String DEFAULT_HANDLE_WORD_SALT = "Goofy Protocol Derived Word Salt";
 

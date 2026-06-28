@@ -2,6 +2,32 @@
 
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
+## TODOs
+* Have known values for all crypto stuff (enc/dec, sign/verify, etc) and test against them
+* Implement Request Signing Stuff
+* Test Request Signing Stuff (Unit Test + Known values?)
+* Test Request Signing Stuff (Integration Test)
+* Setup Flags (Testing / Develop / Production) and document
+  * Setup DB and FileStorage to be isolated with the testing flag and reset fully when executing tests + load test data
+  * Setup DB to be persisted with the production flag and not reset when executing tests + load test data
+  * Look into having the DB stable when the schema changes
+* Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
+  * Document Spec
+* Start implementing CLI Client
+* Move all crypto code into a separate core/common module/lib
+  * Remove all dependencies on Spring Stuff
+  * Add an interface for external stuff (handle resolving, loading data, saving data, etc.)
+  * Change Usages to a Service Class which also implements the interface and can be used by the Spring App
+  * Add Config for Cache/Maps (size, expiration, etc)
+  * Move everything into a seperate package with tests and known values
+* Test to see if AI can translate the Java Crypto Code into JS (Browser/NodeJS) modules and test against known values
+* Try writing Frontend using JS/TS + Modules if possible
+* Implement silly Rate Limiting (only for prod/develop)
+  * Requests without a special cookies token will have to wait some time before their request is processed / get extra low prio / strong rate limiting, then they will get the special cookie
+  * Ideally Requests without the special cookie dont even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks
+  * Requests with the cookie will get individual rate limiting based on their unique cookie (if valid) / maybe also based on the handle
+
+
 ## Features
 A
 

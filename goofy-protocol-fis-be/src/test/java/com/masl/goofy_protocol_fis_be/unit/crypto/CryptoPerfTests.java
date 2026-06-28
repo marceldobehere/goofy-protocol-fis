@@ -6,6 +6,7 @@ import com.github.noconnor.junitperf.JUnitPerfTest;
 import com.github.noconnor.junitperf.JUnitPerfTestActiveConfig;
 import com.github.noconnor.junitperf.reporting.providers.ConsoleReportGenerator;
 import com.github.noconnor.junitperf.reporting.providers.HtmlReportGenerator;
+import com.masl.goofy_protocol_fis_be.crypto.HandleCrypto;
 import com.masl.goofy_protocol_fis_be.crypto.SecretUtils;
 import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCrypto;
 import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCryptoType;
@@ -16,13 +17,16 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.io.IOException;
 import java.security.Security;
+import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -36,6 +40,7 @@ class CryptoPerfTests {
 	private static final String randomSecretBase = "bla bla bla randdom secret";
 	private final GlobSymmCrypto symmCrypto = new GlobSymmCrypto();
 	private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
+	private final HandleCrypto handleCrypto = new HandleCrypto(false);
 
 	@JUnitPerfTestActiveConfig
 	private final static JUnitPerfReportingConfig PERF_CONFIG = JUnitPerfReportingConfig.builder()
@@ -43,7 +48,10 @@ class CryptoPerfTests {
 			.reportGenerator(new HtmlReportGenerator(getProperty("user.dir") + "/build/reports/" + "perf-crypto.html"))
 			.build();
 
-	@BeforeAll
+    CryptoPerfTests() throws IOException {
+    }
+
+    @BeforeAll
 	static void init() {
 		Security.addProvider(new BouncyCastleProvider());
 		Security.addProvider(new BouncyCastlePQCProvider());
@@ -52,7 +60,7 @@ class CryptoPerfTests {
 
 	@ParameterizedTest(name = "PERF: Raw enc/dec roundtrip with size 1_000_000 (type={0})")
 	@EnumSource(SymmCryptoType.class)
-	@JUnitPerfTest(threads = 32, durationMs = 15_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
+	@JUnitPerfTest(durationMs = 15_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
 	void testGlobalSymmCryptoRawEncDecPerf(SymmCryptoType type) {
 		// Create data
 		final int size = 1_000_000;
@@ -122,7 +130,7 @@ class CryptoPerfTests {
 
 	@ParameterizedTest(name = "PERF: Raw enc with size 1MB (type={0})")
 	@EnumSource(AsymmCryptoType.class)
-	@JUnitPerfTest(threads = 32, durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
+	@JUnitPerfTest(durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
 	void testGlobalAsymmCryptoRawEncPerfBig(AsymmCryptoType type) {
 		// Get Keypair & Random Data
 		var keypair = generateCachedKeypair(type);
@@ -135,7 +143,7 @@ class CryptoPerfTests {
 
 	@ParameterizedTest(name = "PERF: Raw dec with size 1M (type={0})")
 	@EnumSource(AsymmCryptoType.class)
-	@JUnitPerfTest(threads = 32, durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
+	@JUnitPerfTest(durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
 	void testGlobalAsymmCryptoRawDecPerfBig(AsymmCryptoType type) {
 		// Get Keypair & Random Data
 		var keypair = generateCachedKeypair(type);
@@ -154,7 +162,7 @@ class CryptoPerfTests {
 
 	@ParameterizedTest(name = "PERF: Raw sign with size 1MB (type={0})")
 	@EnumSource(AsymmCryptoType.class)
-	@JUnitPerfTest(threads = 32, durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
+	@JUnitPerfTest(durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
 	void testGlobalAsymmCryptoRawSignPerf(AsymmCryptoType type) {
 		// Get Keypair & Random Data
 		var keypair = generateCachedKeypair(type);
@@ -167,7 +175,7 @@ class CryptoPerfTests {
 
 	@ParameterizedTest(name = "PERF: Raw verify with size 1MB (type={0})")
 	@EnumSource(AsymmCryptoType.class)
-	@JUnitPerfTest(threads = 32, durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
+	@JUnitPerfTest(durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
 	void testGlobalAsymmCryptoRawVerifyPerf(AsymmCryptoType type) {
 		// Get Keypair & Random Data
 		var keypair = generateCachedKeypair(type);
@@ -185,7 +193,7 @@ class CryptoPerfTests {
 
 	@ParameterizedTest(name = "PERF: Keygen with size 1MB (type={0})")
 	@EnumSource(AsymmCryptoType.class)
-	@JUnitPerfTest(threads = 32, durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
+	@JUnitPerfTest(durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
 	void testGlobalAsymmCryptoKeygenPerf(AsymmCryptoType type) {
 		// Get Keypair
 		var keypair = asymmCrypto.generateKeypair(type);
@@ -194,7 +202,7 @@ class CryptoPerfTests {
 
 	@ParameterizedTest(name = "PERF: Raw enc/dec/sign/verify with size 1MB (type={0})")
 	@EnumSource(AsymmCryptoType.class)
-	@JUnitPerfTest(threads = 32, durationMs = 15_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
+	@JUnitPerfTest(durationMs = 15_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
 	void testGlobalAsymmCryptoRawFullPerf(AsymmCryptoType type) {
 		// Get Keypair & Random Data
 		var keypair = generateCachedKeypair(type);
@@ -236,8 +244,19 @@ class CryptoPerfTests {
 			"256,800000",
 			"256,1000000",
 	})
-	@JUnitPerfTest(threads = 32, durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
+	@JUnitPerfTest(durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
 	void testSecretSymmKey(int size, int iterations) {
 		SecretUtils.symmSecretFromSecret(randomSecretBase, SecretUtils.DEFAULT_DETERMINISTIC_SALT, size, iterations);
+	}
+
+	@ParameterizedTest(name = "PERF: Cacheless Key Derivation (type={0})")
+	@EnumSource(AsymmCryptoType.class)
+	@JUnitPerfTest(durationMs = 10_000, rampUpPeriodMs = 2_000, warmUpMs = 3_000, maxExecutionsPerSecond = 15_000)
+	void testCachelessKeyDerivation(AsymmCryptoType type) {
+		// Get Keypair & Random Data
+		var keypair = generateCachedKeypair(type);
+
+		String handle = handleCrypto._internalDeriveHandle(keypair.pub().serialize());
+		assertThat(handle).isNotNull();
 	}
 }
