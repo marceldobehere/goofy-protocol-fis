@@ -87,8 +87,8 @@ Format: `[word]_[word]NNNNN` / `[word]_[word]_[word]NNNNN` / `[word]_[word]_[wor
 
 In more Detail:
 ```
-[word] - a word chosen from the list in `handle_words.json`
-NNNNN - number from 0 to 99999
+[word] - A Word chosen from the List in `handle_words.json`
+NNNNN - A Number from 0 to 99999
 ```
 
 Example: `beray_drubs_pant57107`
