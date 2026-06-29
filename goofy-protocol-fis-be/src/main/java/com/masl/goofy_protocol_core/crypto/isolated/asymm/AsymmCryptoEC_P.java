@@ -4,23 +4,24 @@ import org.bouncycastle.jce.spec.IESParameterSpec;
 
 import javax.crypto.Cipher;
 import java.security.*;
+import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.List;
 
-public class AsymmCryptoECC implements AsymmCrypto {
+public class AsymmCryptoEC_P implements AsymmCrypto {
 
     @Override
     public List<AsymmCryptoType> getTypes() {
-        return List.of(AsymmCryptoType.EC_256, AsymmCryptoType.EC_384);
+        return List.of(AsymmCryptoType.EC_P256, AsymmCryptoType.EC_P384);
     }
 
-    private static int keySize(AsymmCryptoType type) {
+    private static String keyAlgo(AsymmCryptoType type) {
         return switch (type) {
-            case EC_256 -> 256;
-            case EC_384 -> 384;
+            case EC_P256 -> "secp256r1";
+            case EC_P384 -> "secp384r1";
             default -> throw new IllegalArgumentException("Invalid type");
         };
     }
@@ -44,10 +45,10 @@ public class AsymmCryptoECC implements AsymmCrypto {
         KeyPairGenerator generator;
         try {
             generator = KeyPairGenerator.getInstance("EC", "BC");
-        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+            generator.initialize(new ECGenParameterSpec(keyAlgo(type)));
+        } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
             throw new RuntimeException(e);
         }
-        generator.initialize(keySize(type));
         KeyPair sigPair = generator.generateKeyPair();
         return AsymmFullKeyPair.fromParts(
                 sigPair.getPublic().getEncoded(), sigPair.getPublic().getEncoded(),

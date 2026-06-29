@@ -8,8 +8,11 @@ public enum AsymmCryptoType {
     RSA_3072((short)0x0101),
     RSA_4096((short)0x0102),
 
-    EC_256((short)0x0200),
-    EC_384((short)0x0201),
+    // Using P-256/384
+    EC_P256((short)0x0200),
+    EC_P384((short)0x0201),
+    // Using Curve25519
+    EC_C25519((short)0x0210),
 
     MLKEMDSA_512_44((short)0x0300),
     MLKEMDSA_768_65((short)0x0301),

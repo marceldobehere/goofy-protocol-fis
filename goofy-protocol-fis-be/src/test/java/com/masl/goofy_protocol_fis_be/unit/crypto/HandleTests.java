@@ -22,8 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 class HandleTests {
 	private static final Logger log = LoggerFactory.getLogger(HandleTests.class);
-	private static final String knownPubSplitKey = "PUB.EC_256.MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEfk5TgHyUgvx8KcHwg1ghEGpHw0iCX_O-B_D98IuiLU89UPr_womd87ps40NZbH54vl-wF320i5r-JVDazli22Q==.X.X";
-	private static final String knownPubSplitKeyHandle = "life_pekau_warm57107";
+	private static final String knownPubSplitKey = "PUB.EC_P256.MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAERCDEqWbiDmy3dM9G22qvRsZME_mYNP4Pjzr5l-RzOl_BYycCAwjjjfSiYcCanfPgJ2x6L5xqOpejjixBF6-47A==.X.X";
+	private static final String knownPubSplitKeyHandle = "kaval_rigor_flats26014";
 
 	private final GlobAsymmCrypto crypto = new GlobAsymmCrypto();
 

@@ -59,8 +59,9 @@ Supported types can be seen in the `AsymmCryptoType` Enum, currently they are:
 * RSA 2048
 * RSA 3072
 * RSA 4096
-* EC 256
-* EC 384
+* EC_P256 
+* EC_P384
+* EC_C25519
 * ML-KEM (512) + ML-DSA (44)
 * ML-KEM (768) + ML-DSA (65)
 * ML-KEM (1024) + ML-DSA (87)

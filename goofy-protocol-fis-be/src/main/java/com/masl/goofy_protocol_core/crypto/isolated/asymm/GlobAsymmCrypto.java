@@ -5,7 +5,7 @@ import java.util.Base64;
 import java.util.List;
 
 public class GlobAsymmCrypto {
-    List<AsymmCrypto> cryptoList = List.of(new AsymmCryptoRSA(), new AsymmCryptoECC(), new AsymmCryptoMLKEMDSA());
+    List<AsymmCrypto> cryptoList = List.of(new AsymmCryptoRSA(), new AsymmCryptoEC_P(), new AsymmCryptoEC_X(), new AsymmCryptoMLKEMDSA());
 
     public List<AsymmCryptoType> getTypes() {
         return cryptoList.stream().map(AsymmCrypto::getTypes).flatMap(List::stream).toList();
@@ -120,6 +120,6 @@ public class GlobAsymmCrypto {
 
 
     // Default Methods using the Default Asymmetric Crypto Algo
-    public static final AsymmCryptoType DEFAULT_TYPE = AsymmCryptoType.EC_256;
+    public static final AsymmCryptoType DEFAULT_TYPE = AsymmCryptoType.EC_P256;
     public AsymmCrypto.AsymmFullKeyPair generateKeypair() {return generateKeypair(DEFAULT_TYPE);}
 }
