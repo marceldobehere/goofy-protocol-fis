@@ -1,13 +1,10 @@
-package com.masl.goofy_protocol_fis_be.unit.crypto.symm;
+package com.masl.goofy_protocol_core.crypto.isolated.symm;
 
-import com.masl.goofy_protocol_fis_be.crypto.symm.GlobSymmCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.symm.SymmCryptoType;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
@@ -16,7 +13,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.entry;
 
-@SpringBootTest
 class SymmGlobKnownValues {
 	public static final String SAMPLE_SECRET = "AMAZING INCREDIBLE SECRET FOR THE SYMMETRIC ENCRYPTION";
 	public static final String SAMPLE_STR = "This is a test string! This is a test string yes! This is a test string maybe! This is a test string! insanely long text! AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC";

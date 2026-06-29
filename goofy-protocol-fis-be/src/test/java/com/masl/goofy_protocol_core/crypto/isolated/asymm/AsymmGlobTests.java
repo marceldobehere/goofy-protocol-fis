@@ -1,7 +1,5 @@
-package com.masl.goofy_protocol_fis_be.unit.crypto.asymm;
+package com.masl.goofy_protocol_core.crypto.isolated.asymm;
 
-import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCryptoType;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.GlobAsymmCrypto;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,7 +9,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.Security;
 import java.util.concurrent.ThreadLocalRandom;
@@ -19,7 +16,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
 class AsymmGlobTests {
 	private static final Logger log = LoggerFactory.getLogger(AsymmGlobTests.class);
 	private static final String testMessageStr = "This is a very crazy amazing test message";

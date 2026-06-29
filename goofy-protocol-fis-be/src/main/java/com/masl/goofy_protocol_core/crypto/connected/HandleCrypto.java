@@ -1,69 +1,50 @@
-package com.masl.goofy_protocol_fis_be.crypto;
+package com.masl.goofy_protocol_core.crypto.connected;
 
-import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.GlobAsymmCrypto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
-import tools.jackson.databind.ObjectMapper;
+import com.masl.goofy_protocol_core.crypto.isolated.SecretUtils;
+import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCrypto;
+import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class HandleCrypto {
-    private static final String HANDLE_WORDS_PATH = "data/handle_words.json";
-
-    private static final Logger log = LoggerFactory.getLogger(HandleCrypto.class);
+public class HandleCrypto implements GenericHandleCrypto {
     private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
+    private final HandleCryptoHelper handleCryptoHelper;
+    private final List<String> wordList;
 
-    private List<String> wordList;
     private Map<String, String> userKeyToHandleCache;
     private Map<String, String> generalKeyToHandleCache;
     private Map<String, String> sharedHandleToKeyCache;
 
-    public HandleCrypto() throws IOException {
-        this(true);
+    public record HandleCryptoConfig() {}
+
+    public HandleCrypto(HandleCryptoHelper handleCryptoHelper) {
+        this(handleCryptoHelper, new HandleCryptoConfig());
     }
 
-    public HandleCrypto(boolean realEnv) throws IOException {
-        userKeyToHandleCache = new ConcurrentHashMap<>();
-        generalKeyToHandleCache = new ConcurrentHashMap<>();
-        sharedHandleToKeyCache = new ConcurrentHashMap<>();
-        wordList = new ArrayList<>();
+    public HandleCrypto(HandleCryptoHelper handleCryptoHelper, HandleCryptoConfig config) {
+        this.handleCryptoHelper = handleCryptoHelper;
 
-        loadWordList();
-        if (realEnv) {
-            loadUserKeyToHandle();
-            loadGeneralKeyToHandle();
-            generateHandleToKeyMapping();
-        }
-    }
-
-    // Load Word List (Currently ~15000 Entries)
-    // Stored in resources/data/handle_words.json
-    synchronized public void loadWordList() throws IOException {
-        ClassPathResource resource = new ClassPathResource(HANDLE_WORDS_PATH);
-        ObjectMapper mapper = new ObjectMapper();
-        String[] words = mapper.readValue(resource.getInputStream(), String[].class);
-        wordList = new ArrayList<>(Arrays.asList(words));
-        log.info("Loaded {} words for handle generation", wordList.size());
+        wordList = handleCryptoHelper.loadWordList();
+        generalKeyToHandleCache = new ConcurrentHashMap<>(handleCryptoHelper.loadPersistedKeyToHandleMapCache());
+        userKeyToHandleCache = new ConcurrentHashMap<>(handleCryptoHelper.loadUserKeyToHandleMap());
+        generateHandleToKeyMapping();
     }
 
     // Persistence
 
-    synchronized public void loadUserKeyToHandle() {
-        userKeyToHandleCache = new ConcurrentHashMap<>();
-        // TODO: Load in keys from registered/known users into extra cache
+    synchronized public void reloadUserKeyToHandle() {
+        userKeyToHandleCache = new ConcurrentHashMap<>(handleCryptoHelper.loadUserKeyToHandleMap());
+        generateHandleToKeyMapping();
     }
 
-    synchronized public void loadGeneralKeyToHandle() {
-        generalKeyToHandleCache = new ConcurrentHashMap<>();
-        // TODO: Add some system to persist the cache
+    synchronized public void reloadGeneralKeyToHandle() {
+        generalKeyToHandleCache = new ConcurrentHashMap<>(handleCryptoHelper.loadPersistedKeyToHandleMapCache());
+        generateHandleToKeyMapping();
     }
 
     synchronized public void saveGeneralKeyToHandle() {
-        // TODO: Add some system to persist the cache
+        handleCryptoHelper.storePersistedKeyToHandleMapCache(generalKeyToHandleCache);
     }
 
     // Generate Reverse Mappings
@@ -121,10 +102,10 @@ public class HandleCrypto {
         if (userKeyToHandleCache.containsKey(pubSplitKey))
             return userKeyToHandleCache.get(pubSplitKey);
 
-        return generalKeyToHandleCache.computeIfAbsent(pubSplitKey, key -> {
-            String handle = _internalDeriveHandle(pubSplitKey);
+        return generalKeyToHandleCache.computeIfAbsent(pubSplitKey, _pubSplitKey -> {
+            String handle = _internalDeriveHandle(_pubSplitKey);
             if (handle != null)
-                sharedHandleToKeyCache.putIfAbsent(handle, pubSplitKey);
+                sharedHandleToKeyCache.putIfAbsent(handle, _pubSplitKey);
             return handle;
         });
     }
@@ -182,16 +163,10 @@ public class HandleCrypto {
 
     public String getPublicSplitKeyFromHandle(String handle) {
         return sharedHandleToKeyCache.computeIfAbsent(handle, _handle -> {
-            String pubSplitKey = _internalGetPublicSplitKeyFromHandle(_handle);
+            String pubSplitKey = handleCryptoHelper.lookupPubSplitKeyForHandleExternally(_handle);
             if (pubSplitKey != null)
                 generalKeyToHandleCache.putIfAbsent(pubSplitKey, _handle);
             return pubSplitKey;
         });
-    }
-
-    synchronized private String _internalGetPublicSplitKeyFromHandle(String handle) {
-        // TODO: Specify and Check if handle contains domain path
-        // TODO: Create and Connect External Service that can do a lookup of the handle with known FIS Servers or if the handle has a domain attached
-        return null;
     }
 }

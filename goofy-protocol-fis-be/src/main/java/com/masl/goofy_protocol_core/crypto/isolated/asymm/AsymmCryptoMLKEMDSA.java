@@ -1,6 +1,6 @@
-package com.masl.goofy_protocol_fis_be.crypto.asymm;
+package com.masl.goofy_protocol_core.crypto.isolated.asymm;
 
-import com.masl.goofy_protocol_fis_be.crypto.symm.GlobSymmCrypto;
+import com.masl.goofy_protocol_core.crypto.isolated.symm.GlobSymmCrypto;
 
 import javax.crypto.KEM;
 import java.nio.charset.StandardCharsets;

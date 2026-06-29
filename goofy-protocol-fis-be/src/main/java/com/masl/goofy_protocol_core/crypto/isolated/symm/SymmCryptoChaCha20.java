@@ -1,6 +1,6 @@
-package com.masl.goofy_protocol_fis_be.crypto.symm;
+package com.masl.goofy_protocol_core.crypto.isolated.symm;
 
-import com.masl.goofy_protocol_fis_be.crypto.SecretUtils;
+import com.masl.goofy_protocol_core.crypto.isolated.SecretUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;

@@ -1,13 +1,10 @@
-package com.masl.goofy_protocol_fis_be.unit.crypto.symm;
+package com.masl.goofy_protocol_core.crypto.isolated.symm;
 
-import com.masl.goofy_protocol_fis_be.crypto.symm.GlobSymmCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.symm.SymmCryptoType;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.Security;
 import java.util.Map;
@@ -15,7 +12,6 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
 class SymmGlobKnownTests {
 	private static final Set<Map.Entry<SymmCryptoType, SymmGlobKnownValues.KnownValueSet>> knownValueEntries = SymmGlobKnownValues.knownValues.entrySet();
 	private final GlobSymmCrypto crypto = new GlobSymmCrypto();

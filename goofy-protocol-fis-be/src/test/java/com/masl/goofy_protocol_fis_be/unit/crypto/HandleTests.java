@@ -1,9 +1,9 @@
 package com.masl.goofy_protocol_fis_be.unit.crypto;
 
-import com.masl.goofy_protocol_fis_be.crypto.HandleCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCryptoType;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.GlobAsymmCrypto;
+import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
+import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCrypto;
+import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
+import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.io.IOException;
 import java.security.Security;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,8 +36,8 @@ class HandleTests {
 	}
 
 	@BeforeEach
-	void preTest() throws IOException {
-		handleCrypto = new HandleCrypto(false);
+	void preTest() {
+		handleCrypto = new HandleCrypto(new IsolatedHandleHelper());
 	}
 
 	@ParameterizedTest(name = "Keygen & handle derivation (type={0})")

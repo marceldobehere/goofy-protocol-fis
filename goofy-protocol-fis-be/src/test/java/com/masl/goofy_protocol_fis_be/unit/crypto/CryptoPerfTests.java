@@ -6,13 +6,13 @@ import com.github.noconnor.junitperf.JUnitPerfTest;
 import com.github.noconnor.junitperf.JUnitPerfTestActiveConfig;
 import com.github.noconnor.junitperf.reporting.providers.ConsoleReportGenerator;
 import com.github.noconnor.junitperf.reporting.providers.HtmlReportGenerator;
-import com.masl.goofy_protocol_fis_be.crypto.HandleCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.SecretUtils;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCryptoType;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.GlobAsymmCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.symm.GlobSymmCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.symm.SymmCryptoType;
+import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
+import com.masl.goofy_protocol_core.crypto.isolated.SecretUtils;
+import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCrypto;
+import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
+import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
+import com.masl.goofy_protocol_core.crypto.isolated.symm.GlobSymmCrypto;
+import com.masl.goofy_protocol_core.crypto.isolated.symm.SymmCryptoType;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
@@ -23,7 +23,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.io.IOException;
 import java.security.Security;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -38,16 +37,13 @@ class CryptoPerfTests {
 	private static final String randomSecretBase = "bla bla bla randdom secret";
 	private final GlobSymmCrypto symmCrypto = new GlobSymmCrypto();
 	private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
-	private final HandleCrypto handleCrypto = new HandleCrypto(false);
+	private final HandleCrypto handleCrypto = new HandleCrypto(new IsolatedHandleHelper());
 
 	@JUnitPerfTestActiveConfig
 	private final static JUnitPerfReportingConfig PERF_CONFIG = JUnitPerfReportingConfig.builder()
 			.reportGenerator(new ConsoleReportGenerator())
 			.reportGenerator(new HtmlReportGenerator(getProperty("user.dir") + "/build/reports/" + "perf-crypto.html"))
 			.build();
-
-    CryptoPerfTests() throws IOException {
-    }
 
     @BeforeAll
 	static void init() {

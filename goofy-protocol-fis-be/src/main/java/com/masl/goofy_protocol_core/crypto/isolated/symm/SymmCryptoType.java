@@ -1,4 +1,4 @@
-package com.masl.goofy_protocol_fis_be.crypto.symm;
+package com.masl.goofy_protocol_core.crypto.isolated.symm;
 
 import lombok.Getter;
 

@@ -1,13 +1,10 @@
-package com.masl.goofy_protocol_fis_be.unit.crypto.asymm;
+package com.masl.goofy_protocol_core.crypto.isolated.asymm;
 
-import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCryptoType;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.GlobAsymmCrypto;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.Security;
 import java.util.Map;
@@ -15,7 +12,6 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 
-@SpringBootTest
 class AsymmGlobKnownTests {
 	private static final Set<Map.Entry<AsymmCryptoType, AsymmGlobKnownValues.KnownValueSet>> knownValueEntries = AsymmGlobKnownValues.knownValues.entrySet();
 	private final GlobAsymmCrypto crypto = new GlobAsymmCrypto();

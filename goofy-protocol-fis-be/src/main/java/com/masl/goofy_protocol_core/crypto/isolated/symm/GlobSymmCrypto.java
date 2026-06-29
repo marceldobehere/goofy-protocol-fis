@@ -1,6 +1,4 @@
-package com.masl.goofy_protocol_fis_be.crypto.symm;
-
-import com.masl.goofy_protocol_fis_be.crypto.asymm.*;
+package com.masl.goofy_protocol_core.crypto.isolated.symm;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -8,7 +6,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.masl.goofy_protocol_fis_be.crypto.SecretUtils.ENC_DELIMITER;
+import static com.masl.goofy_protocol_core.crypto.isolated.SecretUtils.ENC_DELIMITER;
 
 public class GlobSymmCrypto {
     List<SymmCrypto> cryptoList = List.of(new SymmCryptoAES(), new SymmCryptoChaCha20());

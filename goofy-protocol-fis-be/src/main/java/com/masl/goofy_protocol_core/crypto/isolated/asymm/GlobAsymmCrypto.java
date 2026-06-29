@@ -1,4 +1,4 @@
-package com.masl.goofy_protocol_fis_be.crypto.asymm;
+package com.masl.goofy_protocol_core.crypto.isolated.asymm;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;

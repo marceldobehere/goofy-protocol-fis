@@ -1,11 +1,11 @@
-package com.masl.goofy_protocol_fis_be.crypto.asymm;
+package com.masl.goofy_protocol_core.crypto.isolated.asymm;
 
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.masl.goofy_protocol_fis_be.crypto.SecretUtils.ENC_DELIMITER;
+import static com.masl.goofy_protocol_core.crypto.isolated.SecretUtils.ENC_DELIMITER;
 
 public interface AsymmCrypto {
     List<AsymmCryptoType> getTypes();

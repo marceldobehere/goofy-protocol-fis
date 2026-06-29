@@ -1,4 +1,4 @@
-package com.masl.goofy_protocol_fis_be.crypto;
+package com.masl.goofy_protocol_core.crypto.isolated;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

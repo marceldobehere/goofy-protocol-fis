@@ -1,7 +1,5 @@
-package com.masl.goofy_protocol_fis_be.unit.crypto.symm;
+package com.masl.goofy_protocol_core.crypto.isolated.symm;
 
-import com.masl.goofy_protocol_fis_be.crypto.symm.GlobSymmCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.symm.SymmCryptoType;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,7 +9,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.Security;
 import java.util.concurrent.ThreadLocalRandom;
@@ -19,7 +16,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
 class SymmGlobTests {
 	private static final Logger log = LoggerFactory.getLogger(SymmGlobTests.class);
 	private static final String randomSecretBase = "bla bla bla randdom secret";

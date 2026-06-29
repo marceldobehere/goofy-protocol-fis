@@ -1,14 +1,10 @@
-package com.masl.goofy_protocol_fis_be.unit.crypto.asymm;
+package com.masl.goofy_protocol_core.crypto.isolated.asymm;
 
-import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCrypto;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.AsymmCryptoType;
-import com.masl.goofy_protocol_fis_be.crypto.asymm.GlobAsymmCrypto;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
@@ -18,7 +14,6 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
-@SpringBootTest
 class AsymmGlobKnownValues {
 	// use a sufficiently long string to force using hybrid encryption
 	public static final String SAMPLE_STR = "This is a test string! This is a test string yes! This is a test string maybe! This is a test string! insanely long text! AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC";
