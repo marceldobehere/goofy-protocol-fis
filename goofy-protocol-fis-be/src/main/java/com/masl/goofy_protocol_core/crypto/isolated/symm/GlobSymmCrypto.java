@@ -95,7 +95,7 @@ public class GlobSymmCrypto {
 
 
     // Default Methods using the Default Symmetric Crypto Algo
-    public static final SymmCryptoType DEFAULT_TYPE = SymmCryptoType.AES_GCM_192;
+    public static final SymmCryptoType DEFAULT_TYPE = SymmCryptoType.AES_GCM_256;
     public byte[] encryptRaw(byte[] data, String secret) {return encryptRaw(data, secret, DEFAULT_TYPE);}
     public String encrypt(byte[] data, String secret) {return encrypt(data, secret, DEFAULT_TYPE);}
     public String encryptStr(String data, String secret) {return encryptStr(data, secret, DEFAULT_TYPE);}

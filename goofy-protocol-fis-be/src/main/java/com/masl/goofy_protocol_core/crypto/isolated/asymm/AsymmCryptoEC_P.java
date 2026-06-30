@@ -57,6 +57,8 @@ public class AsymmCryptoEC_P implements AsymmCrypto {
         );
     }
 
+    // TODO: Potentially incorporate a hash of the unencrypted data, so that the decryption can validate it has not been tampered with
+    // TODO: Look into if "ECIESwithAES-CBC" is standardized / easily portable?
     @Override
     public byte[] encrypt(byte[] data, byte[] pubEncKey, AsymmCryptoType type) {
         try {

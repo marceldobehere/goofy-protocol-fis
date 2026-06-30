@@ -5,6 +5,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 ## TODOs
 * Implement Request Signing Stuff
 * Test Request Signing Stuff (Unit Test + Known values?)
+* Expand the HandleCryptoHelper for Lookup of Domains + Methods in GenericHandleCrypto
 * Test Request Signing Stuff (Integration Test)
 * Setup Flags (Testing / Develop / Production) and document
   * Setup DB and FileStorage to be isolated with the testing flag and reset fully when executing tests + load test data
@@ -24,22 +25,26 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 
 ## Features
-A
+(TODO)
 
 ## Setup
-A
+(TODO)
 
 ## Notes
-A
+(TODO)
 
 
 
 
 ## Implementation Details
-A
+(TODO)
+
+
+
+
 
 ### Symmetric Cryptography
-A
+(TODO)
 
 #### Supported Algorithms
 Supported types can be seen in the `SymmCryptoType` Enum, currently they are:
@@ -49,10 +54,27 @@ Supported types can be seen in the `SymmCryptoType` Enum, currently they are:
 * ChaCha20
 
 #### Symmetrically Encrypted Data Format
-a
+(TODO)
 
-### Asymmetric Cryptography
-A
+#### Algorithm Implementations
+(TODO)
+
+Supported Types:
+* AES-128-GCM
+* AES-196-GCM
+* AES-256-GCM
+* ChaCha20
+
+For now, you can look into the [Implementations](src/main/java/com/masl/goofy_protocol_core/crypto/isolated/symm).
+
+
+
+
+
+
+
+### Asymmetric (/Hybrid) Cryptography
+(TODO)
 
 #### Supported Algorithms
 Supported types can be seen in the `AsymmCryptoType` Enum, currently they are:
@@ -68,7 +90,7 @@ Supported types can be seen in the `AsymmCryptoType` Enum, currently they are:
 
 
 #### Public Split Key Format
-A
+(TODO)
 
 `PUB.[TYPE].[SIG KEY].[ENC KEY].[ENC SIG]` / `PUB.[TYPE].[SIG KEY].X.X`
 
@@ -99,19 +121,121 @@ PUB.MLKEMDSA_512_44.MIIFMjA<...>8EML0hY=.MIIDM<...>PJnu_MKWR.8dC<...>A0gMEA=
 ```
 
 #### Private Split Key Format
-A
+(TODO)
+
+
+#### Signature Format
+Normally a Base64 URLEncoded String of the resulting Signature Bytes. 
+The underlying Format depends on the Signature Algorithm used, which is defined in the Public Split Key.
+
+
+#### Asymmetrically Encrypted Data Format
+(TODO)
+
+
+#### Algorithm Implementations
+(TODO)
+
+Supported Types:
+* RSA 2048
+* RSA 3072
+* RSA 4096
+* EC_P256
+* EC_P384
+* EC_C25519
+* ML-KEM (512) + ML-DSA (44)
+* ML-KEM (768) + ML-DSA (65)
+* ML-KEM (1024) + ML-DSA (87)
+
+Asymmetric Cryptography is usually used in a hybrid way, where the actual data is symmetrically encrypted and the symmetric key is asymmetrically encrypted with the public key of the recipient.
+The Implementations rely on the Symmetric Cryptography Implementations for the actual data encryption and decryption.
+Currently, by default `AES_GCM_256` is used for the symmetric encryption of the data.
+One outlier for the statement above is the Asymmetric Encryption using P-256/384, as it uses `ECIESwithAES-CBC` directly.
+
+
+For now, you can look into the [Implementations](src/main/java/com/masl/goofy_protocol_core/crypto/isolated/asymm).
+
+
+
+
+
+
 
 
 ### User Handle
-A
+The User Handle is a unique identifier for a user (or rather a keypair) in the Goofy Protocol. 
+It is used to identify a user and their associated public split key and is globally unique across all domains.
+
+The handle is tightly coupled to the public key by being derived from it, so it is not possible to change the handle without changing the public key and vice versa.
+This also means that the handle can always be verified to be correct by deriving it from the public key and comparing it to the handle.
+
+The specific derivation is specified below in more detail.
 
 Format: `[word]_[word]NNNNN` / `[word]_[word]_[word]NNNNN` / `[word]_[word]_[word]_[word]NNNNN`
 
 In more Detail:
 ```
-[word] - A Word chosen from the List in `handle_words.json`
+[word] - A Word chosen from the List in `handle_words.json (there can be 2-4 words in a handle)`
 NNNNN - A Number from 0 to 99999
 ```
 
 Example: `beray_drubs_pant57107`
 
+#### Domain Parts
+Usually, handles do not have the domain attached and shouldn't be stored as one string with the domain attached.
+This is because the handle should be portable and not tied to a specific domain.
+Of course the current domain for a handle should be stored, just separately and only used when needed. (For example looking up the public split key)
+
+A username with an attached domain has the following format:
+`[handle]@[domain]`
+
+Example: `beray_drubs_pant57107@fis.rocc.systems`
+
+NOTE: When sending a signed request with only your handle, it is advised to attach the domain, if theres a chance the Server doesn't know it yet.
+If the server cannot resolve your handle, it will throw an error and ideally your client would send the handle with the domain attached.
+
+
+
+#### Cryptographic Handle Derivation
+(TODO)
+
+
+See [Example Implementation](src/main/java/com/masl/goofy_protocol_core/crypto/connected/HandleCrypto.java) for a working example of the Handle Derivation.
+
+
+
+#### Strength
+(TODO)
+```
+// Strength of handles
+// c = 2 -> ~44 bit (15000^2 * 10^5 = 2.3e13)
+// c = 3 -> ~58 bit (15000^3 * 10^5 = 3.4e17)
+// c = 4 -> ~72 bit (15000^4 * 10^5 = 5.1e21)
+```
+
+
+
+
+### Signed Requests
+(TODO)
+
+#### Parts
+(TODO)
+
+#### Headers
+The following headers are needed for Signed Requests:
+* `X-Goofy-Public-Key`: The Public Split Key of the Sender (format defined above)
+* `X-Goofy-Handle`: The Handle of the Sender (format defined above, can have a domain attached)
+* `X-Goofy-Signature`: The Signature of the Request (format defined above)
+* `X-Goofy-Id`: A random Id in the form of a Long (64bit) Integer, used to prevent replay attacks (The server wont store them forever usually)
+* `X-Goofy-Valid-Until`: A timestamp in the form of a Long (64bit) Integer representing the time in milliseconds since epoch, used to enforce a time limit on the validity of the request
+
+The default validity of a Signed Request should be 60 seconds. This is because surprisingly a lot of devices arent closely synchronized with the actual time and can be off by some time. (Sometimes even multiple minutes)
+
+#### Signature
+(TODO)
+
+Servers should reject requests with a valid until timestamp, which has already passed or is too far in the future (for example >1h).
+
+#### Validity
+(TODO)

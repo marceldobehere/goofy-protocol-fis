@@ -15,6 +15,6 @@ public interface HandleCryptoHelper {
     Map<String, String> loadUserKeyToHandleMap();
 
     // Lookup Public Split Key for a handle (which is unknown to the cache, service might look up by asking different servers or return null if no mapping was found)
-    // The handle might have a domain attached (See Spec)
+    // NOTE: The handle might have a domain attached (See Spec)
     String lookupPubSplitKeyForHandleExternally(String handle);
 }

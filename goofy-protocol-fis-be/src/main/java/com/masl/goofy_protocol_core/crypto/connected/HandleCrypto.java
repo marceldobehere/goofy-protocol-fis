@@ -6,6 +6,7 @@ import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public class HandleCrypto implements GenericHandleCrypto {
     private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
@@ -159,13 +160,27 @@ public class HandleCrypto implements GenericHandleCrypto {
         return builder.toString();
     }
 
+    // Handle & Domain Separation
+
+    public String stripPotentialDomainFromHandle(String handle) {
+        return handle.split(Pattern.quote(DEF_DOMAIN_SEPARATOR))[0];
+    }
+
+    public String getPotentialDomainFromHandle(String handle) {
+        String[] split = handle.split(Pattern.quote(DEF_DOMAIN_SEPARATOR));
+        if (split.length > 1)
+            return split[1];
+        return null;
+    }
+
     // Handle to Keypair Lookup
 
     public String getPublicSplitKeyFromHandle(String handle) {
-        return sharedHandleToKeyCache.computeIfAbsent(handle, _handle -> {
-            String pubSplitKey = handleCryptoHelper.lookupPubSplitKeyForHandleExternally(_handle);
+        String strippedHandle = stripPotentialDomainFromHandle(handle);
+        return sharedHandleToKeyCache.computeIfAbsent(strippedHandle, _ -> {
+            String pubSplitKey = handleCryptoHelper.lookupPubSplitKeyForHandleExternally(handle);
             if (pubSplitKey != null)
-                generalKeyToHandleCache.putIfAbsent(pubSplitKey, _handle);
+                generalKeyToHandleCache.putIfAbsent(pubSplitKey, strippedHandle);
             return pubSplitKey;
         });
     }
