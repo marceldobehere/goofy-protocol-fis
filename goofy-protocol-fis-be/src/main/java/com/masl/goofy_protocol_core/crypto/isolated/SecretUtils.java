@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.spec.KeySpec;
 
 public class SecretUtils {
@@ -30,6 +32,20 @@ public class SecretUtils {
             return factory.generateSecret(spec).getEncoded();
         } catch (Exception e) {
             log.error("Error generating symmetric secret from secret: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    public static byte[] sha256(String input) {
+        return sha256(input.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static byte[] sha256(byte[] input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return digest.digest(input);
+        } catch (Exception e) {
+            log.error("Error generating SHA-256 hash: {}", e.getMessage(), e);
             return null;
         }
     }

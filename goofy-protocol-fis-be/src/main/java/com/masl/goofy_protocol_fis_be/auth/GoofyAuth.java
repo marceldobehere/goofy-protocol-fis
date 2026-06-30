@@ -9,14 +9,10 @@ import java.util.Collection;
 import java.util.List;
 
 public class GoofyAuth implements Authentication {
-
     private List<GrantedAuthority> authorities;
     private boolean isAuthenticated;
 
-
-
     public GoofyAuth() {
-
         authorities = new ArrayList<>();
         isAuthenticated = true;
     }
