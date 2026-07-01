@@ -32,7 +32,7 @@ public class HandleHelper implements HandleCryptoHelper {
             ObjectMapper mapper = new ObjectMapper();
             String[] words = mapper.readValue(resource.getInputStream(), String[].class);
             List<String> wordList = new ArrayList<>(Arrays.asList(words));
-            log.info("Loaded {} words for handle generation", wordList.size());
+            log.debug("Loaded {} words for handle generation", wordList.size());
             return wordList;
         } catch (IOException e) {
             throw new RuntimeException("Failed to load handle words from " + HANDLE_WORDS_PATH, e);
