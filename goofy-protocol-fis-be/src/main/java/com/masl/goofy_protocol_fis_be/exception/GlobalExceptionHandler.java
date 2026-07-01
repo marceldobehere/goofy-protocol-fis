@@ -42,10 +42,10 @@ public class GlobalExceptionHandler {
 
     // TODO: Document correct Error Code and Message
     @ExceptionHandler(InvalidSignatureException.class)
-    public ResponseEntity<String> handleInvalidSignatureException(PublicKeyNotFoundException ex) {
+    public ResponseEntity<String> handleInvalidSignatureException(InvalidSignatureException ex) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .contentType(MediaType.TEXT_PLAIN)
-                .body("Signature for Signed Request is invalid");
+                .body(ex.getMessage());
     }
 }

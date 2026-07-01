@@ -32,28 +32,38 @@ public record SignedRequest(
 
     private static final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
 
-    public boolean isValid(GenericHandleCrypto handleCrypto, SignedRequestValidator validator) {
+    public enum SignedRequestValidity {
+        VALID,
+        MISSING_PARTS,
+        INVALID_HASH_SIZE,
+        INVALID_TIME,
+        INVALID_ID,
+        HANDLE_MISMATCH,
+        INVALID_SIGNATURE
+    }
+
+    public SignedRequestValidity isValid(GenericHandleCrypto handleCrypto, SignedRequestValidator validator) {
         if (handleCrypto == null || validator == null)
-            return false;
+            return SignedRequestValidity.MISSING_PARTS;
 
         // Check general validity
         if (pubSplitKey == null || handle == null || signature == null || validUntil == null || method == null || pathHash == null || bodyHash == null)
-            return false;
+            return SignedRequestValidity.MISSING_PARTS;
         if (pathHash.length != DEF_HASH_SIZE || bodyHash.length != DEF_HASH_SIZE)
-            return false;
+            return SignedRequestValidity.INVALID_HASH_SIZE;
 
         // Check time based and unique validity
         if (!validator.isValidUntilValid(validUntil))
-            return false;
+            return SignedRequestValidity.INVALID_TIME;
         if (!validator.isUniqueIdValid(uniqueId))
-            return false;
+            return SignedRequestValidity.INVALID_ID;
 
         // Check Public Key
         asymmCrypto.checkPublicSplitKey(pubSplitKey);
 
         // Check Handle against Public Key
         if (!handleCrypto.verifyKeyAndHandle(pubSplitKey, handle))
-            return false;
+            return SignedRequestValidity.HANDLE_MISMATCH;
 
         // Check Signature
         String baseObj =
@@ -63,9 +73,9 @@ public record SignedRequest(
                 Base64.getUrlEncoder().encodeToString(pathHash) + DEF_SEPARATOR +
                 Base64.getUrlEncoder().encodeToString(bodyHash);
         if (!asymmCrypto.verifyStr(baseObj, signature, pubSplitKey))
-            return false;
+            return SignedRequestValidity.INVALID_SIGNATURE;
 
-        return true;
+        return SignedRequestValidity.VALID;
     }
 
     public static SignedRequest fromParts(AsymmCrypto.AsymmFullKeyPair keypair, String method, String path, byte[] body, GenericHandleCrypto handleCrypto) {
