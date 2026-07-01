@@ -3,9 +3,7 @@
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## TODOs
-* Implement Request Signing Stuff
 * Test Request Signing Stuff (Unit Test + Known values?)
-* Expand the HandleCryptoHelper for Lookup of Domains + Methods in GenericHandleCrypto
 * Test Request Signing Stuff (Integration Test)
 * Setup Flags (Testing / Develop / Production) and document
   * Setup DB and FileStorage to be isolated with the testing flag and reset fully when executing tests + load test data

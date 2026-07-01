@@ -109,6 +109,13 @@ public record SignedRequest(
         );
     }
 
+    public static boolean hasAllRequestHeaders(Map<String, String> headers) {
+        return (headers.containsKey("X-Goofy-Public-Key") || headers.containsKey("X-Goofy-Handle")) &&
+                headers.containsKey("X-Goofy-Signature") &&
+                headers.containsKey("X-Goofy-Id") &&
+                headers.containsKey("X-Goofy-Valid-Until");
+    }
+
     // This just constructs the object, it still needs to be validated!
     public static SignedRequest fromRequestHeaders(Map<String, String> headers, String method, String path, byte[] body, GenericHandleCrypto handleCrypto) throws PubSplitKeyNotFound {
         if (body == null || body.length == 0)
@@ -147,7 +154,7 @@ public record SignedRequest(
             throw new PubSplitKeyNotFound("Unable to derive handle or lookup public split key from provided headers");
 
         // Strip Domain Part of Handle
-        handle = handleCrypto.stripPotentialDomainFromHandle(handle);
+        handle = GenericHandleCrypto.stripPotentialDomainFromHandle(handle);
 
         // Create Signed request
         return new SignedRequest(

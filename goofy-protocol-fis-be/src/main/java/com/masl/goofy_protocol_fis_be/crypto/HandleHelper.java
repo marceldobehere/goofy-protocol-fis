@@ -1,9 +1,11 @@
-package com.masl.goofy_protocol_fis_be.unit.crypto;
+package com.masl.goofy_protocol_fis_be.crypto;
 
+import com.masl.goofy_protocol_core.crypto.connected.GenericHandleCrypto;
 import com.masl.goofy_protocol_core.crypto.connected.HandleCryptoHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -12,9 +14,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class IsolatedHandleHelper implements HandleCryptoHelper {
+@Component
+public class HandleHelper implements HandleCryptoHelper {
     private static final String HANDLE_WORDS_PATH = "data/handle_words.json";
-    private static final Logger log = LoggerFactory.getLogger(IsolatedHandleHelper.class);
+    private static final Logger log = LoggerFactory.getLogger(HandleHelper.class);
+
+    public HandleHelper() {
+        // TODO: Init Stuff?
+    }
 
     // Load Word List (Currently ~15000 Entries)
     // Stored in resources/data/handle_words.json
@@ -34,19 +41,37 @@ public class IsolatedHandleHelper implements HandleCryptoHelper {
 
     @Override
     public Map<String, String> loadPersistedKeyToHandleMapCache() {
+        // TODO: Implement
         return Map.of();
     }
 
     @Override
     public boolean storePersistedKeyToHandleMapCache(Map<String, String> keyToHandleMap) {
+        // TODO: Implement
         return false;
     }
 
     @Override
     public Map<String, String> loadUserKeyToHandleMap() {
+        // TODO: Implement
         return Map.of();
     }
 
     @Override
-    public String lookupPubSplitKeyForHandleExternally(String handle) {return null;}
+    public String lookupPubSplitKeyForHandleExternally(String handle) {
+        String strippedHandle = GenericHandleCrypto.stripPotentialDomainFromHandle(handle);
+        String optDomain = GenericHandleCrypto.getPotentialDomainFromHandle(handle);
+
+        // Check internal Storage / DBs for potential Mappings
+        // TODO: Implement
+
+        // Potential Look up
+        if (optDomain == null) {
+            // TODO: Look up, by asking the domain FIS
+            return null;
+        } else {
+            // TODO: Potentially ask already known FIS Servers or throw Exception
+            return null;
+        }
+    }
 }

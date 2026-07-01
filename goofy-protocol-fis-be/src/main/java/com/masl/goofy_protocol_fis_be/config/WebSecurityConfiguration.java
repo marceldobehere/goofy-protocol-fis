@@ -3,44 +3,30 @@ package com.masl.goofy_protocol_fis_be.config;
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true, prePostEnabled = true)
+@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
 public class WebSecurityConfiguration {
 
-    // TODO: private final TokenUtil tokenUtil;
+    private final GoofyAuthFilter goofyAuthFilter;
 
-    // TODO: public WebSecurityConfiguration(TokenUtil tokenUtil) {
-    // TODO:     this.tokenUtil = tokenUtil;
-    // TODO: }
-
-    @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder authenticationManagerBuilder =
-                http.getSharedObject(AuthenticationManagerBuilder.class);
-        // TODO: authenticationManagerBuilder.authenticationProvider(new JwtAuthenticationProvider(tokenUtil));
-        return  authenticationManagerBuilder.build();
+    public WebSecurityConfiguration(GoofyAuthFilter goofyAuthFilter) {
+        this.goofyAuthFilter = goofyAuthFilter;
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http,
-                                           AuthenticationManager authenticationManager) throws Exception  {
+    public SecurityFilterChain filterChain(HttpSecurity http) {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/test/**").permitAll() // Testing Stuff // TODO: Remove or Only have for integration tests?
                 .requestMatchers("/api/general/**").permitAll() // General Info of FIS Server
                 .requestMatchers("/api/lookup/**").permitAll() // Lookup and set FIS Info
                 .requestMatchers("/api/register/**").permitAll() // Registration
@@ -64,8 +50,7 @@ public class WebSecurityConfiguration {
                 .anyRequest().authenticated()
         );
 
-
-        http.addFilterBefore(new GoofyAuthFilter(), BasicAuthenticationFilter.class);
+        http.addFilterBefore(goofyAuthFilter, BasicAuthenticationFilter.class);
         return http.build();
     }
 }
