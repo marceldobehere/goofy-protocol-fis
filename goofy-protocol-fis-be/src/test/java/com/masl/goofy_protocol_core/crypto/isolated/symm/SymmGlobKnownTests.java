@@ -3,6 +3,8 @@ package com.masl.goofy_protocol_core.crypto.isolated.symm;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
 
@@ -12,6 +14,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Execution(ExecutionMode.CONCURRENT)
 class SymmGlobKnownTests {
 	private static final Set<Map.Entry<SymmCryptoType, SymmGlobKnownValues.KnownValueSet>> knownValueEntries = SymmGlobKnownValues.knownValues.entrySet();
 	private final GlobSymmCrypto crypto = new GlobSymmCrypto();
