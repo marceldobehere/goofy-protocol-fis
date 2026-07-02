@@ -71,8 +71,12 @@ public record SignedRequest(
                 validUntil.toEpochMilli() + DEF_SEPARATOR +
                 Base64.getUrlEncoder().encodeToString(pathHash) + DEF_SEPARATOR +
                 Base64.getUrlEncoder().encodeToString(bodyHash);
-        if (!asymmCrypto.verifyStr(baseObj, signature, pubSplitKey))
+        try {
+            if (!asymmCrypto.verifyStr(baseObj, signature, pubSplitKey))
+                return SignedRequestValidity.INVALID_SIGNATURE;
+        } catch (Exception e) {
             return SignedRequestValidity.INVALID_SIGNATURE;
+        }
 
         return SignedRequestValidity.VALID;
     }
@@ -160,7 +164,7 @@ public record SignedRequest(
 
         // If lookup fails, we fail
         if (handle == null || pubSplitKey == null)
-            throw new PubSplitKeyNotFound("Unable to derive handle or lookup public split key from provided headers");
+            throw new PubSplitKeyNotFound(handle);
 
         // Strip Domain Part of Handle
         handle = GenericHandleCrypto.stripPotentialDomainFromHandle(handle);

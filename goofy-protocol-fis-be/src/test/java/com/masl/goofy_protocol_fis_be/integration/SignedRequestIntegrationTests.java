@@ -5,6 +5,8 @@ import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequest;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
+import com.masl.goofy_protocol_fis_be.exception.client.AllClientErrorCodes;
+import com.masl.goofy_protocol_fis_be.exception.server.AllServerErrorCodes;
 import com.masl.goofy_protocol_fis_be.test_data.test_only.TestDataUser;
 import com.masl.goofy_protocol_fis_be.unit.crypto.IsolatedHandleHelper;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +30,7 @@ import org.springframework.util.MultiValueMap;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -76,7 +79,7 @@ class SignedRequestIntegrationTests {
 			// Create Signed Request
 			SignedRequest req = SignedRequest.fromParts(keypair, method.name(), path, body, handleCrypto);
 
-			// Get Hears as MultiValueMap
+			// Get Headers as MultiValueMap
 			Map<String, String> headers = req.toHeadersWithPubKey();
 			log.info(" > SignedRequest Headers: {}", headers);
 			MultiValueMap<String, String> multiHeaders = new LinkedMultiValueMap<>();
@@ -172,6 +175,76 @@ class SignedRequestIntegrationTests {
 		// Test Admin Endpoint
 		performSignedRequest(HttpMethod.GET, TEST_API_ADMIN, null, keypair)
 				.andExpect(status().isOk());
+	}
+
+	@Test
+	void unknownHandleLookupShouldFail() throws Exception {
+		var keypair = crypto.generateKeypair();
+
+		// Create Signed Request
+		SignedRequest req = SignedRequest.fromParts(keypair, HttpMethod.GET.name(), TEST_API_OUTSIDER, null, handleCrypto);
+
+		// Get Headers as MultiValueMap
+		Map<String, String> headers = req.toHeadersWithHandle();
+		log.info(" > SignedRequest Headers: {}", headers);
+		MultiValueMap<String, String> multiHeaders = new LinkedMultiValueMap<>();
+		headers.forEach(multiHeaders::add);
+
+		// Test Outsider Endpoint
+		var res = mvc.perform(MockMvcRequestBuilders.request(HttpMethod.GET, TEST_API_OUTSIDER)
+				.headers(new HttpHeaders(multiHeaders)));
+
+		// Check for correct result
+		log.info(" > Response: {}", res.andReturn().getResponse().getContentAsString());
+		res.andExpect(status().is4xxClientError())
+				.andExpect(jsonPath("$.errorCode").value(AllServerErrorCodes.PUBLIC_KEY_LOOKUP_FAILED));
+	}
+
+	@Test
+	void invalidSignatureShouldFail() throws Exception {
+		var keypair = crypto.generateKeypair();
+
+		// Create Signed Request
+		SignedRequest req = SignedRequest.fromParts(keypair, HttpMethod.GET.name(), TEST_API_OUTSIDER, null, handleCrypto);
+
+		// Get Headers as MultiValueMap
+		Map<String, String> headers = req.toHeadersWithPubKey();
+		headers.put("X-Goofy-Signature", "BRUH");
+		log.info(" > SignedRequest Headers: {}", headers);
+		MultiValueMap<String, String> multiHeaders = new LinkedMultiValueMap<>();
+		headers.forEach(multiHeaders::add);
+
+		// Test Outsider Endpoint
+		var res = mvc.perform(MockMvcRequestBuilders.request(HttpMethod.GET, TEST_API_OUTSIDER)
+				.headers(new HttpHeaders(multiHeaders)));
+
+		// Check for correct result
+		log.info(" > Response: {}", res.andReturn().getResponse().getContentAsString());
+		res.andExpect(status().is4xxClientError())
+				.andExpect(jsonPath("$.errorCode").value(AllClientErrorCodes.INVALID_SIGNATURE));
+	}
+
+	@Test
+	void PartialSignedRequestShouldFail() throws Exception {
+		var keypair = crypto.generateKeypair();
+
+		// Create Signed Request
+		SignedRequest req = SignedRequest.fromParts(keypair, HttpMethod.GET.name(), TEST_API_OUTSIDER, null, handleCrypto);
+
+		// Get Headers as MultiValueMap
+		Map<String, String> headers = req.toHeadersWithPubKey();
+		headers.remove("X-Goofy-Valid-Until");
+		log.info(" > SignedRequest Headers: {}", headers);
+		MultiValueMap<String, String> multiHeaders = new LinkedMultiValueMap<>();
+		headers.forEach(multiHeaders::add);
+
+		// Test Outsider Endpoint
+		var res = mvc.perform(MockMvcRequestBuilders.request(HttpMethod.GET, TEST_API_OUTSIDER)
+				.headers(new HttpHeaders(multiHeaders)));
+
+		// Check for correct result
+		log.info(" > Response: {}", res.andReturn().getResponse().getContentAsString());
+		res.andExpect(status().is4xxClientError());
 	}
 
 	// TODO: Write Test using Body with e.g POST

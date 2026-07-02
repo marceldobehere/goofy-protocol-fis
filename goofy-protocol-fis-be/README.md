@@ -46,6 +46,13 @@ public FileStorageService(@Value("${app.storage.dir}") String dir) {
 
 The Test Data Path should also be fully reset on launch of the Test Profile, so that tests can be executed without any side effects from previous test runs.
 
+## API Docs
+The WIP API Docs can be found [here](./API.md). 
+
+Later on the version will be copied to the base goofy-protocol repository.
+
+
+
 
 ## Implementation Details
 (TODO)
