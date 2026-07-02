@@ -8,9 +8,6 @@ import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequestValida
 import com.masl.goofy_protocol_core.crypto.exceptions.PubSplitKeyNotFound;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -23,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.nio.charset.StandardCharsets;
-import java.security.Security;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,12 +48,6 @@ class SignedRequestTests {
 	private final SignedRequestValidator basicValidator = new BasicRequestValidator();
 
 	private HandleCrypto handleCrypto;
-
-    @BeforeAll
-    static void init() {
-		Security.addProvider(new BouncyCastleProvider());
-		Security.addProvider(new BouncyCastlePQCProvider());
-	}
 
 	@BeforeEach
 	void preTest() {

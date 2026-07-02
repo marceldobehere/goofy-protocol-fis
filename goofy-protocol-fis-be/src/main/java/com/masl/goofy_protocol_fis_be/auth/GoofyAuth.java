@@ -36,11 +36,9 @@ public class GoofyAuth implements Authentication {
         isAuthenticated = true;
         authorities = new ArrayList<>();
 
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + ROLES.OUTSIDE_ENTITY));
         if (isUser)
             authorities.add(new SimpleGrantedAuthority("ROLE_" + ROLES.REGISTERED_USER));
-        else
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + ROLES.OUTSIDE_ENTITY));
-
         if (isAdmin)
             authorities.add(new SimpleGrantedAuthority("ROLE_" + ROLES.ADMIN));
     }

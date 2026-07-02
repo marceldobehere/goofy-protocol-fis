@@ -13,9 +13,6 @@ import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.symm.GlobSymmCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.symm.SymmCryptoType;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,7 +20,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.security.Security;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -44,12 +40,6 @@ class CryptoPerfTests {
 			.reportGenerator(new ConsoleReportGenerator())
 			.reportGenerator(new HtmlReportGenerator(getProperty("user.dir") + "/build/reports/" + "perf-crypto.html"))
 			.build();
-
-    @BeforeAll
-	static void init() {
-		Security.addProvider(new BouncyCastleProvider());
-		Security.addProvider(new BouncyCastlePQCProvider());
-	}
 
 
 	@ParameterizedTest(name = "PERF: Raw enc/dec roundtrip with size 1_000_000 (type={0})")

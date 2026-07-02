@@ -120,6 +120,6 @@ public class GlobAsymmCrypto {
 
 
     // Default Methods using the Default Asymmetric Crypto Algo
-    public static final AsymmCryptoType DEFAULT_TYPE = AsymmCryptoType.EC_P256;
+    public static final AsymmCryptoType DEFAULT_TYPE = AsymmCryptoType.EC_C25519;
     public AsymmCrypto.AsymmFullKeyPair generateKeypair() {return generateKeypair(DEFAULT_TYPE);}
 }

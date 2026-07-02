@@ -3,11 +3,6 @@
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## TODOs
-* Test Request Signing Stuff (Integration Test)
-* Setup Flags (Testing / Develop / Production) and document
-  * Setup DB and FileStorage to be isolated with the testing flag and reset fully when executing tests + load test data
-  * Setup DB to be persisted with the production flag and not reset when executing tests + load test data
-  * Look into having the DB stable when the schema changes
 * Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
   * Document Spec
 * Start implementing CLI Client
@@ -30,7 +25,26 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 ## Notes
 (TODO)
 
+## Profiles
+There are currently 3 Profiles:
+* `dev` - Development Profile, used for local development and testing
+* `prod` - Production Profile, used for production deployment
+* `test` - Test Profile, used internally for executing tests
 
+The dev and prod Profiles use different databases and the test Profile uses an in-memory database for testing purposes.
+
+(TODO)
+
+### File Storage
+File Storage will also depend on the Profile used, for now its not implemented. 
+To set the path I will probably use something like this:
+```java
+public FileStorageService(@Value("${app.storage.dir}") String dir) {
+    this.baseDir = Path.of(dir);
+}
+```
+
+The Test Data Path should also be fully reset on launch of the Test Profile, so that tests can be executed without any side effects from previous test runs.
 
 
 ## Implementation Details

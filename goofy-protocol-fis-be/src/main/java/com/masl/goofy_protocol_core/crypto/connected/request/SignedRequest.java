@@ -14,7 +14,6 @@ import java.util.Map;
 
 import static com.masl.goofy_protocol_core.crypto.connected.GenericHandleCrypto.DEF_DOMAIN_SEPARATOR;
 
-// TODO: Write tests
 public record SignedRequest(
         String pubSplitKey,
         String handle, // does not contain the domain part

@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/test")
-public class TestEndpoint {
+@RequestMapping("/api/user")
+public class UserEndpoint {
     @GetMapping("/test-guest")
     public String testGuest() {
         return "Hello, Guest";

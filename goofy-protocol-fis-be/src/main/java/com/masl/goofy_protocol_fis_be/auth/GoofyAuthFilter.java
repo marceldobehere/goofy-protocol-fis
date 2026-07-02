@@ -6,13 +6,16 @@ import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequest;
 import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequestValidator;
 import com.masl.goofy_protocol_core.crypto.exceptions.PubSplitKeyNotFound;
 import com.masl.goofy_protocol_fis_be.crypto.HandleHelper;
+import com.masl.goofy_protocol_fis_be.entity.User;
 import com.masl.goofy_protocol_fis_be.exception.InvalidSignatureException;
 import com.masl.goofy_protocol_fis_be.exception.PublicKeyNotFoundException;
+import com.masl.goofy_protocol_fis_be.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -27,9 +30,13 @@ import java.util.stream.Collectors;
 public class GoofyAuthFilter extends OncePerRequestFilter {
     private final SignedRequestValidator validator = new BasicRequestValidator();
     private final HandleCrypto handleCrypto;
+    private final UserRepository userRepository;
+    private final int maxRequestSizeBytes;
 
-    public GoofyAuthFilter(HandleHelper handleHelper) {
+    public GoofyAuthFilter(HandleHelper handleHelper, UserRepository userRepository, @Value("${goofy.auth.max-cache-bytes}") int maxCacheBytes) {
         this.handleCrypto = new HandleCrypto(handleHelper);
+        this.userRepository = userRepository;
+        this.maxRequestSizeBytes = maxCacheBytes;
     }
 
     @Override
@@ -45,8 +52,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
         }
 
         // Cache Request So body can be read without issues
-        // TODO: Add configuration for max request sizes and use it in this cache limit too!
-        ContentCachingRequestWrapper wrapped = new ContentCachingRequestWrapper(request, 0);
+        ContentCachingRequestWrapper wrapped = new ContentCachingRequestWrapper(request, maxRequestSizeBytes);
         byte[] body = wrapped.getInputStream().readAllBytes(); // should be an empty array if no body is provided
 
         // Parse Request
@@ -63,8 +69,9 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
             throw new InvalidSignatureException(valid);
 
         // Get User Data and Create Authentication
-        boolean isUser = false; // TODO: fetch from DB
-        boolean isAdmin = false; // TODO: fetch from DB
+        User user = userRepository.findByHandle(req.handle());
+        boolean isUser = user != null;
+        boolean isAdmin = user != null && user.isAdmin();
         SecurityContextHolder.getContext().setAuthentication(new GoofyAuth(req, isUser, isAdmin));
 
         // Continue
