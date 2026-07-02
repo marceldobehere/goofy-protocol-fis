@@ -25,7 +25,7 @@ For now, Errors are split into ClientErrors and ServerErrors, which all use uniq
     }
 }
 ```
-The Error Codes can be found [here](/src/main/java/com/masl/goofy_protocol_fis_be/exception) in the `client` and `server` directories.
+The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be/exception) in the `client` and `server` directories.
 
 
 ## API
