@@ -10,7 +10,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Move the Crypto Core Lib into a seperate package with tests, known values and pom.xml
 * Test to see if AI can translate the Java Crypto Code into JS (Browser/NodeJS) modules and test against known values
 * Try writing Frontend using JS/TS + Modules if possible
-* Implement silly Rate Limiting (only for prod/develop)
+* Implement silly Rate Limiting (only for prod/develop), Base: https://www.baeldung.com/spring-bucket4j
   * Requests without a special cookies token will have to wait some time before their request is processed / get extra low prio / strong rate limiting, then they will get the special cookie
   * Ideally Requests without the special cookie dont even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks
   * Requests with the cookie will get individual rate limiting based on their unique cookie (if valid) / maybe also based on the handle

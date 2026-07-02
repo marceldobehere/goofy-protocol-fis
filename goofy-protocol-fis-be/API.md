@@ -33,6 +33,9 @@ The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be
 ### General
 Endpoints for general stuff about the FIS.
 
+#### Status
+Returns status info. Mostly just "XYZ is running!"
+
 #### Info
 Returns information about the fis instance
 
