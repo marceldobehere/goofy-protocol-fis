@@ -77,12 +77,11 @@ class SignedRequestTests {
 
 		// Turn into Headers
 		Map<String, String> headers = req.toHeadersWithPubKey();
-		log.info(" > SignedRequest Headers: {}", headers);
 
 		// Check Headers
 		assertThat(SignedRequest.hasAllRequestHeaders(headers)).isTrue();
 		int headerSize = headers.entrySet().stream().reduce(0, (acc, e) -> acc + e.getKey().length() + e.getValue().length(), Integer::sum);
-		log.info(" > SignedRequest Headers Size: {} bytes", headerSize);
+		log.info(" > SignedRequest Headers Size for {} & Pubkey: {} bytes => {}", type, headerSize, headers);
 
 		// Reconstruct from Headers
 		SignedRequest reconstructed = SignedRequest.fromRequestHeaders(headers, DEF_METHOD, DEF_PATH, handleCrypto);
@@ -131,12 +130,11 @@ class SignedRequestTests {
 
 		// Turn into Headers
 		Map<String, String> headers = req.toHeadersWithHandle();
-		log.info(" > SignedRequest Headers: {}", headers);
 
 		// Check Headers
 		assertThat(SignedRequest.hasAllRequestHeaders(headers)).isTrue();
 		int headerSize = headers.entrySet().stream().reduce(0, (acc, e) -> acc + e.getKey().length() + e.getValue().length(), Integer::sum);
-		log.info(" > SignedRequest Headers Size: {} bytes", headerSize);
+		log.info(" > SignedRequest Headers Size for {} & Handle: {} bytes => {}", type, headerSize, headers);
 
 		// Reconstruct from Headers (Using Fresh HandleCrypto -> Should Fail)
 		HandleCrypto freshHandleCrypto = new HandleCrypto(new IsolatedHandleHelper());

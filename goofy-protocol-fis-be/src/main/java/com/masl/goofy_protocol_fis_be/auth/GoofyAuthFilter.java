@@ -16,6 +16,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -32,10 +34,12 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
     private final HandleCrypto handleCrypto;
     private final UserRepository userRepository;
     private final int maxRequestSizeBytes;
+    private final boolean disableUniqueIdCheck;
 
-    public GoofyAuthFilter(HandleHelper handleHelper, UserRepository userRepository, @Value("${goofy.auth.max-cache-bytes}") int maxCacheBytes) {
+    public GoofyAuthFilter(HandleHelper handleHelper, UserRepository userRepository, Environment env, @Value("${goofy.auth.max-cache-bytes}") int maxCacheBytes) {
         this.handleCrypto = new HandleCrypto(handleHelper);
         this.userRepository = userRepository;
+        this.disableUniqueIdCheck = env.acceptsProfiles(Profiles.of("test")); // Important for Perf Testing
         this.maxRequestSizeBytes = maxCacheBytes;
     }
 
@@ -67,6 +71,10 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
         SignedRequest.SignedRequestValidity valid = req.isValid(handleCrypto, validator);
         if (!valid.equals(SignedRequest.SignedRequestValidity.VALID))
             throw new InvalidSignatureException(valid);
+
+        // Invalidate ID
+        if (!disableUniqueIdCheck)
+            validator.invalidateUniqueId(req.uniqueId());
 
         // Get User Data and Create Authentication
         User user = userRepository.findByHandle(req.handle());

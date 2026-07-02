@@ -3,7 +3,6 @@
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## TODOs
-* Write PerfTests for Signed Requests
 * Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
   * Document Spec
 * Start implementing CLI Client
@@ -251,3 +250,33 @@ Servers should reject requests with a valid until timestamp, which has already p
 
 #### Validity
 (TODO)
+
+
+#### Signature Sizes
+Below are some rough measurements of the average added size of the total headers using Signed Requests.
+
+Using the Public Split Key (usually larger)
+```
+RSA 2048:                       ~900 bytes
+RSA 3072:                     ~1,200 bytes
+RSA 4096:                     ~1,500 bytes
+EC_P256:                        ~350 bytes
+EC_P384:                        ~400 bytes
+EC_C25519:                      ~400 bytes
+ML-KEM (512)  + ML-DSA (44):  ~9,500 bytes
+ML-KEM (768)  + ML-DSA (65): ~13,200 bytes
+ML-KEM (1024) + ML-DSA (87): ~18,100 bytes
+```
+
+Using Handles only (in general smaller)
+```
+RSA 2048:                       ~500 bytes
+RSA 3072:                       ~600 bytes
+RSA 4096:                       ~800 bytes
+EC_P256:                        ~200 bytes
+EC_P384:                        ~250 bytes
+EC_C25519:                      ~200 bytes
+ML-KEM (512)  + ML-DSA (44):  ~3,350 bytes
+ML-KEM (768)  + ML-DSA (65):  ~4,500 bytes
+ML-KEM (1024) + ML-DSA (87):  ~6,300 bytes
+```
