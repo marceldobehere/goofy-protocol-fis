@@ -38,7 +38,7 @@ public class IsolatedHandleHelper implements HandleCryptoHelper {
     }
 
     @Override
-    public boolean storePersistedKeyToHandleMapCache(Map<String, String> keyToHandleMap) {
+    public boolean addPersistedKeyToHandleMapping(String pubSplitKey, String handle) {
         return false;
     }
 

@@ -43,10 +43,6 @@ public class HandleCrypto implements GenericHandleCrypto {
         generateHandleToKeyMapping();
     }
 
-    synchronized public void saveGeneralKeyToHandle() {
-        handleCryptoHelper.storePersistedKeyToHandleMapCache(generalKeyToHandleCache);
-    }
-
     // Generate Reverse Mappings
 
     synchronized public void generateHandleToKeyMapping() {
@@ -104,8 +100,10 @@ public class HandleCrypto implements GenericHandleCrypto {
 
         return generalKeyToHandleCache.computeIfAbsent(pubSplitKey, _pubSplitKey -> {
             String handle = _internalDeriveHandle(_pubSplitKey);
-            if (handle != null)
+            if (handle != null) {
+                handleCryptoHelper.addPersistedKeyToHandleMapping(_pubSplitKey, handle);
                 sharedHandleToKeyCache.putIfAbsent(handle, _pubSplitKey);
+            }
             return handle;
         });
     }
@@ -165,8 +163,10 @@ public class HandleCrypto implements GenericHandleCrypto {
         String strippedHandle = GenericHandleCrypto.stripPotentialDomainFromHandle(handle);
         return sharedHandleToKeyCache.computeIfAbsent(strippedHandle, _ -> {
             String pubSplitKey = handleCryptoHelper.lookupPubSplitKeyForHandleExternally(handle);
-            if (pubSplitKey != null)
+            if (pubSplitKey != null) {
+                handleCryptoHelper.addPersistedKeyToHandleMapping(pubSplitKey, strippedHandle);
                 generalKeyToHandleCache.putIfAbsent(pubSplitKey, strippedHandle);
+            }
             return pubSplitKey;
         });
     }

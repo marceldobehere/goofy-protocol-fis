@@ -3,6 +3,7 @@
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## TODOs
+* Write PerfTests for Signed Requests
 * Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
   * Document Spec
 * Start implementing CLI Client
@@ -14,7 +15,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
   * Requests without a special cookies token will have to wait some time before their request is processed / get extra low prio / strong rate limiting, then they will get the special cookie
   * Ideally Requests without the special cookie dont even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks
   * Requests with the cookie will get individual rate limiting based on their unique cookie (if valid) / maybe also based on the handle
-
+* Create extra DB Table for known FIS Domains ?
 
 ## Features
 (TODO)

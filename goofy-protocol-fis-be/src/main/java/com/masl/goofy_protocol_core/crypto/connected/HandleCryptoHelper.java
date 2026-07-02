@@ -9,7 +9,7 @@ public interface HandleCryptoHelper {
 
     // General Cache
     Map<String, String> loadPersistedKeyToHandleMapCache();
-    boolean storePersistedKeyToHandleMapCache(Map<String, String> keyToHandleMap);
+    boolean addPersistedKeyToHandleMapping(String pubSplitKey, String handle);
 
     // All Known / Registered / Important Users
     Map<String, String> loadUserKeyToHandleMap();

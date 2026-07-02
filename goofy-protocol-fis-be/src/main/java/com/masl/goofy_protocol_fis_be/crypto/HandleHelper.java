@@ -41,13 +41,13 @@ public class HandleHelper implements HandleCryptoHelper {
 
     @Override
     public Map<String, String> loadPersistedKeyToHandleMapCache() {
-        // TODO: Implement
+        // TODO: Implement  & Connect to DB
         return Map.of();
     }
 
     @Override
-    public boolean storePersistedKeyToHandleMapCache(Map<String, String> keyToHandleMap) {
-        // TODO: Implement
+    public boolean addPersistedKeyToHandleMapping(String pubSplitKey, String handle) {
+        // TODO: Implement & Connect to DB
         return false;
     }
 
