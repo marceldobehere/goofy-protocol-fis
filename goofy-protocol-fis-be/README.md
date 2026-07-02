@@ -3,9 +3,13 @@
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## TODOs
+* Implement Registration Request + Report List DB
+* Implement Server Identity Keypair
+* Test General Endpoint
+* Test Registration Service & REST
+* Start implementing CLI Client
 * Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
   * Document Spec
-* Start implementing CLI Client
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc)
 * Move the Crypto Core Lib into a seperate package with tests, known values and pom.xml
 * Test to see if AI can translate the Java Crypto Code into JS (Browser/NodeJS) modules and test against known values
