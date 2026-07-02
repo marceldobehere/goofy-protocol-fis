@@ -65,11 +65,12 @@ Users from other FISs or users that move their account should be able to update 
 ### Registration (Base Identity / Account)
 Endpoints for registering new profiles
 
-#### Check Registrations Allowed
-Checks if the FIS even allows registrations currently
+#### Check Registrations Status
+Checks if the FIS even allows registrations currently and if its automatic or manual
 
-#### Contact
-A way to contact if you want a register code. If register codes are automatically sent by email or something, this can be skipped.
+#### Request Registration Code
+A way to contact if you want a register code. 
+Some Systems might send a mail automatically, should use the string body for that then.
 
 #### Create Registration
 This endpoint is used to create a new account. It should be a signed request using the generated keypair and include the public key and handle of the registering user. It should also include the registration code/token/key/etc.
