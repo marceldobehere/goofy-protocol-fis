@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum AsymmCryptoType {
-    // Using RSA/ECB/OAEPWithSHA-256AndMGF1Padding
+    // Using RSA/ECB/OAEPWithSHA-256AndMGF1Padding & RSASSA-PKCS1-v1_5 + SHA-256
     RSA_2048((short)0x0100),
     RSA_3072((short)0x0101),
     RSA_4096((short)0x0102),
