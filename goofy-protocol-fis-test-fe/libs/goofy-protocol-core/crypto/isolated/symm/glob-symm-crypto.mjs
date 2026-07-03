@@ -1,7 +1,8 @@
 import { ENC_DELIMITER } from "../secret-utils.mjs";
 import { SymmCryptoType } from "./symm-crypto-type.mjs";
 
-import {AES} from "./aes.mjs";
+import { AES } from "./aes.mjs";
+import { ChaCha20 } from "./chacha20.mjs";
 
 function bytesToB64Url(bytes) {
     let binary = "";
@@ -30,7 +31,8 @@ function intToU16be(n) {
 export class GlobSymmCrypto {
     constructor() {
         this.cryptoList = [
-            new AES()
+            new AES(),
+            new ChaCha20()
         ];
     }
 

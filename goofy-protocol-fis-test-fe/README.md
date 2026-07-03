@@ -15,8 +15,6 @@ Supported Types:
 * AES-128-GCM
 * AES-196-GCM
 * AES-256-GCM
-
-Not yet Supported Types:
 * ChaCha20
 
 ### Asymmetric Cryptography
