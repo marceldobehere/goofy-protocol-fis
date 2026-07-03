@@ -93,4 +93,32 @@ class SymmGlobKnownValues {
 			System.out.println(entryStr);
 		}
 	}
+
+	@Test
+	@Disabled("Just a cursed Helper Method to generate the map so I can copy paste it or regenerate it if needed")
+	void _generateKnownValuesJS() {
+		for (var type : crypto.getTypes()) {
+			// Encrypt String & Raw & Dev
+			String strEnc = crypto.encryptStr(SAMPLE_STR, SAMPLE_SECRET);
+			String rawEnc = Base64.getEncoder().encodeToString(crypto.encryptRaw(SAMPLE_ARR, SAMPLE_SECRET));
+			String defEnc = crypto.encrypt(SAMPLE_ARR, SAMPLE_SECRET);
+
+			boolean isLast = type.equals(SymmCryptoType.values()[SymmCryptoType.values().length - 1]);
+
+			String entryStr =
+					"    [\n" +
+							"        SymmCryptoType." + type + ",\n" +
+							"        {\n" +
+							"            secret: SAMPLE_SECRET,\n" +
+							"            strOg: SAMPLE_STR,\n" +
+							"            strEnc: \"" + strEnc + "\",\n" +
+							"            rawDefOg: SAMPLE_ARR,\n" +
+							"            rawEnc: b64uDecodeLocal(\"" + rawEnc + "\"),\n" +
+							"            defEnc: \"" + defEnc + "\"\n" +
+							"        }\n" +
+							"    ]" + (isLast ? "" : ",");
+
+			System.out.println(entryStr);
+		}
+	}
 }

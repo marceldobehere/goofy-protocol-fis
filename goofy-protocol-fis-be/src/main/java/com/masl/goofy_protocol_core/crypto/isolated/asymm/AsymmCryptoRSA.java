@@ -4,9 +4,12 @@ import com.masl.goofy_protocol_core.crypto.isolated.symm.GlobSymmCrypto;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.OAEPParameterSpec;
+import javax.crypto.spec.PSource;
 import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.List;
@@ -29,7 +32,9 @@ public class AsymmCryptoRSA implements AsymmCrypto {
     }
 
     private static int maxContentSize(AsymmCryptoType type) {
-        return keySize(type) / 8 - 20; // should be 11 but lets say 20 for good measure
+        int k = keySize(type) / 8;      // modulus length in bytes
+        int hLen = 32;                 // SHA-256 output length in bytes
+        return k - 2 * hLen - 2 - 10;      // OAEP max message size
     }
 
     @Override
@@ -38,9 +43,16 @@ public class AsymmCryptoRSA implements AsymmCrypto {
             try {
                 KeyFactory kf = KeyFactory.getInstance("RSA");
                 PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pubKey));
-                Cipher encryptCipher = Cipher.getInstance("RSA");
-                encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
-            } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException e) {
+                Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+                OAEPParameterSpec spec = new OAEPParameterSpec(
+                        "SHA-256",
+                        "MGF1",
+                        MGF1ParameterSpec.SHA256,
+                        PSource.PSpecified.DEFAULT
+                );
+                cipher.init(Cipher.ENCRYPT_MODE, publicKey, spec);
+            } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException |
+                     InvalidAlgorithmParameterException e) {
                 return false;
             }
         return true;
@@ -67,9 +79,15 @@ public class AsymmCryptoRSA implements AsymmCrypto {
         try {
             KeyFactory kf = KeyFactory.getInstance("RSA");
             PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pubEncKey));
-            Cipher encryptCipher = Cipher.getInstance("RSA");
-            encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
-            return encryptCipher.doFinal(data);
+            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            OAEPParameterSpec spec = new OAEPParameterSpec(
+                    "SHA-256",
+                    "MGF1",
+                    MGF1ParameterSpec.SHA256,
+                    PSource.PSpecified.DEFAULT
+            );
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey, spec);
+            return cipher.doFinal(data);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -124,9 +142,15 @@ public class AsymmCryptoRSA implements AsymmCrypto {
         try {
             KeyFactory kf = KeyFactory.getInstance("RSA");
             PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(privEncKey));
-            Cipher decryptCipher = Cipher.getInstance("RSA");
-            decryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
-            return decryptCipher.doFinal(data);
+            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            OAEPParameterSpec spec = new OAEPParameterSpec(
+                    "SHA-256",
+                    "MGF1",
+                    MGF1ParameterSpec.SHA256,
+                    PSource.PSpecified.DEFAULT
+            );
+            cipher.init(Cipher.DECRYPT_MODE, privateKey, spec);
+            return cipher.doFinal(data);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
