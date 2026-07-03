@@ -7,6 +7,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Implement Server Identity Keypair
 * Test General Endpoint
 * Test Registration Service & REST
+* Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
 * Start implementing CLI Client
 * Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
   * Document Spec
