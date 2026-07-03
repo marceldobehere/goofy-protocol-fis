@@ -1,0 +1,40 @@
+# Goofy Protocol FIS (Federated Identity Server) TEST Frontend
+
+WIP "Reference" Implementation of a FIS for Goofy Protocol.
+
+**NOTE**: this is mostly for testing currently, do not base anything on this!
+
+**NOTE**: I'm using AI Tools to try and translate my Java Library code, the code wont be perfect and it might contain issues. 
+There is a good chance i will fully rewrite it in the future, but for now testing it should hopefully be okay.
+It is also a good showcase if it's even compatible and if there are any Java / JS Compatibility issues i need to address first!
+
+## Current Support
+
+### Symmetric Cryptography
+Supported Types:
+* AES-128-GCM
+* AES-196-GCM
+* AES-256-GCM
+
+Not yet Supported Types:
+* ChaCha20
+
+### Asymmetric Cryptography
+Supported Types:
+* RSA 2048
+* RSA 3072
+* RSA 4096
+
+Not yet Supported Types:
+* EC_P256
+* EC_P384
+* EC_C25519
+* ML-KEM (512) + ML-DSA (44)
+* ML-KEM (768) + ML-DSA (65)
+* ML-KEM (1024) + ML-DSA (87)
+
+### User Handle Derivation
+Not yet
+
+### Signed Requests
+Not yet
