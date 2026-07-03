@@ -34,7 +34,7 @@ Not yet Supported Types:
 * ML-KEM (1024) + ML-DSA (87)
 
 ### User Handle Derivation
-Not yet
+Is supported
 
 ### Signed Requests
 Not yet

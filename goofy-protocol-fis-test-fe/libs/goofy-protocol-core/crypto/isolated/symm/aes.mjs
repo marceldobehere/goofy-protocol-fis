@@ -20,7 +20,7 @@ export class AES {
         const keyBytes = await symmSecretFromSecret(
             secretStr,
             DEFAULT_DETERMINISTIC_SALT,
-            bits / 8
+            bits
         );
         return keyBytes; // Uint8Array
     }

@@ -28,7 +28,7 @@ export async function symmSecretFromSecret(secret, salt, size, iterations = DEFA
             iterations,
         },
         keyMaterial,
-        size * 8
+        size
     );
 
     return new Uint8Array(bits);
