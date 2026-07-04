@@ -3,7 +3,6 @@
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## TODOs
-* Look into why isolated unit tests run spring instance and in dev profile (so not even test profile)
 * Implement Server Identity Keypair
 * Test General Endpoint
 * Test Registration Service & REST
