@@ -8,5 +8,6 @@ public class AllClientErrorCodes {
 
     public static final int INVALID_REGISTER_CODE = 1_002_001;
     public static final int REGISTRATION_NOT_ALLOWED = 1_002_002;
+    public static final int HANDLE_ALREADY_REGISTERED = 1_002_003;
 
 }

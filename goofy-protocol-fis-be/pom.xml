@@ -146,6 +146,14 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.2.5</version>
+				<configuration>
+					<!-- TODO: Set important groups to run in the build -->
+<!--					<groups>UnitTest</groups>-->
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 

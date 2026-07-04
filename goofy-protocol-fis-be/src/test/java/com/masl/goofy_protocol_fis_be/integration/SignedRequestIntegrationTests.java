@@ -2,7 +2,6 @@ package com.masl.goofy_protocol_fis_be.integration;
 
 import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
 import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequest;
-import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import com.masl.goofy_protocol_fis_be.exception.client.AllClientErrorCodes;
@@ -10,6 +9,7 @@ import com.masl.goofy_protocol_fis_be.exception.server.AllServerErrorCodes;
 import com.masl.goofy_protocol_fis_be.test_data.test_only.TestDataUser;
 import com.masl.goofy_protocol_core.crypto.connected.IsolatedHandleHelper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -21,17 +21,19 @@ import org.springframework.http.HttpMethod;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.util.Map;
 
+import static com.masl.goofy_protocol_fis_be.integration.SignedRequestUtils.performSignedRequest;
+import static com.masl.goofy_protocol_fis_be.integration.SignedRequestUtils.performUnsignedRequest;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Tag("integration")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles({"test", "tests-signed-req"})
@@ -62,51 +64,22 @@ class SignedRequestIntegrationTests {
 		handleCrypto = new HandleCrypto(new IsolatedHandleHelper());
 	}
 
-	private ResultActions performUnsignedRequest(HttpMethod method, String path, byte[] body) {
-		try {
-			// Perform Request
-			return mvc.perform(MockMvcRequestBuilders.request(method, path)
-					.content(body));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private ResultActions performSignedRequest(HttpMethod method, String path, byte[] body, AsymmCrypto.AsymmFullKeyPair keypair) {
-		try {
-			// Create Signed Request
-			SignedRequest req = SignedRequest.fromParts(keypair, method.name(), path, body, handleCrypto);
-
-			// Get Headers as MultiValueMap
-			Map<String, String> headers = req.toHeadersWithPubKey();
-			MultiValueMap<String, String> multiHeaders = new LinkedMultiValueMap<>();
-			headers.forEach(multiHeaders::add);
-
-			// Perform Request
-			return mvc.perform(MockMvcRequestBuilders.request(method, path)
-					.headers(new HttpHeaders(multiHeaders))
-					.content(body));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	@Test
 	void checkTestEndpointsGuest() throws Exception {
 		// Test Guest Endpoint
-		performUnsignedRequest(HttpMethod.GET, TEST_API_GUEST, null)
+		performUnsignedRequest(HttpMethod.GET, TEST_API_GUEST, mvc)
 				.andExpect(status().isOk());
 
 		// Test Outsider Endpoint
-		performUnsignedRequest(HttpMethod.GET, TEST_API_OUTSIDER, null)
+		performUnsignedRequest(HttpMethod.GET, TEST_API_OUTSIDER, mvc)
 				.andExpect(status().isForbidden());
 
 		// Test User Endpoint
-		performUnsignedRequest(HttpMethod.GET, TEST_API_USER, null)
+		performUnsignedRequest(HttpMethod.GET, TEST_API_USER, mvc)
 				.andExpect(status().isForbidden());
 
 		// Test Admin Endpoint
-		performUnsignedRequest(HttpMethod.GET, TEST_API_ADMIN, null)
+		performUnsignedRequest(HttpMethod.GET, TEST_API_ADMIN, mvc)
 				.andExpect(status().isForbidden());
 	}
 
@@ -116,19 +89,19 @@ class SignedRequestIntegrationTests {
 		var keypair = crypto.generateKeypair(type);
 
 		// Test Guest Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_GUEST, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_GUEST, keypair, mvc, handleCrypto)
 				.andExpect(status().isOk());
 
 		// Test Outsider Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_OUTSIDER, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_OUTSIDER, keypair, mvc, handleCrypto)
 				.andExpect(status().isOk());
 
 		// Test User Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_USER, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_USER, keypair, mvc, handleCrypto)
 				.andExpect(status().isForbidden());
 
 		// Test Admin Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_ADMIN, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_ADMIN, keypair, mvc, handleCrypto)
 				.andExpect(status().isForbidden());
 	}
 
@@ -137,19 +110,19 @@ class SignedRequestIntegrationTests {
 		var keypair = testDataUser.testUser;
 
 		// Test Guest Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_GUEST, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_GUEST, keypair, mvc, handleCrypto)
 				.andExpect(status().isOk());
 
 		// Test Outsider Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_OUTSIDER, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_OUTSIDER, keypair, mvc, handleCrypto)
 				.andExpect(status().isOk());
 
 		// Test User Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_USER, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_USER, keypair, mvc, handleCrypto)
 				.andExpect(status().isOk());
 
 		// Test Admin Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_ADMIN, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_ADMIN, keypair, mvc, handleCrypto)
 				.andExpect(status().isForbidden());
 	}
 
@@ -158,19 +131,19 @@ class SignedRequestIntegrationTests {
 		var keypair = testDataUser.testAdmin;
 
 		// Test Guest Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_GUEST, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_GUEST, keypair, mvc, handleCrypto)
 				.andExpect(status().isOk());
 
 		// Test Outsider Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_OUTSIDER, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_OUTSIDER, keypair, mvc, handleCrypto)
 				.andExpect(status().isOk());
 
 		// Test User Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_USER, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_USER, keypair, mvc, handleCrypto)
 				.andExpect(status().isOk());
 
 		// Test Admin Endpoint
-		performSignedRequest(HttpMethod.GET, TEST_API_ADMIN, null, keypair)
+		performSignedRequest(HttpMethod.GET, TEST_API_ADMIN, keypair, mvc, handleCrypto)
 				.andExpect(status().isOk());
 	}
 
@@ -237,8 +210,6 @@ class SignedRequestIntegrationTests {
 		// Check for correct result
 		res.andExpect(status().is4xxClientError());
 	}
-
-	// TODO: Write Test using Body with e.g POST
 
 	// TODO: Write Test to check Multipart Behaviour
 }

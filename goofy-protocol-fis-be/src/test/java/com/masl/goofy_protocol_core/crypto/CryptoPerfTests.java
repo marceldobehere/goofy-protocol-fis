@@ -16,6 +16,7 @@ import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.symm.GlobSymmCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.symm.SymmCryptoType;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -27,6 +28,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static java.lang.System.getProperty;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Tag("perf")
 @ExtendWith(JUnitPerfInterceptor.class)
 @Disabled // Don't run this during mvn clean install/test
 class CryptoPerfTests extends BaseCryptoTestBase {

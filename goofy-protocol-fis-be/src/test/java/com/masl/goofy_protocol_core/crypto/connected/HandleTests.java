@@ -5,6 +5,7 @@ import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Tag("crypto")
 class HandleTests extends BaseCryptoTestBase {
 	private static final Logger log = LoggerFactory.getLogger(HandleTests.class);
 	private static final String knownPubSplitKey = "PUB.EC_P256.MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAERCDEqWbiDmy3dM9G22qvRsZME_mYNP4Pjzr5l-RzOl_BYycCAwjjjfSiYcCanfPgJ2x6L5xqOpejjixBF6-47A==.X.X";

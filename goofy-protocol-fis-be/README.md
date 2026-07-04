@@ -4,8 +4,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## TODOs
 * Implement Server Identity Keypair
-* Test General Endpoint
-* Test Registration Service & REST
+* Test Registration REST
 * Try writing Frontend using JS/TS + Modules if possible
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests

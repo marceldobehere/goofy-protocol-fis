@@ -8,6 +8,7 @@ import com.masl.goofy_protocol_core.crypto.isolated.BaseCryptoTestBase;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 
+@Tag("crypto")
 @Execution(ExecutionMode.CONCURRENT)
 class SignedRequestTests extends BaseCryptoTestBase {
 	private static final Logger log = LoggerFactory.getLogger(SignedRequestTests.class);

@@ -5,6 +5,7 @@ import com.masl.goofy_protocol_fis_be.dto.request.RegistrationRequestDto;
 import com.masl.goofy_protocol_fis_be.entity.RegistrationCode;
 import com.masl.goofy_protocol_fis_be.entity.RegistrationRequest;
 import com.masl.goofy_protocol_fis_be.entity.User;
+import com.masl.goofy_protocol_fis_be.exception.client.HandleAlreadyRegistered;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidRegisterCode;
 import com.masl.goofy_protocol_fis_be.repository.RegistrationCodeRepository;
 import com.masl.goofy_protocol_fis_be.repository.RegistrationRequestRepository;
@@ -70,7 +71,7 @@ public class RegistrationService {
         return registrationCodeRepository.findByCodeAndUsedAtIsNull(code);
     }
 
-    public void useCode(String code, User user) {
+    private void useCode(String code, User user) {
         RegistrationCode regCode = registrationCodeRepository.findById(code).orElseThrow(() -> new IllegalArgumentException("Invalid registration code"));
         if (regCode.getUsedAt() != null)
             throw new IllegalArgumentException("Registration code already used");
@@ -86,6 +87,10 @@ public class RegistrationService {
         RegistrationCode regCode = getValidCode(code);
         if (regCode == null)
             throw new InvalidRegisterCode(code);
+
+        // Check if Handle is already registered
+        if (userRepository.findById(auth.getHandle()).isPresent())
+            throw new HandleAlreadyRegistered(auth.getHandle());
 
         // Create User
         User user = new User();
@@ -107,5 +112,13 @@ public class RegistrationService {
         request.setOptEmail(requestDto.getOptEmail());
         request.setCreatedAt(Instant.now());
         registrationRequestRepository.save(request);
+    }
+
+    public List<RegistrationRequest> getAllRequests() {
+        return registrationRequestRepository.findAll();
+    }
+
+    public List<RegistrationRequest> getAllUnresolvedRequests() {
+        return registrationRequestRepository.findAllByResolvedAtIsNull();
     }
 }

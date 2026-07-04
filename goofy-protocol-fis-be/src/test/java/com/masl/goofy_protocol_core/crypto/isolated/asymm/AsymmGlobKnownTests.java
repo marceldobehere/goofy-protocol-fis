@@ -3,6 +3,7 @@ package com.masl.goofy_protocol_core.crypto.isolated.asymm;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,6 +15,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 
+@Tag("crypto")
 @Execution(ExecutionMode.CONCURRENT)
 class AsymmGlobKnownTests {
 	private static final Set<Map.Entry<AsymmCryptoType, AsymmGlobKnownValues.KnownValueSet>> knownValueEntries = AsymmGlobKnownValues.knownValues.entrySet();

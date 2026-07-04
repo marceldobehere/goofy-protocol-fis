@@ -61,8 +61,8 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
             }
 
             // Cache Request So body can be read without issues
-            ContentCachingRequestWrapper wrapped = new ContentCachingRequestWrapper(request, maxRequestSizeBytes);
-            byte[] body = wrapped.getInputStream().readAllBytes(); // should be an empty array if no body is provided
+            ContentCachingRequestWrapper _wrapped = new ContentCachingRequestWrapper(request, maxRequestSizeBytes);
+            byte[] body = _wrapped.getInputStream().readAllBytes();
 
             // Parse Request
             SignedRequest req;
@@ -86,6 +86,10 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
             boolean isUser = user != null;
             boolean isAdmin = user != null && user.isAdmin();
             SecurityContextHolder.getContext().setAuthentication(new GoofyAuth(req, isUser, isAdmin));
+
+            // Fix Body for Filter
+            RequestBodyContentWrapper wrapped = new RequestBodyContentWrapper(_wrapped, maxRequestSizeBytes);
+            wrapped.prepareInputStream();
 
             // Continue
             filterChain.doFilter(wrapped, response);

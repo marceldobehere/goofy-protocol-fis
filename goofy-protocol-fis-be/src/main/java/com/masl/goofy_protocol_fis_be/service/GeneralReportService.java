@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 // TODO: Test
 @Service
@@ -23,11 +24,19 @@ public class GeneralReportService {
     public void submitReport(GeneralReportDto reportDto, String optHandle) {
         log.info("Received Report: {} from {}", reportDto, optHandle);
         GeneralReport report = new GeneralReport();
-        report.setTitle(report.getTitle());
+        report.setTitle(reportDto.getTitle());
         report.setDescription(reportDto.getDescription());
         report.setContact(reportDto.getContact());
         report.setOptionalHandle(optHandle);
         report.setCreatedAt(Instant.now());
         generalReportRepository.save(report);
+    }
+
+    public List<GeneralReport> getAllReports() {
+        return generalReportRepository.findAll();
+    }
+
+    public List<GeneralReport> getAllUnresolvedReports() {
+        return generalReportRepository.findAllByResolvedAtIsNull();
     }
 }

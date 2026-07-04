@@ -10,7 +10,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 // TODO: Document API
-// TODO: Test
 @RestController
 @RequestMapping("/api/general")
 public class GeneralEndpoint {
@@ -48,7 +47,6 @@ public class GeneralEndpoint {
     }
 
     // TODO: Rate Limit
-    // TODO: Check how Invalid Requests get treated, possibly add Handler to GlobalExceptionHandler
     @PostMapping("/report")
     public void report(@Valid @RequestBody GeneralReportDto report, @AuthenticationPrincipal GoofyAuthUser auth) {
         String optHandle = auth != null ? auth.getHandle() : null;
