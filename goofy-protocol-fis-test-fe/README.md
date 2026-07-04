@@ -24,7 +24,7 @@ Supported Types:
 * RSA 4096
 * EC_C25519
 
-Not yet Supported Types:
+Not (yet) Supported Types:
 * EC_P256
 * EC_P384
 * ML-KEM (512) + ML-DSA (44)
@@ -35,4 +35,4 @@ Not yet Supported Types:
 Is supported
 
 ### Signed Requests
-Not yet
+Is supported
