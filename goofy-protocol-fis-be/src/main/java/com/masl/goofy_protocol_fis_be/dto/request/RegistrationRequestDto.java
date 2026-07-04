@@ -10,16 +10,14 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GeneralReportDto {
-    @NotBlank
-    @Size(max = FieldSize.TITLE_LEN)
-    private String title;
-
+public class RegistrationRequestDto {
     @NotBlank
     @Size(max = FieldSize.NORMAL_TEXT_LEN)
-    private String description;
+    private String message;
 
     @NotBlank
     @Size(max = FieldSize.SHORT_TEXT_LEN)
     private String contact;
+
+    private String optEmail;
 }

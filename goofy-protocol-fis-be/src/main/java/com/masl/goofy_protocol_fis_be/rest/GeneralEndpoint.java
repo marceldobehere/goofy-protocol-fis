@@ -1,22 +1,25 @@
 package com.masl.goofy_protocol_fis_be.rest;
 
+import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import com.masl.goofy_protocol_fis_be.dto.request.GeneralReportDto;
 import com.masl.goofy_protocol_fis_be.dto.response.GeneralInfoDto;
 import com.masl.goofy_protocol_fis_be.properties.GeneralProperties;
+import com.masl.goofy_protocol_fis_be.service.GeneralReportService;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 // TODO: Document API
+// TODO: Test
 @RestController
 @RequestMapping("/api/general")
 public class GeneralEndpoint {
-    private static final Logger log = LoggerFactory.getLogger(GeneralEndpoint.class);
     private final GeneralProperties generalProperties;
+    private final GeneralReportService generalReportService;
 
-    public GeneralEndpoint(GeneralProperties generalProperties) {
+    public GeneralEndpoint(GeneralProperties generalProperties, GeneralReportService generalReportService) {
         this.generalProperties = generalProperties;
+        this.generalReportService = generalReportService;
     }
 
     @GetMapping("/status")
@@ -45,10 +48,10 @@ public class GeneralEndpoint {
     }
 
     // TODO: Rate Limit
+    // TODO: Check how Invalid Requests get treated, possibly add Handler to GlobalExceptionHandler
     @PostMapping("/report")
-    public void report(@Valid @RequestBody GeneralReportDto report) {
-        log.info("Received Report: {}", report);
-        // TODO: Implement
-        // TODO: Check how Invalid Requests get treated, possibly add Handler to GlobalExceptionHandler
+    public void report(@Valid @RequestBody GeneralReportDto report, @AuthenticationPrincipal GoofyAuthUser auth) {
+        String optHandle = auth != null ? auth.getHandle() : null;
+        generalReportService.submitReport(report, optHandle);
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
@@ -41,8 +42,14 @@ public class WebSecurityConfiguration {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> {
                 // Only for dev or integration tests
-                if (testOrDev)
-                    auth.requestMatchers("/api/test/**").permitAll();
+                if (testOrDev) {
+                    auth
+                        .requestMatchers("/api/test/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll();
+
+                    // H2-Console
+                    http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
+                }
 
                 // Default values
                 auth

@@ -3,16 +3,23 @@
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## TODOs
-* Implement Registration Request + Report List DB
+* Look into why isolated unit tests run spring instance and in dev profile (so not even test profile)
 * Implement Server Identity Keypair
 * Test General Endpoint
 * Test Registration Service & REST
 * Try writing Frontend using JS/TS + Modules if possible
+* Add Max Unresolved Registration Requests and Reports Config + Error Codes
+* Add Config for regular pruning of old unresolved Registration Requests
 * Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
 * Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
   * Document Spec
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc)
 * Move the Crypto Core Lib into a seperate package with tests, known values and pom.xml
+* Implement User Restriction
+* Implement User Account Deactivation
+* Implement Data Export
+* Implement Data Import?
+* Implement User Account Deletion -> Should safely delete everything and not cause DB issues (Cache too)
 * Implement silly Rate Limiting (only for prod/develop), Base: https://www.baeldung.com/spring-bucket4j
   * Requests without a special cookies token will have to wait some time before their request is processed / get extra low prio / strong rate limiting, then they will get the special cookie
   * Ideally Requests without the special cookie dont even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks

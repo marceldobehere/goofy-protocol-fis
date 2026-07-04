@@ -1,10 +1,13 @@
 package com.masl.goofy_protocol_fis_be.service;
 
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
+import com.masl.goofy_protocol_fis_be.dto.request.RegistrationRequestDto;
 import com.masl.goofy_protocol_fis_be.entity.RegistrationCode;
+import com.masl.goofy_protocol_fis_be.entity.RegistrationRequest;
 import com.masl.goofy_protocol_fis_be.entity.User;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidRegisterCode;
 import com.masl.goofy_protocol_fis_be.repository.RegistrationCodeRepository;
+import com.masl.goofy_protocol_fis_be.repository.RegistrationRequestRepository;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,10 +23,12 @@ public class RegistrationService {
     private static final Logger log = LoggerFactory.getLogger(RegistrationService.class);
 
     private final RegistrationCodeRepository registrationCodeRepository;
+    private final RegistrationRequestRepository registrationRequestRepository;
     private final UserRepository userRepository;
 
-    public RegistrationService(RegistrationCodeRepository registrationCodeRepository, UserRepository userRepository) {
+    public RegistrationService(RegistrationCodeRepository registrationCodeRepository, RegistrationRequestRepository registrationRequestRepository, UserRepository userRepository) {
         this.registrationCodeRepository = registrationCodeRepository;
+        this.registrationRequestRepository = registrationRequestRepository;
         this.userRepository = userRepository;
     }
 
@@ -94,8 +99,13 @@ public class RegistrationService {
         log.info("User {} registered successfully with code {}", user.getHandle(), code);
     }
 
-    public void requestRegistrationCode(String requestMessage) {
-        log.info("Registration code requested with message: {}", requestMessage);
-        // TODO: Implement
+    public void submitRegistrationRequest(RegistrationRequestDto requestDto) {
+        log.info("Received Registration Request: {}", requestDto);
+        RegistrationRequest request = new RegistrationRequest();
+        request.setMesssage(requestDto.getMessage());
+        request.setGeneralContact(requestDto.getContact());
+        request.setOptEmail(requestDto.getOptEmail());
+        request.setCreatedAt(Instant.now());
+        registrationRequestRepository.save(request);
     }
 }

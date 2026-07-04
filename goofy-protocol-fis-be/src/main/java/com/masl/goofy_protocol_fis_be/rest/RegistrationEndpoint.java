@@ -1,6 +1,7 @@
 package com.masl.goofy_protocol_fis_be.rest;
 
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
+import com.masl.goofy_protocol_fis_be.dto.request.RegistrationRequestDto;
 import com.masl.goofy_protocol_fis_be.dto.response.RegisterStatusDto;
 import com.masl.goofy_protocol_fis_be.exception.client.RegistrationNotAllowed;
 import com.masl.goofy_protocol_fis_be.properties.RegisterProperties;
@@ -44,9 +45,9 @@ public class RegistrationEndpoint {
     // TODO: Rate Limit
     @PostMapping("/request")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    public void requestRegistrationCode(@Valid @RequestBody String requestMessage) {
+    public void requestRegistrationCode(@Valid @RequestBody RegistrationRequestDto requestDto) {
         if (!registerProperties.getRegistrationsAllowed())
             throw new RegistrationNotAllowed();
-        registrationService.requestRegistrationCode(requestMessage);
+        registrationService.submitRegistrationRequest(requestDto);
     }
 }
