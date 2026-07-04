@@ -18,7 +18,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-// TODO: Test
 @Service
 public class RegistrationService {
     private static final Logger log = LoggerFactory.getLogger(RegistrationService.class);

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 
-// TODO: Test
 @Service
 public class GeneralReportService {
     private static final Logger log = LoggerFactory.getLogger(GeneralReportService.class);
