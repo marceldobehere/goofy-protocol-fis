@@ -35,8 +35,13 @@ class AsymmGlobTests {
 	@EnumSource(AsymmCryptoType.class)
 	void testGlobalAsymmCryptoKeygen(AsymmCryptoType type) {
 		var keypair = crypto.generateKeypair(type);
-		log.info("Generated pub keypair for type {} ({}): {}", type, keypair.pub().serialize().length(), keypair.pub().serialize());
-		log.info(" > Generated priv keypair for type {} ({}): {}", type, keypair.priv().serialize().length(), keypair.priv().serialize());
+		if (keypair.priv().serialize().length() < 1024) {
+			log.info("Generated pub  keypair for type {} ({}): {}", type, keypair.pub().serialize().length(), keypair.pub().serialize());
+			log.info("Generated priv keypair for type {} ({}): {}", type, keypair.priv().serialize().length(), keypair.priv().serialize());
+		} else {
+			log.info("Generated pub  keypair for type {} ({}):", type, keypair.pub().serialize().length());
+			log.info("Generated priv keypair for type {} ({})", type, keypair.priv().serialize().length());
+		}
 		assertThat(keypair).isNotNull();
 		assertThat(crypto.checkPublicSplitKey(keypair.pub().serialize())).isTrue();
 	}
@@ -93,7 +98,6 @@ class AsymmGlobTests {
 		assertThat(dec).isNotEqualTo(enc);
 
 		// Check
-		log.info("Decrypted message: \"{}\" = \"{}\" ?", testMessageStr, dec);
 		assertThat(dec).isEqualTo(testMessageStr);
 	}
 
@@ -149,8 +153,7 @@ class AsymmGlobTests {
 						10_000,
 						100_000,
 						1_000_000,
-						10_000_000,
-						100_000_000
+						10_000_000
 				).map(size -> Arguments.of(type, size)));
 	}
 

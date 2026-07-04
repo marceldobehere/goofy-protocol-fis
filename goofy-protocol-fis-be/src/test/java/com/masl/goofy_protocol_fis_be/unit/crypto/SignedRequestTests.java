@@ -6,6 +6,7 @@ import com.masl.goofy_protocol_core.crypto.connected.request.BasicRequestValidat
 import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequest;
 import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequestValidator;
 import com.masl.goofy_protocol_core.crypto.exceptions.PubSplitKeyNotFound;
+import com.masl.goofy_protocol_core.crypto.isolated.BaseCryptoTestBase;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +18,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -27,8 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 
 @Execution(ExecutionMode.CONCURRENT)
-@SpringBootTest
-class SignedRequestTests {
+class SignedRequestTests extends BaseCryptoTestBase {
 	private static final Logger log = LoggerFactory.getLogger(SignedRequestTests.class);
 
 	// Using EC_C25519 & DEF_METHOD & DEF_PATH & DEF_BODY
@@ -81,7 +80,7 @@ class SignedRequestTests {
 		// Check Headers
 		assertThat(SignedRequest.hasAllRequestHeaders(headers)).isTrue();
 		int headerSize = headers.entrySet().stream().reduce(0, (acc, e) -> acc + e.getKey().length() + e.getValue().length(), Integer::sum);
-		log.info(" > SignedRequest Headers Size for {} & Pubkey: {} bytes => {}", type, headerSize, headers);
+		log.info(" > SignedRequest Headers Size for {} & Pubkey: {} bytes", type, headerSize);
 
 		// Reconstruct from Headers
 		SignedRequest reconstructed = SignedRequest.fromRequestHeaders(headers, DEF_METHOD, DEF_PATH, handleCrypto);
@@ -103,12 +102,12 @@ class SignedRequestTests {
 
 		// Turn into Headers
 		Map<String, String> headers = req.toHeadersWithPubKey();
-		log.info(" > SignedRequest Headers: {}", headers);
 
 		// Check Headers
 		assertThat(SignedRequest.hasAllRequestHeaders(headers)).isTrue();
 		int headerSize = headers.entrySet().stream().reduce(0, (acc, e) -> acc + e.getKey().length() + e.getValue().length(), Integer::sum);
-		log.info(" > SignedRequest Headers Size: {} bytes", headerSize);
+		if (headerSize < 1024)
+			log.info(" > SignedRequest Headers for {}: {}", type, headers);
 
 		// Reconstruct from Headers
 		SignedRequest reconstructed = SignedRequest.fromRequestHeaders(headers, DEF_METHOD, DEF_PATH, DEF_BODY, handleCrypto);
@@ -134,7 +133,7 @@ class SignedRequestTests {
 		// Check Headers
 		assertThat(SignedRequest.hasAllRequestHeaders(headers)).isTrue();
 		int headerSize = headers.entrySet().stream().reduce(0, (acc, e) -> acc + e.getKey().length() + e.getValue().length(), Integer::sum);
-		log.info(" > SignedRequest Headers Size for {} & Handle: {} bytes => {}", type, headerSize, headers);
+		log.info(" > SignedRequest Headers Size for {} & Handle: {} bytes", type, headerSize);
 
 		// Reconstruct from Headers (Using Fresh HandleCrypto -> Should Fail)
 		HandleCrypto freshHandleCrypto = new HandleCrypto(new IsolatedHandleHelper());
@@ -159,7 +158,6 @@ class SignedRequestTests {
 
 		// Turn into Headers
 		Map<String, String> headers = req.toHeadersWithHandle(DEF_DOMAIN);
-		log.info(" > SignedRequest Headers: {}", headers);
 
 		// Check Headers
 		assertThat(SignedRequest.hasAllRequestHeaders(headers)).isTrue();
@@ -193,7 +191,6 @@ class SignedRequestTests {
 
 		// Turn into Headers
 		Map<String, String> headers = req.toHeadersWithHandle(DEF_DOMAIN);
-		log.info(" > SignedRequest Headers: {}", headers);
 
 		// Check Headers
 		assertThat(SignedRequest.hasAllRequestHeaders(headers)).isTrue();
@@ -215,7 +212,6 @@ class SignedRequestTests {
 		// Check Headers
 		assertThat(SignedRequest.hasAllRequestHeaders(knownHeaders)).isTrue();
 		int headerSize = knownHeaders.entrySet().stream().reduce(0, (acc, e) -> acc + e.getKey().length() + e.getValue().length(), Integer::sum);
-		log.info(" > SignedRequest Headers Size: {} bytes", headerSize);
 
 		// Verify
 		assertThat(reconstructed.isValid(handleCrypto, basicValidator)).isEqualTo(SignedRequest.SignedRequestValidity.INVALID_TIME);
@@ -233,7 +229,6 @@ class SignedRequestTests {
 		// Check Headers
 		assertThat(SignedRequest.hasAllRequestHeaders(knownHeaders)).isTrue();
 		int headerSize = knownHeaders.entrySet().stream().reduce(0, (acc, e) -> acc + e.getKey().length() + e.getValue().length(), Integer::sum);
-		log.info(" > SignedRequest Headers Size: {} bytes", headerSize);
 
 		// Verify
 		assertThat(reconstructed.isValid(handleCrypto, validator)).isEqualTo(SignedRequest.SignedRequestValidity.VALID);

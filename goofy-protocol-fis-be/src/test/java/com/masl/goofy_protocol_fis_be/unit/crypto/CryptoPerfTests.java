@@ -7,6 +7,7 @@ import com.github.noconnor.junitperf.JUnitPerfTestActiveConfig;
 import com.github.noconnor.junitperf.reporting.providers.ConsoleReportGenerator;
 import com.github.noconnor.junitperf.reporting.providers.HtmlReportGenerator;
 import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
+import com.masl.goofy_protocol_core.crypto.isolated.BaseCryptoTestBase;
 import com.masl.goofy_protocol_core.crypto.isolated.SecretUtils;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
@@ -18,7 +19,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -27,9 +27,8 @@ import static java.lang.System.getProperty;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(JUnitPerfInterceptor.class)
-@SpringBootTest
 @Disabled // Don't run this during mvn clean install/test
-class CryptoPerfTests {
+class CryptoPerfTests extends BaseCryptoTestBase {
 	private static final String randomSecretBase = "bla bla bla randdom secret";
 	private final GlobSymmCrypto symmCrypto = new GlobSymmCrypto();
 	private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();

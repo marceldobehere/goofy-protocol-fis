@@ -13,14 +13,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -35,10 +34,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@ActiveProfiles({"test", "tests-signed-req"})
+@ContextConfiguration(initializers = IsolatedTestConfig.class)
 class SignedRequestIntegrationTests {
-	private static final Logger log = LoggerFactory.getLogger(SignedRequestIntegrationTests.class);
-
 	private static final String TEST_API_GUEST = "/api/test/test-guest";
 	private static final String TEST_API_OUTSIDER = "/api/test/test-outsider";
 	private static final String TEST_API_USER = "/api/test/test-user";
@@ -81,7 +79,6 @@ class SignedRequestIntegrationTests {
 
 			// Get Headers as MultiValueMap
 			Map<String, String> headers = req.toHeadersWithPubKey();
-			log.info(" > SignedRequest Headers: {}", headers);
 			MultiValueMap<String, String> multiHeaders = new LinkedMultiValueMap<>();
 			headers.forEach(multiHeaders::add);
 
@@ -186,7 +183,6 @@ class SignedRequestIntegrationTests {
 
 		// Get Headers as MultiValueMap
 		Map<String, String> headers = req.toHeadersWithHandle();
-		log.info(" > SignedRequest Headers: {}", headers);
 		MultiValueMap<String, String> multiHeaders = new LinkedMultiValueMap<>();
 		headers.forEach(multiHeaders::add);
 
@@ -195,7 +191,6 @@ class SignedRequestIntegrationTests {
 				.headers(new HttpHeaders(multiHeaders)));
 
 		// Check for correct result
-		log.info(" > Response: {}", res.andReturn().getResponse().getContentAsString());
 		res.andExpect(status().is4xxClientError())
 				.andExpect(jsonPath("$.errorCode").value(AllServerErrorCodes.PUBLIC_KEY_LOOKUP_FAILED));
 	}
@@ -210,7 +205,6 @@ class SignedRequestIntegrationTests {
 		// Get Headers as MultiValueMap
 		Map<String, String> headers = req.toHeadersWithPubKey();
 		headers.put("X-Goofy-Signature", "BRUH");
-		log.info(" > SignedRequest Headers: {}", headers);
 		MultiValueMap<String, String> multiHeaders = new LinkedMultiValueMap<>();
 		headers.forEach(multiHeaders::add);
 
@@ -219,7 +213,6 @@ class SignedRequestIntegrationTests {
 				.headers(new HttpHeaders(multiHeaders)));
 
 		// Check for correct result
-		log.info(" > Response: {}", res.andReturn().getResponse().getContentAsString());
 		res.andExpect(status().is4xxClientError())
 				.andExpect(jsonPath("$.errorCode").value(AllClientErrorCodes.INVALID_SIGNATURE));
 	}
@@ -234,7 +227,6 @@ class SignedRequestIntegrationTests {
 		// Get Headers as MultiValueMap
 		Map<String, String> headers = req.toHeadersWithPubKey();
 		headers.remove("X-Goofy-Valid-Until");
-		log.info(" > SignedRequest Headers: {}", headers);
 		MultiValueMap<String, String> multiHeaders = new LinkedMultiValueMap<>();
 		headers.forEach(multiHeaders::add);
 
@@ -243,7 +235,6 @@ class SignedRequestIntegrationTests {
 				.headers(new HttpHeaders(multiHeaders)));
 
 		// Check for correct result
-		log.info(" > Response: {}", res.andReturn().getResponse().getContentAsString());
 		res.andExpect(status().is4xxClientError());
 	}
 

@@ -26,6 +26,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -43,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@ContextConfiguration(initializers = IsolatedTestConfig.class)
 @Disabled // Don't run this during mvn clean install/test
 class SignedRequestPerfTests {
 	private static final String TEST_API_GUEST = "/api/test/test-guest";
@@ -145,6 +147,28 @@ class SignedRequestPerfTests {
 		// Test Admin Endpoint
 		performSignedRequest(HttpMethod.GET, TEST_API_ADMIN, null, keypair)
 				.andExpect(status().isOk());
+	}
+
+	@Test
+	@JUnitPerfTest(threads = 8, durationMs = 15_000, rampUpPeriodMs = 2_000, warmUpMs = 5_000, maxExecutionsPerSecond = 30_000)
+	void checkTestEndpointsNoRaceConditions() throws Exception {
+		var keypair = testDataUser.testUser;
+
+		// Test Guest Endpoint
+		performSignedRequest(HttpMethod.GET, TEST_API_GUEST, null, keypair)
+				.andExpect(status().isOk());
+
+		// Test Outsider Endpoint
+		performSignedRequest(HttpMethod.GET, TEST_API_OUTSIDER, null, keypair)
+				.andExpect(status().isOk());
+
+		// Test User Endpoint
+		performSignedRequest(HttpMethod.GET, TEST_API_USER, null, keypair)
+				.andExpect(status().isOk());
+
+		// Test Admin Endpoint
+		performSignedRequest(HttpMethod.GET, TEST_API_ADMIN, null, keypair)
+				.andExpect(status().isForbidden());
 	}
 
 	// TODO: Write Test using Body with e.g POST

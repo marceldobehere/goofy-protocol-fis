@@ -33,22 +33,28 @@ public class TestDataUser {
 
     @PostConstruct
     public void init() {
+        // Check if Users already exist?
+        if (userRepository.count() > 0) {
+            log.error("TestDataUser: USERS ALREADY EXIST IN DB, EVEN THOUGH IT SHOULD BE A FRESH IN-MEMORY DB???");
+            throw new RuntimeException("USERS ALREADY EXIST IN DB");
+        }
+
         // Test User
-        log.info("> Generating Test User");
         testUser = asymmCrypto.generateKeypair();
         User testUserEntity = new User();
         testUserEntity.setPubSplitKey(testUser.pub().serialize());
         testUserEntity.setHandle(handleCrypto.deriveHandle(testUser.pub().serialize()));
         testUserEntity.setAdmin(false);
         userRepository.save(testUserEntity);
+        log.info("> Generated Test User: {}", handleCrypto.deriveHandle(testUser.pub().serialize()));
 
-        // Test User
-        log.info("> Generating Test Admin");
+        // Test Admin
         testAdmin = asymmCrypto.generateKeypair();
         User testAdminEntity = new User();
         testAdminEntity.setPubSplitKey(testAdmin.pub().serialize());
         testAdminEntity.setHandle(handleCrypto.deriveHandle(testAdmin.pub().serialize()));
         testAdminEntity.setAdmin(true);
         userRepository.save(testAdminEntity);
+        log.info("> Generated Test Admin: {}", handleCrypto.deriveHandle(testAdmin.pub().serialize()));
     }
 }

@@ -92,5 +92,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             resolver.resolveException(request, response, null, e);
         }
+
+        SecurityContextHolder.clearContext();
     }
 }
