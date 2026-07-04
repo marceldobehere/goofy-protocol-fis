@@ -1,4 +1,4 @@
-package com.masl.goofy_protocol_fis_be.unit.crypto;
+package com.masl.goofy_protocol_core.crypto;
 
 import com.github.noconnor.junitperf.JUnitPerfInterceptor;
 import com.github.noconnor.junitperf.JUnitPerfReportingConfig;
@@ -7,6 +7,7 @@ import com.github.noconnor.junitperf.JUnitPerfTestActiveConfig;
 import com.github.noconnor.junitperf.reporting.providers.ConsoleReportGenerator;
 import com.github.noconnor.junitperf.reporting.providers.HtmlReportGenerator;
 import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
+import com.masl.goofy_protocol_core.crypto.connected.IsolatedHandleHelper;
 import com.masl.goofy_protocol_core.crypto.isolated.BaseCryptoTestBase;
 import com.masl.goofy_protocol_core.crypto.isolated.SecretUtils;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCrypto;

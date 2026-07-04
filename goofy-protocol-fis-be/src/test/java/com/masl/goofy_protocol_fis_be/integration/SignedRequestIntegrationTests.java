@@ -8,7 +8,7 @@ import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import com.masl.goofy_protocol_fis_be.exception.client.AllClientErrorCodes;
 import com.masl.goofy_protocol_fis_be.exception.server.AllServerErrorCodes;
 import com.masl.goofy_protocol_fis_be.test_data.test_only.TestDataUser;
-import com.masl.goofy_protocol_fis_be.unit.crypto.IsolatedHandleHelper;
+import com.masl.goofy_protocol_core.crypto.connected.IsolatedHandleHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

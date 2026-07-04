@@ -12,7 +12,7 @@ import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import com.masl.goofy_protocol_fis_be.test_data.test_only.TestDataUser;
-import com.masl.goofy_protocol_fis_be.unit.crypto.IsolatedHandleHelper;
+import com.masl.goofy_protocol_core.crypto.connected.IsolatedHandleHelper;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
