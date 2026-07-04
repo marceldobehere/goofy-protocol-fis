@@ -2,7 +2,8 @@ import { AsymmCryptoType } from "./asymm-crypto-type.mjs";
 import { AsymmPubKeyPair, AsymmPrivKeyPair } from "./asymm-crypto-interface.mjs";
 
 // Implementations
-import {RSA} from "./rsa.mjs";
+import { RSA } from "./rsa.mjs";
+import { EC_X } from "./ec_x.mjs";
 
 // Base64 URL helpers
 function bytesToB64Url(bytes) {
@@ -28,7 +29,8 @@ const textDecoder = new TextDecoder();
 export class GlobAsymmCrypto {
     constructor() {
         this.cryptoList = [
-            new RSA()
+            new RSA(),
+            new EC_X()
         ];
     }
 

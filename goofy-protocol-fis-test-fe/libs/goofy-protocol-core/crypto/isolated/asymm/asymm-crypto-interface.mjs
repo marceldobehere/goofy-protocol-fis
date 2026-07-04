@@ -167,7 +167,7 @@ export class AsymmFullKeyPair {
         this.priv = priv;
     }
 
-    static fromParts(pubSigKey, pubEncKey, privSigKey, privEncKey, cryptoImpl, type) {
+    static async fromParts(pubSigKey, pubEncKey, privSigKey, privEncKey, cryptoImpl, type) {
         const priv = new AsymmPrivKeyPair(privSigKey, privEncKey, type);
 
         // Java:
@@ -175,7 +175,7 @@ export class AsymmFullKeyPair {
         const encSig =
             pubEncKey.length === pubSigKey.length && pubEncKey.every((v, i) => v === pubSigKey[i])
                 ? null
-                : cryptoImpl.sign(pubEncKey, privSigKey, type);
+                : await cryptoImpl.sign(pubEncKey, privSigKey, type);
 
         const pub = new AsymmPubKeyPair(pubSigKey, pubEncKey, encSig, type);
         return new AsymmFullKeyPair(pub, priv);

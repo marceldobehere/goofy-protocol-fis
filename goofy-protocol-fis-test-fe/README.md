@@ -22,11 +22,11 @@ Supported Types:
 * RSA 2048
 * RSA 3072
 * RSA 4096
+* EC_C25519
 
 Not yet Supported Types:
 * EC_P256
 * EC_P384
-* EC_C25519
 * ML-KEM (512) + ML-DSA (44)
 * ML-KEM (768) + ML-DSA (65)
 * ML-KEM (1024) + ML-DSA (87)

@@ -1,6 +1,7 @@
 import { ENC_DELIMITER } from "../secret-utils.mjs";
 import { SymmCryptoType } from "./symm-crypto-type.mjs";
 
+// Implementations
 import { AES } from "./aes.mjs";
 import { ChaCha20 } from "./chacha20.mjs";
 

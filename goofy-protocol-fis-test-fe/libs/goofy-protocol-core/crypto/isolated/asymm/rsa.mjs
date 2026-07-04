@@ -103,7 +103,7 @@ export class RSA extends AsymmCrypto {
         const pubSpki = new Uint8Array(await crypto.subtle.exportKey("spki", keyPair.publicKey));
         const privPkcs8 = new Uint8Array(await crypto.subtle.exportKey("pkcs8", keyPair.privateKey));
 
-        return AsymmFullKeyPair.fromParts(
+        return await AsymmFullKeyPair.fromParts(
             pubSpki, // pubSigKey
             pubSpki, // pubEncKey
             privPkcs8, // privSigKey
