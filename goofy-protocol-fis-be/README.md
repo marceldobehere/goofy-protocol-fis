@@ -7,6 +7,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests
 * Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
+* Implement Exceptions for unsupported Crypto Requests
 * Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
   * Document Spec
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc)

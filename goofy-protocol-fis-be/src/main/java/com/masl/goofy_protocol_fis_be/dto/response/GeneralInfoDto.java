@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,4 +17,6 @@ public class GeneralInfoDto {
     private String version;
     private String pubKey;
     private String handle;
+    private List<String> supportedAsymmCryptoTypes;
+    private List<String> supportedSymmCryptoTypes;
 }

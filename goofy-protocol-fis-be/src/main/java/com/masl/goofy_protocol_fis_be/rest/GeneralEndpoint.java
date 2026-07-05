@@ -1,5 +1,7 @@
 package com.masl.goofy_protocol_fis_be.rest;
 
+import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
+import com.masl.goofy_protocol_core.crypto.isolated.symm.SymmCryptoType;
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import com.masl.goofy_protocol_fis_be.dto.request.GeneralReportDto;
 import com.masl.goofy_protocol_fis_be.dto.response.GeneralInfoDto;
@@ -9,6 +11,8 @@ import com.masl.goofy_protocol_fis_be.test_data.test_dev_prod.TestDataKeypair;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
 
 // TODO: Document API
 @RestController
@@ -38,7 +42,9 @@ public class GeneralEndpoint {
                 generalProperties.getDescription(),
                 generalProperties.getVersion(),
                 testDataKeypair.getServerKeypair().pub().serialize(),
-                testDataKeypair.getServerHandle()
+                testDataKeypair.getServerHandle(),
+                Arrays.stream(AsymmCryptoType.values()).map(AsymmCryptoType::name).toList(),
+                Arrays.stream(SymmCryptoType.values()).map(SymmCryptoType::name).toList()
         );
     }
 
