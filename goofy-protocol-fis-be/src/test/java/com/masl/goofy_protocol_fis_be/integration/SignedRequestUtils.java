@@ -10,6 +10,8 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -23,6 +25,19 @@ public class SignedRequestUtils {
         return performSignedRequest(method, path, body.getBytes(StandardCharsets.UTF_8), keypair, mvc, handleCrypto);
     }
 
+    private static boolean isJSON(byte[] data) {
+        if (data == null)
+            return false;
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.readTree(data);
+            return true;
+        } catch (JacksonException _) {
+            return false;
+        }
+    }
+
     public static ResultActions performSignedRequest(HttpMethod method, String path, byte[] body, AsymmCrypto.AsymmFullKeyPair keypair, MockMvc mvc, GenericHandleCrypto handleCrypto) {
         try {
             // Create Signed Request
@@ -33,10 +48,13 @@ public class SignedRequestUtils {
             MultiValueMap<String, String> multiHeaders = new LinkedMultiValueMap<>();
             headers.forEach(multiHeaders::add);
 
+            // Check if byte[] is JSON
+            boolean isJSON = isJSON(body);
+
             // Perform Request
             return mvc.perform(MockMvcRequestBuilders.request(method, path)
                     .headers(new HttpHeaders(multiHeaders))
-                    .contentType("application/json")
+                    .contentType(isJSON ? "application/json" : "text/plain")
                     .content(body));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -53,9 +71,12 @@ public class SignedRequestUtils {
 
     public static ResultActions performUnsignedRequest(HttpMethod method, String path, byte[] body, MockMvc mvc) {
         try {
+            // Check if byte[] is JSON
+            boolean isJSON = isJSON(body);
+
             // Perform Request
             return mvc.perform(MockMvcRequestBuilders.request(method, path)
-                    .contentType("application/json")
+                    .contentType(isJSON ? "application/json" : "text/plain")
                     .content(body));
         } catch (Exception e) {
             throw new RuntimeException(e);

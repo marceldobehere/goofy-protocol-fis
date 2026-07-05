@@ -2,6 +2,10 @@ package com.masl.goofy_protocol_fis_be.crypto;
 
 import com.masl.goofy_protocol_core.crypto.connected.GenericHandleCrypto;
 import com.masl.goofy_protocol_core.crypto.connected.HandleCryptoHelper;
+import com.masl.goofy_protocol_fis_be.entity.CachedKeyHandleEntry;
+import com.masl.goofy_protocol_fis_be.entity.User;
+import com.masl.goofy_protocol_fis_be.repository.CachedKeyHandleRepository;
+import com.masl.goofy_protocol_fis_be.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -9,18 +13,21 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class HandleHelper implements HandleCryptoHelper {
     private static final String HANDLE_WORDS_PATH = "data/handle_words.json";
     private static final Logger log = LoggerFactory.getLogger(HandleHelper.class);
 
-    public HandleHelper() {
-        // TODO: Init Stuff?
+    private final CachedKeyHandleRepository cachedKeyHandleRepository;
+    private final UserRepository userRepository;
+
+    public HandleHelper(CachedKeyHandleRepository cachedKeyHandleRepository, UserRepository userRepository) {
+        this.cachedKeyHandleRepository = cachedKeyHandleRepository;
+        this.userRepository = userRepository;
     }
 
     // Load Word List (Currently ~15000 Entries)
@@ -41,20 +48,26 @@ public class HandleHelper implements HandleCryptoHelper {
 
     @Override
     public Map<String, String> loadPersistedKeyToHandleMapCache() {
-        // TODO: Implement  & Connect to DB
-        return Map.of();
+        return cachedKeyHandleRepository.findAll().stream()
+                .collect(Collectors.toMap(
+                        CachedKeyHandleEntry::getPubSplitKey,
+                        CachedKeyHandleEntry::getHandle,
+                        (_, b) -> b));
     }
 
     @Override
     public boolean addPersistedKeyToHandleMapping(String pubSplitKey, String handle) {
-        // TODO: Implement & Connect to DB
-        return false;
+        cachedKeyHandleRepository.save(new CachedKeyHandleEntry(pubSplitKey, handle, Instant.now()));
+        return true;
     }
 
     @Override
     public Map<String, String> loadUserKeyToHandleMap() {
-        // TODO: Implement
-        return Map.of();
+        return userRepository.findAll().stream()
+                .collect(Collectors.toMap(
+                        User::getPubSplitKey,
+                        User::getHandle,
+                        (_, b) -> b));
     }
 
     @Override
@@ -66,7 +79,7 @@ public class HandleHelper implements HandleCryptoHelper {
         // TODO: Implement
 
         // Potential Look up
-        if (optDomain == null) {
+        if (optDomain != null) {
             // TODO: Look up, by asking the domain FIS
             return null;
         } else {

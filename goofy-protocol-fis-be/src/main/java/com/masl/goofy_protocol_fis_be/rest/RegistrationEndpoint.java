@@ -12,7 +12,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 // TODO: Document API
-// TODO: Test
 @RestController
 @RequestMapping("/api/register")
 public class RegistrationEndpoint {

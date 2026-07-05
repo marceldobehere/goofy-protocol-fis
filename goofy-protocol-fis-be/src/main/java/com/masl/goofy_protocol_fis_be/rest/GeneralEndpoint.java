@@ -5,6 +5,7 @@ import com.masl.goofy_protocol_fis_be.dto.request.GeneralReportDto;
 import com.masl.goofy_protocol_fis_be.dto.response.GeneralInfoDto;
 import com.masl.goofy_protocol_fis_be.properties.GeneralProperties;
 import com.masl.goofy_protocol_fis_be.service.GeneralReportService;
+import com.masl.goofy_protocol_fis_be.test_data.test_dev_prod.TestDataKeypair;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +16,12 @@ import org.springframework.web.bind.annotation.*;
 public class GeneralEndpoint {
     private final GeneralProperties generalProperties;
     private final GeneralReportService generalReportService;
+    private final TestDataKeypair testDataKeypair;
 
-    public GeneralEndpoint(GeneralProperties generalProperties, GeneralReportService generalReportService) {
+    public GeneralEndpoint(GeneralProperties generalProperties, GeneralReportService generalReportService, TestDataKeypair testDataKeypair) {
         this.generalProperties = generalProperties;
         this.generalReportService = generalReportService;
+        this.testDataKeypair = testDataKeypair;
     }
 
     @GetMapping("/status")
@@ -34,10 +37,8 @@ public class GeneralEndpoint {
                 generalProperties.getName(),
                 generalProperties.getDescription(),
                 generalProperties.getVersion(),
-
-                // TODO: Implement Repository/File & Service for FIS Identity & Load here
-                "<PUB_KEY>",
-                "<HANDLE>"
+                testDataKeypair.getServerKeypair().pub().serialize(),
+                testDataKeypair.getServerHandle()
         );
     }
 
