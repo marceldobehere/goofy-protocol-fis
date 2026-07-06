@@ -19,6 +19,7 @@ import org.springframework.web.method.HandlerMethod;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 // This makes the Swagger automatically document all possibly thrown (checked) Exceptions and documents them
 @Component
@@ -66,17 +67,21 @@ public class FisOpenApiCustomizer implements OperationCustomizer {
                 continue;
             log.debug("  > MATCH Exception Type: {}", exType);
 
+            // Get the Error Detail Fields
+            String[] detailFieldsArr = BaseClassFisException.detailFieldsFor(exType);
+            Map<String, Object> detailFields = Arrays.stream(detailFieldsArr).collect(Collectors.toMap(f -> f, f -> "..."));
+
             // Use The FisErrorDto as the Schema base, since it doesn't get used we have to explicitly force it
             Schema schema = ModelConverters.getInstance().read(FisErrorDto.class).get("FisErrorDto");
             schema.setExample(new FisErrorDto(
                     BaseClassFisException.errorCodeFor(exType),
                     "Error message for " + exType.getSimpleName(),
-                    Map.of("detailKey", "detailValue")));
+                    detailFields));
 
             // Create and Add the API Response
             String httpStatus = BaseClassFisException.httpStatusFor(exType) + " / " + BaseClassFisException.errorCodeFor(exType);
             ApiResponse response = new ApiResponse()
-                    .description("Error " + exType.getSimpleName())
+                    .description(exType.getSimpleName().replaceAll("([a-z0-9])([A-Z])", "$1 $2"))
                     .content(new Content().addMediaType(
                             "application/json",
                             new MediaType().schema(schema)

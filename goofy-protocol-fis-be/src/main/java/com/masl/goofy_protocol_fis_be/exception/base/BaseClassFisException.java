@@ -71,4 +71,13 @@ public class BaseClassFisException extends Exception {
 
         throw new IllegalArgumentException("Class " + _class.getName() + " is not annotated with @FisHttpErrorCode");
     }
+
+    // Magic Helper Methods for Annotation
+    public static String[] detailFieldsFor(Class<?> _class) {
+        // Check Base Class
+        FisHttpErrorCode ann = _class.getAnnotation(FisHttpErrorCode.class);
+        if (ann == null)
+            throw new IllegalArgumentException("Class " + _class.getName() + " is not annotated with @FisHttpErrorCode");
+        return ann.detailFields();
+    }
 }

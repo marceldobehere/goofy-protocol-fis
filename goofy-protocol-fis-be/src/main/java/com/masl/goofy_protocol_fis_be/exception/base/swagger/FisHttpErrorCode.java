@@ -12,4 +12,5 @@ import java.lang.annotation.Target;
 public @interface FisHttpErrorCode {
     int httpStatus() default 0;
     int errorCode() default 0;
+    String[] detailFields() default {};
 }
