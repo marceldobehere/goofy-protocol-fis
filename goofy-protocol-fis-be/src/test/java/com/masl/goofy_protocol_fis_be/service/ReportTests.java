@@ -1,11 +1,7 @@
 package com.masl.goofy_protocol_fis_be.service;
 
-import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
-import com.masl.goofy_protocol_core.crypto.connected.IsolatedHandleHelper;
-import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import com.masl.goofy_protocol_fis_be.dto.request.GeneralReportDto;
 import com.masl.goofy_protocol_fis_be.integration.IsolatedTestConfig;
-import com.masl.goofy_protocol_fis_be.repository.GeneralReportRepository;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -23,18 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles({"test", "tests-shared"})
 @ContextConfiguration(initializers = IsolatedTestConfig.class)
 public class ReportTests {
-    private static final String INVALID_CODE = "bruh 123";
-
     private final GeneralReportService reportService;
-    private final GeneralReportRepository reportRepository;
-
-    private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
-    private final HandleCrypto handleCrypto = new HandleCrypto(new IsolatedHandleHelper());
 
     @Autowired
-    public ReportTests(GeneralReportService reportService, GeneralReportRepository reportRepository) {
+    public ReportTests(GeneralReportService reportService) {
         this.reportService = reportService;
-        this.reportRepository = reportRepository;
     }
 
     @ParameterizedTest(name = "testReport(haveHandle={0})")

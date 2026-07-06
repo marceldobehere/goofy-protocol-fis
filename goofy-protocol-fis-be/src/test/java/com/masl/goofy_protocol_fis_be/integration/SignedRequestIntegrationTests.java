@@ -164,7 +164,7 @@ class SignedRequestIntegrationTests {
 				.headers(new HttpHeaders(multiHeaders)));
 
 		// Check for correct result
-		res.andExpect(status().is4xxClientError())
+		res.andExpect(status().is5xxServerError())
 				.andExpect(jsonPath("$.errorCode").value(AllServerErrorCodes.PUBLIC_KEY_LOOKUP_FAILED));
 	}
 

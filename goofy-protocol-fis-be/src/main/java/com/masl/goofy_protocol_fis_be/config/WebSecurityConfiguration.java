@@ -45,7 +45,10 @@ public class WebSecurityConfiguration {
                 if (testOrDev) {
                     auth
                         .requestMatchers("/api/test/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll();
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll();
 
                     // H2-Console
                     http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
@@ -74,7 +77,7 @@ public class WebSecurityConfiguration {
 
                     .requestMatchers("/api/admin/**").hasRole(ROLES.ADMIN)
                     .requestMatchers("/api/**").hasRole(ROLES.REGISTERED_USER)
-                    .anyRequest().authenticated();
+                    .anyRequest().hasRole(ROLES.ADMIN);
             }
         );
 

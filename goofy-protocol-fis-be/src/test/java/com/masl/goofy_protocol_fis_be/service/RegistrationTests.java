@@ -59,7 +59,7 @@ public class RegistrationTests {
 
     @ParameterizedTest(name = "testRegistrationWithValidCode(isAdmin={0})")
     @ValueSource(booleans = {false, true})
-    void testRegistrationWithValidCode(boolean isAdmin) {
+    void testRegistrationWithValidCode(boolean isAdmin) throws Exception {
         var auth = createTestAuthUser();
         var code = registrationService.createNewRegistrationCode(isAdmin);
         assertThat(code).isNotNull();
@@ -78,7 +78,7 @@ public class RegistrationTests {
     }
 
     @Test
-    void testRegistrationWithValidCodeReused() {
+    void testRegistrationWithValidCodeReused() throws Exception {
         var auth = createTestAuthUser();
         var code = registrationService.createNewRegistrationCode(false);
 
@@ -88,7 +88,7 @@ public class RegistrationTests {
     }
 
     @Test
-    void testRegistrationWithSameIdentity() {
+    void testRegistrationWithSameIdentity() throws Exception {
         var auth = createTestAuthUser();
 
         var code1 = registrationService.createNewRegistrationCode(false);

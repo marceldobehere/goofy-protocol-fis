@@ -2,12 +2,16 @@
 
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
+## General Infos
+(TODO)
+
 ## TODOs
 * Try writing Frontend using JS/TS + Modules if possible
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests
 * Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
 * Implement Exceptions for unsupported Crypto Requests
+* Create automated API Spec genertion in PDF/MD format
 * Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
   * Document Spec
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc)
@@ -28,6 +32,12 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## Setup
 (TODO)
+* Clone Repo
+* Change `application.properties` to use your wanted profile, probably `prod`
+* Check the `application-prod.properties` and adapt it to your needs
+* Run the Application, it should create the DB and the needed tables automatically
+* Get the Admin Register Code from the Logs and Register your Admin Account
+* Profit?
 
 ## Notes
 (TODO)
@@ -54,7 +64,7 @@ public FileStorageService(@Value("${app.storage.dir}") String dir) {
 The Test Data Path should also be fully reset on launch of the Test Profile, so that tests can be executed without any side effects from previous test runs.
 
 ## API Docs
-The WIP API Docs can be found [here](./API.md). 
+The WIP API Docs can be found [here](API.md). 
 
 Later on the version will be copied to the base goofy-protocol repository.
 

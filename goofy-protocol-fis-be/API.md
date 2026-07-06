@@ -1,17 +1,11 @@
 # Minimal Specs for a valid FIS
-These are the minimal specs for a valid FIS.
+These are some notes about the specs for FIS
 
-These are still very WIP.
+## NOTE
+The actual specs will can be found by starting the application and checking http://localhost:8080/swagger-ui/index.html.
 
+I will at some point make the source include a PDF or Markdown file with the current API Specs but currently I've had issues with automatically generating those :(
 
-# Table of Contents
-- [Minimal Specs for a valid FIS](#minimal-specs-for-a-valid-fis)
-- [Table of Contents](#table-of-contents)
-- [Specs](#specs)
-    - [Error Codes](#error-codes)
-    - [API](#api)
-
-# Specs
 
 
 ## Error Codes
@@ -28,42 +22,31 @@ For now, Errors are split into ClientErrors and ServerErrors, which all use uniq
 The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be/exception) in the `client` and `server` directories.
 
 
-## API
+## API (Implemented) `/api`
 
-### General
-Endpoints for general stuff about the FIS.
+### General `/api/general`
+Endpoints for general stuff about the FIS. 
+See `GeneralEndpoint.java`
 
-#### Status
+#### Status `GET /api/general/status`
 Returns status info. Mostly just "XYZ is running!"
 
-#### Info
+#### Info `GET /api/general/info`
 Returns information about the fis instance
 
-#### Contact
+#### Contact `GET /api/general/contact`
 These can be used publically but can also be signed by a user.
 
-#### Report
+#### Report `POST /api/general/report`
 These can be used publically but can also be signed by a user.
 
 #### Public Handle / Key
 Get the public handle / public key of the fis server itself
 
 
-### Verification / User Lookup
-Endpoint(s) for getting information about a handle
-
-TODO: Make sure that all relevant endpoints notify when a handle has been moved
-
-#### Handle Lookup
-Looking up the base / service identity using the handle and getting some basic information back. (Handle, Public Key, which FIS server it is on, etc, if its from the fis service?)
-
-#### Set/Update (Ext.) Handle Information
-TODO: Finalize, and update other fis endpoints (data/service related)
-
-Users from other FISs or users that move their account should be able to update the fis server url and other things for their handle, this is important because of the implicit nature of the handles and services having the old fis cached.
-
-### Registration (Base Identity / Account)
-Endpoints for registering new profiles
+### Registration (Base Identity / Account) `/api/register`
+Endpoints for registering new profiles. 
+See `RegistrationEndpoint.java`
 
 #### Check Registrations Status
 Checks if the FIS even allows registrations currently and if its automatic or manual
@@ -78,8 +61,34 @@ This endpoint is used to create a new account. It should be a signed request usi
 ### Login/Check (Base Identity / Account)
 Endpoint(s) to get data for signed request and also as a check if the signature is working.
 
+
+
+
+
+
+
+
+## API (TODO)
+
+### Registration (Base Identity / Account) (Remaining Part)
+
 #### Get User Info
 This signed request will return info about the user who sent it. This can be used to check whether the signing works, if the user is authenticated and if the user is an administrator.
+
+
+
+### Verification / User Lookup
+Endpoint(s) for getting information about a handle
+
+TODO: Make sure that all relevant endpoints notify when a handle has been moved
+
+#### Handle Lookup
+Looking up the base / service identity using the handle and getting some basic information back. (Handle, Public Key, which FIS server it is on, etc, if its from the fis service?)
+
+#### Set/Update (Ext.) Handle Information
+TODO: Finalize, and update other fis endpoints (data/service related)
+
+Users from other FISs or users that move their account should be able to update the fis server url and other things for their handle, this is important because of the implicit nature of the handles and services having the old fis cached.
 
 
 ### Encrypted Password/Keypair Storage (Base Identity / Account)

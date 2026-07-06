@@ -3,17 +3,22 @@ package com.masl.goofy_protocol_fis_be.rest;
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import com.masl.goofy_protocol_fis_be.dto.request.RegistrationRequestDto;
 import com.masl.goofy_protocol_fis_be.dto.response.RegisterStatusDto;
+import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
+import com.masl.goofy_protocol_fis_be.exception.client.HandleAlreadyRegistered;
+import com.masl.goofy_protocol_fis_be.exception.client.InvalidRegisterCode;
+import com.masl.goofy_protocol_fis_be.exception.client.RegistrationCodeAlreadyUsed;
 import com.masl.goofy_protocol_fis_be.exception.client.RegistrationNotAllowed;
 import com.masl.goofy_protocol_fis_be.properties.RegisterProperties;
 import com.masl.goofy_protocol_fis_be.service.RegistrationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-// TODO: Document API
 @RestController
 @RequestMapping("/api/register")
+@Tag(name = "Registration", description = "Endpoints relating to Registration of Users")
 public class RegistrationEndpoint {
     private final RegisterProperties registerProperties;
     private final RegistrationService registrationService;
@@ -25,7 +30,8 @@ public class RegistrationEndpoint {
 
     @PostMapping
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY') and not hasRole('ROLE_REGISTERED_USER')")
-    public String register(@Valid @RequestBody String code, @AuthenticationPrincipal GoofyAuthUser auth) {
+    @FisEndpoint(summary = "Attempt Registration", description = "To register, a registration code is required.")
+    public String register(@Valid @RequestBody String code, @AuthenticationPrincipal GoofyAuthUser auth) throws RegistrationNotAllowed, InvalidRegisterCode, HandleAlreadyRegistered, RegistrationCodeAlreadyUsed {
         if (!registerProperties.getRegistrationsAllowed())
             throw new RegistrationNotAllowed();
 
@@ -34,6 +40,7 @@ public class RegistrationEndpoint {
     }
 
     @GetMapping("/status")
+    @FisEndpoint(summary = "Get Registration Status")
     public RegisterStatusDto registrationsAllowed() {
         return new RegisterStatusDto(
                 registerProperties.getRegistrationsAllowed(),
@@ -44,7 +51,8 @@ public class RegistrationEndpoint {
     // TODO: Rate Limit
     @PostMapping("/request")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    public void requestRegistrationCode(@Valid @RequestBody RegistrationRequestDto requestDto) {
+    @FisEndpoint(summary = "Request a Registration Code")
+    public void requestRegistrationCode(@Valid @RequestBody RegistrationRequestDto requestDto) throws RegistrationNotAllowed {
         if (!registerProperties.getRegistrationsAllowed())
             throw new RegistrationNotAllowed();
         registrationService.submitRegistrationRequest(requestDto);

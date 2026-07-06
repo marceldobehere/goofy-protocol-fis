@@ -7,6 +7,7 @@ import com.masl.goofy_protocol_fis_be.entity.RegistrationRequest;
 import com.masl.goofy_protocol_fis_be.entity.User;
 import com.masl.goofy_protocol_fis_be.exception.client.HandleAlreadyRegistered;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidRegisterCode;
+import com.masl.goofy_protocol_fis_be.exception.client.RegistrationCodeAlreadyUsed;
 import com.masl.goofy_protocol_fis_be.repository.RegistrationCodeRepository;
 import com.masl.goofy_protocol_fis_be.repository.RegistrationRequestRepository;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
@@ -70,10 +71,10 @@ public class RegistrationService {
         return registrationCodeRepository.findByCodeAndUsedAtIsNull(code);
     }
 
-    private void useCode(String code, User user) {
+    private void useCode(String code, User user) throws RegistrationCodeAlreadyUsed {
         RegistrationCode regCode = registrationCodeRepository.findById(code).orElseThrow(() -> new IllegalArgumentException("Invalid registration code"));
         if (regCode.getUsedAt() != null)
-            throw new IllegalArgumentException("Registration code already used");
+            throw new RegistrationCodeAlreadyUsed(code);
 
         regCode.setUsedBy(user);
         regCode.setUsedAt(Instant.now());
@@ -82,7 +83,7 @@ public class RegistrationService {
 
     // Synchronized should hopefully be enough to avoid race conditions, since the backend will only really use one instance.
     // (Future) TODO: Make Code Safe from Race Conditions when scaling
-    synchronized public void attemptRegistration(String code, GoofyAuthUser auth) {
+    synchronized public void attemptRegistration(String code, GoofyAuthUser auth) throws InvalidRegisterCode, HandleAlreadyRegistered, RegistrationCodeAlreadyUsed {
         RegistrationCode regCode = getValidCode(code);
         if (regCode == null)
             throw new InvalidRegisterCode(code);
