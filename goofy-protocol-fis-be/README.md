@@ -6,26 +6,33 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 (TODO)
 
 ## TODOs
+* Add Endpoint to check if a register code is valid without using it
 * Try writing Frontend using JS/TS + Modules if possible
+* Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
+* Add Descriptions to FIS Errors (For example validity errors)
+* Potentially add examples to the DTOs using annotations or so for swagger
+* Create a sample Endpoint / document the potential runtime errors (Mostly in Signed Request filtering / Forbidden)
+* 
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests
 * Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
 * Implement Exceptions for unsupported Crypto Requests
+* Have correct Behavior for deleting Entities (on delete cascade/set null)
 * Create automated API Spec genertion in PDF/MD format
-* Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
-  * Document Spec
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc)
 * Move the Crypto Core Lib into a seperate package with tests, known values and pom.xml
 * Implement User Restriction
 * Implement User Account Deactivation
-* Implement Data Export
-* Implement Data Import?
+* Implement Data Export (How to treat Buckets and Tables?)
+* Implement Data Import? (How to treat Buckets and Tables?)
 * Implement User Account Deletion -> Should safely delete everything and not cause DB issues (Cache too)
+* Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS
 * Implement silly Rate Limiting (only for prod/develop), Base: https://www.baeldung.com/spring-bucket4j
   * Requests without a special cookies token will have to wait some time before their request is processed / get extra low prio / strong rate limiting, then they will get the special cookie
   * Ideally Requests without the special cookie dont even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks
   * Requests with the cookie will get individual rate limiting based on their unique cookie (if valid) / maybe also based on the handle
 * Create extra DB Table for known FIS Domains ?
+* Look into Canonical Builds
 
 ## Features
 (TODO)
@@ -306,3 +313,96 @@ ML-KEM (512)  + ML-DSA (44):  ~3,350 bytes
 ML-KEM (768)  + ML-DSA (65):  ~4,500 bytes
 ML-KEM (1024) + ML-DSA (87):  ~6,300 bytes
 ```
+
+
+### User Tables
+(TODO)
+
+#### Table Structure
+(TODO)
+
+#### Table Access
+(TODO)
+
+#### Table Permissions
+(TODO)
+
+#### Table Creation
+(TODO)
+Important: Supported Datatypes, limits for columns, column names, primary key, foreign keys? (on update/delete?) (interop with different tables?), custom field indexing?  
+
+#### Table Deletion
+(TODO)
+
+#### Table Size
+
+
+#### Table Query Idea
+(TODO)
+
+to query a table, users can send queries as a JSON object:
+```json
+{
+  "select": [],
+  "where": [],
+  "having": [],
+  "groupBy": [],
+  "orderBy": [],
+  "limit": 0,
+  "offset": 0
+}
+```
+
+Keep in mind this will still be quite limited and only support a small subset of SQL queries, but it should be enough for most use cases.
+
+The datatypes of the tables will also be limited.
+
+All fields except for the `select` field are optional and can be omitted if not needed.
+
+The `select` field will contain a list of either pure columns or aggregate functions like `COUNT`.
+
+
+The `where` field will contain a list of conditions applied to the columns but also can have nested conditions (for example with `AND` `OR` `NOT`).
+The conditions will be have a limit to prevent abuse.
+
+The `having` field will contain a list of conditions applied to the aggregate functions but also can have nested conditions (for example with `AND` `OR` `NOT`).
+
+The `groupBy` field will contain a list of columns to group the results by.
+
+The `orderBy` field will contain a list of columns to order the results by, with an optional direction (ASC/DESC).
+
+The `limit` field will contain a number to limit the number of results returned.
+
+The `offset` field will contain a number to offset the results returned, useful for pagination.
+
+
+An example query could look like this:
+```json
+{
+  "select": ["id", "name", "COUNT(*)"],
+  "where": [
+    {
+      "column": "age",
+      "operator": ">",
+      "value": 18
+    },
+    {
+      "column": "country",
+      "operator": "!=",
+      "value": "USA"
+    }
+  ],
+  "groupBy": ["country"],
+  "orderBy": [
+    {
+      "column": "name",
+      "direction": "ASC"
+    }
+  ],
+  "limit": 10,
+  "offset": 0
+}
+```
+
+This is for querying, for inserts/updates/deletes, the system might be different.
+
