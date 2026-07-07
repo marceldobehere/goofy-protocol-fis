@@ -8,7 +8,19 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol using NextJS.
 There is a good chance i will fully rewrite it in the future, but for now testing it should hopefully be okay.
 It is also a good showcase if it's even compatible and if there are any Java / JS Compatibility issues i need to address first!
 
-## Planned Register Flow
+
+## Get Started
+* Clone the repo
+* Install dependencies with `npm install`
+* Run the tests with `npm run test`
+* Run the dev server with `npm run dev`
+* Profit?
+
+
+
+## Other Stuff
+
+### Planned Register Flow
 * User goes to the Register Page
 * Ideally User already has a Register Code or Requests one
 * User enters the Code to Check
