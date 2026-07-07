@@ -48,6 +48,12 @@ public class RegistrationEndpoint {
         );
     }
 
+    @GetMapping("/valid")
+    @FisEndpoint(summary = "Check if a Registration Code is Valid")
+    public boolean isRegistrationCodeValid(@RequestParam String code) {
+        return registrationService.isCodeValid(code);
+    }
+
     // TODO: Rate Limit
     @PostMapping("/request")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")

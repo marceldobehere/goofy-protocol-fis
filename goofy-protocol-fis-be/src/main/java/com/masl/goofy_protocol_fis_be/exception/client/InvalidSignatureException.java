@@ -6,7 +6,7 @@ import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisHttpErrorCode;
 
 import java.util.Map;
 
-@FisHttpErrorCode(errorCode = AllClientErrorCodes.INVALID_SIGNATURE, detailFields = {"validity"})
+@FisHttpErrorCode(errorCode = AllClientErrorCodes.INVALID_SIGNATURE, detailFields = {"validity"}, description = "This means that a signature passed is for some reason invalid. The \"validity\" Field contains the exact reason. (See SignedRequest.SignedRequestValidity)")
 public class InvalidSignatureException extends BaseClientFisException {
     public InvalidSignatureException(SignedRequest.SignedRequestValidity signedRequestValidity) {
         super("Invalid signature: " + signedRequestValidity, Map.of("validity", signedRequestValidity.name()));

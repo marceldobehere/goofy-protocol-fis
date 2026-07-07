@@ -5,34 +5,36 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 ## General Infos
 (TODO)
 
-## TODOs
-* Add Endpoint to check if a register code is valid without using it
-* Try writing Frontend using JS/TS + Modules if possible
-* Start implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
-* Add Descriptions to FIS Errors (For example validity errors)
-* Potentially add examples to the DTOs using annotations or so for swagger
-* Create a sample Endpoint / document the potential runtime errors (Mostly in Signed Request filtering / Forbidden)
-* 
+## TODOs (Currently)
+* Work on Frontend
+* Work on Implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
+* Work on more Implementation Stuff
+  * Have correct Behavior for deleting Entities (on delete cascade/set null)
+  * Implement User Restriction
+  * Implement User Account Deactivation
+  * Implement User Account Deletion -> Should safely delete everything and not cause DB issues (Cache too)
+  * Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS
+  * Implement Data Export (How to treat Buckets and Tables?)
+  * Implement Data Import? (How to treat Buckets and Tables?)
+* Implement Exceptions for unsupported Crypto Requests
+* Check Multipart Upload with Signed Request + Query Parameters.
+* Add Config for HandleCrypto Cache/Maps (size, expiration, etc)
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests
-* Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
-* Implement Exceptions for unsupported Crypto Requests
-* Have correct Behavior for deleting Entities (on delete cascade/set null)
+* Create extra DB Table for known FIS Domains ?
+
+## TODOs (Later)
+* Create a sample Endpoint / document the potential runtime errors (Mostly in Signed Request filtering / Forbidden)
+* Potentially add examples to the DTOs using annotations or so for swagger
+* Maybe Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
 * Create automated API Spec genertion in PDF/MD format
-* Add Config for HandleCrypto Cache/Maps (size, expiration, etc)
-* Move the Crypto Core Lib into a seperate package with tests, known values and pom.xml
-* Implement User Restriction
-* Implement User Account Deactivation
-* Implement Data Export (How to treat Buckets and Tables?)
-* Implement Data Import? (How to treat Buckets and Tables?)
-* Implement User Account Deletion -> Should safely delete everything and not cause DB issues (Cache too)
-* Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS
 * Implement silly Rate Limiting (only for prod/develop), Base: https://www.baeldung.com/spring-bucket4j
   * Requests without a special cookies token will have to wait some time before their request is processed / get extra low prio / strong rate limiting, then they will get the special cookie
   * Ideally Requests without the special cookie dont even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks
   * Requests with the cookie will get individual rate limiting based on their unique cookie (if valid) / maybe also based on the handle
-* Create extra DB Table for known FIS Domains ?
+* Move the Crypto Core Lib into a seperate package with tests, known values and pom.xml
 * Look into Canonical Builds
+
 
 ## Features
 (TODO)

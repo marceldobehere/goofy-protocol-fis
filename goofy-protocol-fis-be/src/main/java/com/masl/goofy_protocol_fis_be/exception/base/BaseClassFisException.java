@@ -34,7 +34,9 @@ public class BaseClassFisException extends Exception {
         this(message, Map.of());
     }
 
-    // Magic Helper Methods for Annotation
+
+    // ---- Magic Helper Methods for Annotation ----
+
     public static int httpStatusFor(Class<?> _class) {
         // Check Base Class
         FisHttpErrorCode ann = _class.getAnnotation(FisHttpErrorCode.class);
@@ -53,7 +55,6 @@ public class BaseClassFisException extends Exception {
         throw new IllegalArgumentException("Class " + _class.getName() + " is not annotated with @FisHttpErrorCode");
     }
 
-    // Magic Helper Methods for Annotation
     public static int errorCodeFor(Class<?> _class) {
         // Check Base Class
         FisHttpErrorCode ann = _class.getAnnotation(FisHttpErrorCode.class);
@@ -72,12 +73,19 @@ public class BaseClassFisException extends Exception {
         throw new IllegalArgumentException("Class " + _class.getName() + " is not annotated with @FisHttpErrorCode");
     }
 
-    // Magic Helper Methods for Annotation
     public static String[] detailFieldsFor(Class<?> _class) {
         // Check Base Class
         FisHttpErrorCode ann = _class.getAnnotation(FisHttpErrorCode.class);
         if (ann == null)
             throw new IllegalArgumentException("Class " + _class.getName() + " is not annotated with @FisHttpErrorCode");
         return ann.detailFields();
+    }
+
+    public static String descriptionFor(Class<?> _class) {
+        // Check Base Class
+        FisHttpErrorCode ann = _class.getAnnotation(FisHttpErrorCode.class);
+        if (ann == null)
+            throw new IllegalArgumentException("Class " + _class.getName() + " is not annotated with @FisHttpErrorCode");
+        return ann.description();
     }
 }

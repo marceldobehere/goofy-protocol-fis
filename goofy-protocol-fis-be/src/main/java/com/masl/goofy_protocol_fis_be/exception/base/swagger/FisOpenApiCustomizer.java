@@ -80,8 +80,9 @@ public class FisOpenApiCustomizer implements OperationCustomizer {
 
             // Create and Add the API Response
             String httpStatus = BaseClassFisException.httpStatusFor(exType) + " / " + BaseClassFisException.errorCodeFor(exType);
+            String descStr = BaseClassFisException.descriptionFor(exType); descStr = descStr.isEmpty() ? "" : ":<br>" + descStr;
             ApiResponse response = new ApiResponse()
-                    .description(exType.getSimpleName().replaceAll("([a-z0-9])([A-Z])", "$1 $2"))
+                    .description(exType.getSimpleName().replaceAll("([a-z0-9])([A-Z])", "$1 $2") + descStr)
                     .content(new Content().addMediaType(
                             "application/json",
                             new MediaType().schema(schema)
