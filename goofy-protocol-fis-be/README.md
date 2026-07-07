@@ -32,9 +32,11 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## Setup
 (TODO)
-* Clone Repo
-* Change `application.properties` to use your wanted profile, probably `prod`
-* Check the `application-prod.properties` and adapt it to your needs
+* Clone the Repository
+* Inside the `/src/main/resources` directory:
+  * Change `application.properties` to use your wanted profile, probably `prod`
+  * Copy the `application-prod.example.properties` to be `application-prod.properties`
+  * Check the `application-prod.properties` and adapt/edit it to your needs
 * Run the Application, it should create the DB and the needed tables automatically
 * Get the Admin Register Code from the Logs and Register your Admin Account
 * Profit?

@@ -35,3 +35,6 @@ build/
 .mvn
 
 *.db
+
+
+application-prod.properties
