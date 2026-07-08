@@ -9,4 +9,10 @@ public class ROLES {
 
     // Administrator
     public static final String ADMIN = "ADMIN";
+
+    public enum AuthRoleEnumDto {
+        OUTSIDE_ENTITY,
+        REGISTERED_USER,
+        ADMIN
+    }
 }

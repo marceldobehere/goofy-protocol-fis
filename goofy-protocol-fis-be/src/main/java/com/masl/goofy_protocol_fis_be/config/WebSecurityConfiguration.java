@@ -75,25 +75,18 @@ public class WebSecurityConfiguration {
                 auth
                     .requestMatchers("/").permitAll() // Redirect to Frontend
                     .requestMatchers("/api/general/**").permitAll() // General Info of FIS Server
-                    .requestMatchers("/api/lookup/**").permitAll() // Lookup and set FIS Info
-                    .requestMatchers("/api/register/**").permitAll() // Registration
-                    .requestMatchers("/api/global-handle/**").permitAll() // Global Handle Info
-                    .requestMatchers("/api/ext-service-access/**").permitAll() // Redirect Links for Service Config/Access
+                    .requestMatchers("/api/register/**").permitAll() // Registration of Users
+                    .requestMatchers("/api/user/**").permitAll() // User Info, Lookup, Export, etc.
+                    .requestMatchers("/api/redirect/**").permitAll() // Redirect Links for Service Login/Config/Access
 
-                    .requestMatchers("/api/check/**").permitAll() // Check/Verify Request Validity / Get User Info
-                    .requestMatchers("/api/account-details/**").hasRole(ROLES.REGISTERED_USER) // Account Details
-                    .requestMatchers("/api/key-storage/**").hasRole(ROLES.REGISTERED_USER) // Password/Keypair Storage
-                    .requestMatchers("/api/id-storage/**").hasRole(ROLES.REGISTERED_USER) // Identity Storage
+                    .requestMatchers("/api/login-storage/**").permitAll() // Password/Keypair Storage
+                    .requestMatchers("/api/identity-storage/**").hasRole(ROLES.REGISTERED_USER) // Identity Keypair Storage for Services.
+
                     .requestMatchers("/api/service-entry-config/**").hasRole(ROLES.REGISTERED_USER) // Service Entry Configuration
-                    .requestMatchers("/api/service-data-config/**").hasRole(ROLES.REGISTERED_USER) // Service Data Access Configuration
-                    .requestMatchers("/api/gdpr/**").hasRole(ROLES.REGISTERED_USER) // GDPR Stuff (for Users)
-
-                    .requestMatchers("/api/service-table/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Table Access
                     .requestMatchers("/api/service-bucket/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Bucket Access
-
+                    .requestMatchers("/api/service-table/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Table Access
 
                     .requestMatchers("/api/admin/**").hasRole(ROLES.ADMIN)
-                    .requestMatchers("/api/**").hasRole(ROLES.REGISTERED_USER)
                     .anyRequest().hasRole(ROLES.ADMIN);
             }
         );

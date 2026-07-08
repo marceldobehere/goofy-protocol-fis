@@ -63,6 +63,7 @@ public class HandleHelper implements HandleCryptoHelper {
 
     @Override
     public Map<String, String> loadUserKeyToHandleMap() {
+        // TODO: Also Check Identity Storage
         return userRepository.findAll().stream()
                 .collect(Collectors.toMap(
                         User::getPubSplitKey,
@@ -76,6 +77,7 @@ public class HandleHelper implements HandleCryptoHelper {
         String optDomain = GenericHandleCrypto.getPotentialDomainFromHandle(handle);
 
         // Check internal Storage / DBs for potential Mappings
+        // TODO: Also Check Identity Storage
         // TODO: Implement
 
         // Potential Look up

@@ -1,6 +1,7 @@
 package com.masl.goofy_protocol_fis_be.rest;
 
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -8,9 +9,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// TODO: Move back to test and make Profile test only
 @RestController
 @Profile({"dev","test"})
 @RequestMapping("/api/test")
+@Hidden
 public class TestEndpoint {
     @GetMapping("/test-guest")
     public String testGuest() {

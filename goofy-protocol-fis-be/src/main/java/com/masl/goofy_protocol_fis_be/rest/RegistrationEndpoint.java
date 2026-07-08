@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/register")
-@Tag(name = "Registration", description = "Endpoints relating to Registration of Users")
+@Tag(name = "Registration", description = "Endpoints relating to the Registration of Users")
 public class RegistrationEndpoint {
     private final RegisterProperties registerProperties;
     private final RegistrationService registrationService;
@@ -30,7 +30,7 @@ public class RegistrationEndpoint {
 
     @PostMapping
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY') and not hasRole('ROLE_REGISTERED_USER')")
-    @FisEndpoint(summary = "Attempt Registration", description = "To register, a registration code is required.")
+    @FisEndpoint(summary = "Attempt Registration", description = "To register, a registration code is required. The request needs to be signed with the keypair that wants to register.")
     public String register(@Valid @RequestBody String code, @AuthenticationPrincipal GoofyAuthUser auth) throws RegistrationNotAllowed, InvalidRegisterCode, HandleAlreadyRegistered, RegistrationCodeAlreadyUsed {
         if (!registerProperties.getRegistrationsAllowed())
             throw new RegistrationNotAllowed();
@@ -40,7 +40,7 @@ public class RegistrationEndpoint {
     }
 
     @GetMapping("/status")
-    @FisEndpoint(summary = "Get Registration Status")
+    @FisEndpoint(summary = "Get the Registration Status (Are Registrations allowed? How do they get checked?)")
     public RegisterStatusDto registrationsAllowed() {
         return new RegisterStatusDto(
                 registerProperties.getRegistrationsAllowed(),
@@ -49,15 +49,15 @@ public class RegistrationEndpoint {
     }
 
     @GetMapping("/valid")
-    @FisEndpoint(summary = "Check if a Registration Code is Valid")
+    @FisEndpoint(summary = "Check if a Registration Code is Valid without using it")
     public boolean isRegistrationCodeValid(@RequestParam String code) {
         return registrationService.isCodeValid(code);
     }
 
-    // TODO: Rate Limit
+    // TODO: Rate Limit & Maybe Remove OUTSIDE_ENTITY Role?
     @PostMapping("/request")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Request a Registration Code")
+    @FisEndpoint(summary = "Request a Registration Code.", description = "You will either be manually contacted by a person or an automated system might send you an email/etc.")
     public void requestRegistrationCode(@Valid @RequestBody RegistrationRequestDto requestDto) throws RegistrationNotAllowed {
         if (!registerProperties.getRegistrationsAllowed())
             throw new RegistrationNotAllowed();

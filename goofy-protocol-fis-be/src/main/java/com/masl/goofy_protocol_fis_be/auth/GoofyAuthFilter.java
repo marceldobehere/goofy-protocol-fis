@@ -82,7 +82,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
                 validator.invalidateUniqueId(req.uniqueId());
 
             // Get User Data and Create Authentication
-            User user = userRepository.findById(req.handle()).orElse(null);
+            User user = userRepository.findByHandle(req.handle());
             boolean isUser = user != null;
             boolean isAdmin = user != null && user.isAdmin();
             SecurityContextHolder.getContext().setAuthentication(new GoofyAuth(req, isUser, isAdmin));

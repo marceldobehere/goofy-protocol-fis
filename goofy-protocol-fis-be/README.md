@@ -76,10 +76,27 @@ public FileStorageService(@Value("${app.storage.dir}") String dir) {
 The Test Data Path should also be fully reset on launch of the Test Profile, so that tests can be executed without any side effects from previous test runs.
 
 ## API Docs
-The WIP API Docs can be found [here](API.md). 
+The actual specs will can be found by starting the application in the `dev` Profile and checking http://localhost:8080/swagger-ui/index.html.
+
+All Non-Admin Endpoints should be accessible and behave the same way on all FIS implementations, so that clients can be implemented in a generic way and work with any FIS implementation.
+The Admin Endpoints don't necessarily have to be implemented in the same way, but it would make sense to have them implemented in a similar way, so that a generic client can be used for all FIS implementations.
+
+I will at some point make the source include a PDF or Markdown file with the current API Specs but currently I've had issues with automatically generating those :(
 
 Later on the version will be copied to the base goofy-protocol repository.
 
+### Error Codes
+For now, Errors are split into ClientErrors and ServerErrors, which all use unique Error Codes and have the following structure:
+```
+{
+    "errorCode": <INT>,
+    "message": <Message>,
+    "details": {
+        <Details depending on exact error>
+    }
+}
+```
+The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be/exception) in the `client` and `server` directories.
 
 
 
@@ -241,6 +258,7 @@ Example: `beray_drubs_pant57107@fis.rocc.systems`
 NOTE: When sending a signed request with only your handle, it is advised to attach the domain, if theres a chance the Server doesn't know it yet.
 If the server cannot resolve your handle, it will throw an error and ideally your client would send the handle with the domain attached.
 
+NOTE: The domain technically allows to have the port defined too, useful for testing with localhost.
 
 
 #### Cryptographic Handle Derivation

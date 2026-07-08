@@ -31,7 +31,7 @@ public class GeneralEndpoint {
     }
 
     @GetMapping("/status")
-    @FisEndpoint(summary = "Get the Status of the FIS Backend")
+    @FisEndpoint(summary = "Get the Status of the FIS Backend. Mostly just `XYZ is running!`")
     public String status() {
         return "FIS Backend is running!";
     }
@@ -42,6 +42,7 @@ public class GeneralEndpoint {
         return new GeneralInfoDto(
                 generalProperties.getFrontendUrl(),
                 generalProperties.getUrl(),
+                generalProperties.getDomain(),
                 generalProperties.getName(),
                 generalProperties.getDescription(),
                 generalProperties.getVersion(),
@@ -53,14 +54,14 @@ public class GeneralEndpoint {
     }
 
     @GetMapping("/contact")
-    @FisEndpoint(summary = "Get Contact Information for the Instance Owner")
+    @FisEndpoint(summary = "Get Contact Information for the Instance Owner. Can be signed by the user")
     public String contact() {
         return generalProperties.getContact();
     }
 
     // TODO: Rate Limit
     @PostMapping("/report")
-    @FisEndpoint(summary = "Report a General Issue to the Instance Owner")
+    @FisEndpoint(summary = "Report a General Issue to the Instance Owner. Can be signed by the user")
     public void report(@Valid @RequestBody GeneralReportDto report, @AuthenticationPrincipal GoofyAuthUser auth) {
         String optHandle = auth != null ? auth.getHandle() : null;
         generalReportService.submitReport(report, optHandle);

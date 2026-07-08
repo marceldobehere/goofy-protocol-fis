@@ -12,6 +12,7 @@ import java.util.List;
 public class GeneralInfoDto {
     private String frontendUrl;
     private String url;
+    private String domain;
     private String name;
     private String description;
     private String version;
