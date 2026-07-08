@@ -121,7 +121,7 @@ export function parseFullHandle(handleWithOptDomain: string): FullHandle {
 
 // Signed Request
 
-export async function createSignedRequest(keypair: AsymmFullKeyPair, method: HttpMethod, path: string, body: string | Uint8Array): Promise<SignedRequest> {
+export async function createSignedRequest(keypair: AsymmFullKeyPair, method: HttpMethod, path: string, body: string | Uint8Array | null): Promise<SignedRequest> {
     return await _internalSignedRequest.fromParts(keypair, method, path, body, handleCrypto) as SignedRequest;
 }
 

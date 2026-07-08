@@ -34,6 +34,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
   * Requests with the cookie will get individual rate limiting based on their unique cookie (if valid) / maybe also based on the handle
 * Move the Crypto Core Lib into a seperate package with tests, known values and pom.xml
 * Look into Canonical Builds
+* Improve CORS?
 
 
 ## Features

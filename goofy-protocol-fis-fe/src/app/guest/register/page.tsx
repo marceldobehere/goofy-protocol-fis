@@ -8,6 +8,9 @@ import {
     getHeadersFromSignedRequestWithHandle, getHeadersFromSignedRequestWithPubkey
 } from "@/libs/crypto";
 import {AsymmCryptoType} from "@/libs/crypto-types";
+import {GeneralInfoDto, RequestError, RequestFisError} from "@/libs/dtos";
+import {getAuth, getNoAuth} from "@/libs/req";
+import {hasKeypair, saveKeypair} from "@/libs/auth";
 
 export default function Home() {
 
@@ -52,13 +55,52 @@ export default function Home() {
 
     }
 
+    async function testRequest() {
+        if (!(await hasKeypair())) {
+            const keypair = await generateAsymmKeypair(AsymmCryptoType.EC_C25519);
+            await saveKeypair(keypair);
+        }
+
+        // Should work and return DTO
+        const generalInfo: GeneralInfoDto = await getNoAuth("/api/general/info");
+        console.log("generalInfo:", generalInfo);
+
+        // Should work
+        try {
+            const outsiderTest: string = await getAuth("/api/test/test-outsider");
+            console.log("outsiderTest:", outsiderTest);
+        } catch (error) {
+            if (error instanceof RequestFisError)
+                console.debug("Outsider RequestFisError:", error.toString());
+            else if (error instanceof RequestError)
+                console.debug("Outsider RequestError:", error.toString());
+            else
+                console.debug(error);
+        }
+
+        // Should Fail with Access Denied
+        try {
+            const userTest: string = await getAuth("/api/test/test-user");
+            console.log("userTest:", userTest);
+        } catch (error) {
+            if (error instanceof RequestFisError)
+                console.debug("User RequestFisError:", error.toString());
+            else if (error instanceof RequestError)
+                console.debug("User RequestError:", error.toString());
+            else
+                console.debug(error);
+        }
+    }
+
     return (
         <main>
             <div className={styles.MainCont}>
                 <h2 className={styles.Title}>Register</h2>
 
                 <p className={styles.Introduction}>
-                    <button  onClick={test}>Test</button>
+                    <button  onClick={test}>Test Local</button>
+                    &#32;
+                    <button  onClick={testRequest}>Test Request</button>
                 </p>
 
 
