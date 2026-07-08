@@ -5,39 +5,28 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegistrationCode {
+public class LoginStorageEntry {
     @Id
-    @Column(nullable = false, length = FieldSize.GENERIC_CODE_LEN)
+    @Column(nullable = false, length = FieldSize.SHA256_LEN)
     @Getter @Setter
-    private String code;
+    private String usernameHash;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = FieldSize.FULL_KEY_LEN)
     @Getter @Setter
-    @ColumnDefault("false")
-    private Boolean admin;
+    private String encKeypair;
 
-    @ManyToOne
-    @JoinColumn
+    @ManyToOne(optional = false)
+    @JoinColumn(nullable = false)
     @Getter @Setter
     private User createdBy;
 
     @Column(nullable = false)
     @Getter @Setter
     private Instant createdAt;
-
-    @ManyToOne
-    @JoinColumn
-    @Getter @Setter
-    private User usedBy;
-
-    @Column
-    @Getter @Setter
-    private Instant usedAt;
 }

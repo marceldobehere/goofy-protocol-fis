@@ -11,4 +11,8 @@ public class AllClientErrorCodes {
     public static final int HANDLE_ALREADY_REGISTERED = 1_002_003;
     public static final int REGISTRATION_CODE_ALREADY_USED = 1_002_004;
 
+    public static final int LOGIN_ENTRY_ALREADY_EXISTS = 1_003_001;
+    public static final int LOGIN_ENTRY_NOT_FOUND = 1_003_002;
+    public static final int LOGIN_ENTRY_INVALID = 1_003_003;
+
 }

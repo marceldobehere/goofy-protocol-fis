@@ -335,6 +335,11 @@ ML-KEM (768)  + ML-DSA (65):  ~4,500 bytes
 ML-KEM (1024) + ML-DSA (87):  ~6,300 bytes
 ```
 
+### Login Storage
+(TODO)
+The username will be hashed with sha256 and encoded using Base64URL.
+
+
 
 ### User Tables
 (TODO)
