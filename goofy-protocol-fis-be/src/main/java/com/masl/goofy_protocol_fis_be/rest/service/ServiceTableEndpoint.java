@@ -9,6 +9,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Service Table Access", description = "Endpoints related to accessing Tables.")
 public class ServiceTableEndpoint {
     /*
+
+    // TODO: Look into behaviour for modifying tables so simple "migration", ideally force the user to define explicit default values when changing the schema
+    // In general look into how that should work, maybe define a schema version and on launch the service/app checks the schema and updates it if needed?
+    // This would also affect constraints, so maybe we shouldnt have constraints and really keep the tables simple
+
+
     ### Service Table Access
     These Endpoints get used by services to access the tables.
     IMPORTANT, KEEP SCOPE IN MIND: EITHER LOCAL (Uses service name as a prefix) or GLOBAL (Uses absolute name, for example if a service wants to access data from a different service, for example a chat app server writing received messages to its table and the client reading the entries from the table and storing it in its own table)

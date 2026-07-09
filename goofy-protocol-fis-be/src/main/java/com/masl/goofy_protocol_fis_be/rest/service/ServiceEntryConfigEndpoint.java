@@ -13,6 +13,8 @@ public class ServiceEntryConfigEndpoint {
     // The Entries also have access defined for which handles can read/write to them. (Default always has at least the User and the Identity)
     // The Entries consist of a DB with Tables and Bucket for binary Data
 
+    // TODO: Look into if I should maybe split it into 2 DBs per service entry: 1 for the service to access and one for the user to access (for example useful if the user stores extra info like chat messages which the server shouldnt interfere with / know about)
+    
     /*
     ### Service Entry Configuration
     Endpoints related to configuring Service Data Access Entries.
