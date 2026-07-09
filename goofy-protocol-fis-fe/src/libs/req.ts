@@ -1,7 +1,7 @@
 import {AsymmFullKeyPair, HttpMethod} from "@/libs/crypto-types";
 import {createSignedRequest, getHeadersFromSignedRequestWithHandle, getHeadersFromSignedRequestWithPubkey} from "@/libs/crypto";
 import {AllServerErrorCodes, FisExceptionDto, RequestError, RequestFisError} from "@/libs/dtos";
-import {getBaseServerUrl, getKeypair} from "@/libs/auth";
+import {getBaseServerUrl, getKeypair} from "@/libs/auth-store";
 
 export async function _internalDoReq<T>(_path: string, method: HttpMethod, body: object | null, keypair: AsymmFullKeyPair | null = null, extraHeaders: Map<string, string> = new Map(), rawResponse: boolean = false, sendHandle: boolean = true): Promise<T | Response> {
     const headers: Map<string, string> = new Map(extraHeaders);
@@ -83,25 +83,27 @@ export async function _internalDoReq<T>(_path: string, method: HttpMethod, body:
 export async function getNoAuth<T>(path: string): Promise<T> {
     return await _internalDoReq<T>(path, "GET", null) as T;
 }
-
 export async function getRawNoAuth(path: string): Promise<Response> {
     return await _internalDoReq<Response>(path, "GET", null, null, new Map(), true) as Response;
 }
-
 export async function getAuth<T>(path: string): Promise<T> {
     return await _internalDoReq<T>(path, "GET", null, await getKeypair()) as T;
+}
+export async function getFixedAuth<T>(path: string, keypair: AsymmFullKeyPair): Promise<T> {
+    return await _internalDoReq<T>(path, "GET", null, keypair) as T;
 }
 
 export async function postNoAuth<T>(path: string, body: object) {
     return await _internalDoReq<T>(path, "POST", body) as T;
 }
-
 export async function postRawNoAuth(path: string, body: object): Promise<Response> {
     return await _internalDoReq<Response>(path, "POST", body, null, new Map(), true) as Response;
 }
-
 export async function postAuth<T>(path: string, body: object) {
-    return await _internalDoReq<T>(path, "POST", body) as T;
+    return await _internalDoReq<T>(path, "POST", body, await getKeypair()) as T;
+}
+export async function postFixedAuth<T>(path: string, body: object, keypair: AsymmFullKeyPair) {
+    return await _internalDoReq<T>(path, "POST", body, keypair) as T;
 }
 
 // TODO: Add more when needed

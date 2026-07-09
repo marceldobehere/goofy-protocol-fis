@@ -72,3 +72,13 @@ export interface RegisterStatusDto {
     registrationsAllowed: boolean;
     checkMethod: string;
 }
+
+export type AuthRole = "OUTSIDE_ENTITY" | "REGISTERED_USER" | "ADMIN";
+
+export interface MyUserInfoDto {
+    handle: string;
+    handleDomain: string;
+    pubKey: string;
+    authRole: AuthRole;
+    isRestricted: boolean;
+}

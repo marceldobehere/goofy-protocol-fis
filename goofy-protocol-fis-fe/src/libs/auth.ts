@@ -1,49 +1,31 @@
-import {AsymmFullKeyPair} from "@/libs/crypto-types";
+import {MyUserInfoDto} from "@/libs/dtos";
+import {getAuth} from "@/libs/req";
+import {hasKeypair} from "@/libs/auth-store";
 
-// This will be responsible for storing the keypair and loading it (either from SessionStorage or LocalStorage) and maybe secured with a password
-// Other files can then check if there is a keypair loaded
-
-let currKeypair: AsymmFullKeyPair | null;
-let currServerBase: string;
-
-let initDone = false;
-export async function init() {
-    if (initDone)
-        return; // console.log("Keypair storage already initialized");
-    initDone = true;
-    console.log("Initializing keypair storage...");
-
-    // TODO: Implement & call
-    currServerBase = "http://localhost:8080";
-    currKeypair = null;
+export async function isLoggedIn(): Promise<boolean> {
+    return await hasKeypair();
 }
 
-export async function setStorageMode() {
+export async function isUser(): Promise<boolean> {
+    if (!(await isLoggedIn()))
+        return false;
 
+    try {
+        const res: MyUserInfoDto = await getAuth("/api/user/info");
+        return res.authRole == "REGISTERED_USER" || res.authRole == "ADMIN";
+    } catch (_) {
+        return false;
+    }
 }
 
-export async function getBaseServerUrl(): Promise<string> {
-    await init();
+export async function isAdmin(): Promise<boolean> {
+    if (!(await isLoggedIn()))
+        return false;
 
-    return currServerBase;
-}
-
-export async function hasKeypair(): Promise<boolean> {
-    await init();
-    return currKeypair != null;
-}
-
-export async function getKeypair(): Promise<AsymmFullKeyPair> {
-    await init();
-    // TODO: Implement
-
-    if (currKeypair == null)
-        throw new Error("keypair is undefined");
-    return currKeypair;
-}
-
-export async function saveKeypair(keypair: AsymmFullKeyPair) {
-    await init();
-    // TODO: Implement
-    currKeypair = keypair;
+    try {
+        const res: MyUserInfoDto = await getAuth("/api/user/info");
+        return res.authRole == "ADMIN";
+    } catch (_) {
+        return false;
+    }
 }
