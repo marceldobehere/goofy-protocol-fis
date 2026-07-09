@@ -114,8 +114,8 @@ The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be
 Supported types can be seen in the `SymmCryptoType` Enum, currently they are:
 * AES-128-GCM
 * AES-196-GCM
-* AES-256-GCM
-* ChaCha20
+* AES-256-GCM (**Recommended**)
+* ChaCha20 (**Recommended**)
 
 #### Symmetrically Encrypted Data Format
 (TODO)
@@ -143,14 +143,19 @@ For now, you can look into the [Implementations](src/main/java/com/masl/goofy_pr
 #### Supported Algorithms
 Supported types can be seen in the `AsymmCryptoType` Enum, currently they are:
 * RSA 2048
-* RSA 3072
-* RSA 4096
-* EC_P256 
+* RSA 3072 (**Recommended**)
+* RSA 4096 (**Recommended**)
+* EC_P256
 * EC_P384
-* EC_C25519
+* EC_C25519 (**Recommended**)
 * ML-KEM (512) + ML-DSA (44)
 * ML-KEM (768) + ML-DSA (65)
 * ML-KEM (1024) + ML-DSA (87)
+
+##### Important Notes
+Currently, the support for `ML-KEM` & `ML-DSA` on Browsers is lacking, so for now it should be avoided until the support is better and I have implemented it in the JS Lib.
+
+Additionally, `EC_P256` and `EC_P384` are currently not supported in the JS Lib either, and instead `EC_C25519` should be used, as thats the default anyway.
 
 
 #### Public Split Key Format
