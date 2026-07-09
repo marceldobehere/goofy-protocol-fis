@@ -82,3 +82,9 @@ export interface MyUserInfoDto {
     authRole: AuthRole;
     isRestricted: boolean;
 }
+
+export interface RegistrationRequestDto {
+    message: string;
+    contact: string;
+    optEmail?: string;
+}

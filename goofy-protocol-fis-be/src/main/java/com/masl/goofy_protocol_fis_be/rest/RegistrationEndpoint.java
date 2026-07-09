@@ -28,6 +28,7 @@ public class RegistrationEndpoint {
         this.registrationService = registrationService;
     }
 
+    // TODO: Rate Limit?
     @PostMapping
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY') and not hasRole('ROLE_REGISTERED_USER')")
     @FisEndpoint(summary = "Attempt Registration", description = "To register, a registration code is required. The request needs to be signed with the keypair that wants to register.")
@@ -48,9 +49,13 @@ public class RegistrationEndpoint {
         );
     }
 
+    // TODO: Rate Limit?
     @GetMapping("/valid")
     @FisEndpoint(summary = "Check if a Registration Code is Valid without using it")
     public boolean isRegistrationCodeValid(@RequestParam String code) {
+        if (!registerProperties.getRegistrationsAllowed())
+            return false;
+
         return registrationService.isCodeValid(code);
     }
 
@@ -58,9 +63,9 @@ public class RegistrationEndpoint {
     @PostMapping("/request")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Request a Registration Code.", description = "You will either be manually contacted by a person or an automated system might send you an email/etc.")
-    public void requestRegistrationCode(@Valid @RequestBody RegistrationRequestDto requestDto) throws RegistrationNotAllowed {
+    public void requestRegistrationCode(@Valid @RequestBody RegistrationRequestDto requestDto, @AuthenticationPrincipal GoofyAuthUser auth) throws RegistrationNotAllowed {
         if (!registerProperties.getRegistrationsAllowed())
             throw new RegistrationNotAllowed();
-        registrationService.submitRegistrationRequest(requestDto);
+        registrationService.submitRegistrationRequest(requestDto, auth.getHandle());
     }
 }

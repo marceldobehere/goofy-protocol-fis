@@ -33,6 +33,10 @@ public class RegistrationRequest {
     @Getter @Setter
     private Instant createdAt;
 
+    @Column(length = FieldSize.HANDLE_LEN)
+    @Getter @Setter
+    private String createdByHandle;
+
     @Column
     @Getter @Setter
     private Instant resolvedAt; // Also acts as boolean

@@ -104,13 +104,14 @@ public class RegistrationService {
         log.info("User {} registered successfully with code {}", user.getHandle(), code);
     }
 
-    public void submitRegistrationRequest(RegistrationRequestDto requestDto) {
+    public void submitRegistrationRequest(RegistrationRequestDto requestDto, String handle) {
         log.info("Received Registration Request: {}", requestDto);
         RegistrationRequest request = new RegistrationRequest();
         request.setMesssage(requestDto.getMessage());
         request.setGeneralContact(requestDto.getContact());
         request.setOptEmail(requestDto.getOptEmail());
         request.setCreatedAt(Instant.now());
+        request.setCreatedByHandle(handle);
         registrationRequestRepository.save(request);
     }
 

@@ -21,7 +21,7 @@ export async function init() {
     currentStorageMode = await _loadStorageMode();
 
     // Load Server Base
-    currServerBase = await _loadServerBase(currentStorageMode, "localhost:8080");
+    currServerBase = await _loadServerBase(currentStorageMode, "http://localhost:8080");
 
     // Load Keypair
     currKeypair = await _loadKeypair(currentStorageMode);
@@ -71,19 +71,8 @@ export async function saveKeypair(keypair: AsymmFullKeyPair | null) {
 // Internal Storage Mode
 async function _loadStorageMode(): Promise<StorageMode> {
     let mode = localStorage.getItem("StorageMode") as StorageMode ?? "NONE";
-    if (mode === "NONE") {
-        while (true) {
-            const selected = prompt("Please enter a Storage Mode: (L)ocalStorage or (S)essionStorage");
-            if (selected != "S" && selected != "L")
-                continue;
-
-            if (selected == "S")
-                mode = "SESSION_STORAGE";
-            else if (selected == "L")
-                mode = "LOCAL_STORAGE";
-            break;
-        }
-    }
+    if (mode == "NONE")
+        mode = "SESSION_STORAGE";
     localStorage.setItem("StorageMode", mode);
     return mode;
 }

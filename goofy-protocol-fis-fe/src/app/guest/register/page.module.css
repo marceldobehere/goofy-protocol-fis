@@ -4,8 +4,15 @@
   margin: auto;
 }
 
-.Introduction {
+.Body {
   margin: 1rem 0;
+}
+
+.ErrorText {
+  color: red;
+  display: inline-block;
+  margin: 1rem 0;
+  padding: 0;
 }
 
 .MainButtons {

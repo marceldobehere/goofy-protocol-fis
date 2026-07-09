@@ -114,7 +114,7 @@ public class RegistrationTests {
         requestDto.setContact(randomUUID);
         requestDto.setOptEmail(null);
 
-        registrationService.submitRegistrationRequest(requestDto);
+        registrationService.submitRegistrationRequest(requestDto, null);
         var request = registrationService.getAllUnresolvedRequests()
                 .stream().filter(r -> r.getGeneralContact().equals(randomUUID))
                 .findFirst().orElse(null);
@@ -133,7 +133,7 @@ public class RegistrationTests {
         requestDto.setContact(randomUUID);
         requestDto.setOptEmail(setMail ? "test@mail.com" : null);
 
-        registrationService.submitRegistrationRequest(requestDto);
+        registrationService.submitRegistrationRequest(requestDto, null);
         var request = registrationService.getAllUnresolvedRequests()
                 .stream().filter(r -> r.getGeneralContact().equals(randomUUID))
                 .findFirst().orElse(null);

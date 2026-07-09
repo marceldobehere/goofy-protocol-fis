@@ -8,6 +8,13 @@ export class AsymmCryptoType {
     static readonly EC_C25519 = _internalAsymmCryptoType.EC_C25519 as AsymmCryptoType;
 
     static readonly DEFAULT = AsymmCryptoType.EC_C25519;
+    static readonly TYPES = [this.RSA_2048, this.RSA_3072, this.RSA_4096, this.EC_C25519];
+    static fromValue(val: string): AsymmCryptoType {
+        for (const type of this.TYPES)
+            if (val == type.name)
+                return type;
+        return this.DEFAULT;
+    }
 
     private constructor(public readonly name: string, public readonly value: number) {}
 }
@@ -19,7 +26,13 @@ export class SymmCryptoType {
     static readonly CHACHA_20 = _internalSymmCryptoType.CHACHA_20 as SymmCryptoType;
 
     static readonly DEFAULT = SymmCryptoType.AES_GCM_256;
-
+    static readonly TYPES = [this.AES_GCM_128, this.AES_GCM_192, this.AES_GCM_256, this.CHACHA_20];
+    static fromValue(val: string): SymmCryptoType {
+        for (const type of this.TYPES)
+            if (val == type.name)
+                return type;
+        return this.DEFAULT;
+    }
     private constructor(public readonly name: string, public readonly value: number) {}
 }
 
@@ -43,6 +56,12 @@ export interface AsymmPrivKeyPair {
 export interface AsymmFullKeyPair {
     pub: AsymmPubKeyPair;
     priv: AsymmPrivKeyPair;
+}
+
+// Contains Serialized Data
+export interface AsymmFullJsonKeypair {
+    pub: string;
+    priv: string;
 }
 
 export interface SignedRequest {

@@ -1,24 +1,31 @@
 import {
     AsymmCryptoType,
+    AsymmFullJsonKeypair,
     AsymmFullKeyPair,
-    AsymmPubKeyPair,
     AsymmPrivKeyPair,
+    AsymmPubKeyPair,
     EncodedSignature,
     EncodedString,
-    SymmCryptoType,
-    SecretString,
-    HttpMethod,
-    SignedRequest,
     FullHandle,
-    Handle
+    Handle,
+    HttpMethod,
+    SecretString,
+    SignedRequest,
+    SymmCryptoType
 } from "@/libs/crypto-types";
 
 import {GlobAsymmCrypto} from "@/libs/goofy-protocol-core/crypto/isolated/asymm/glob-asymm-crypto.mjs";
 import {GlobSymmCrypto} from "@/libs/goofy-protocol-core/crypto/isolated/symm/glob-symm-crypto.mjs";
-import {AsymmPrivKeyPair as _internalAsymmPrivKeyPair, AsymmPubKeyPair as _internalAsymmPubKeyPair} from "@/libs/goofy-protocol-core/crypto/isolated/asymm/asymm-crypto-interface.mjs";
-import {SignedRequest as _internalSignedRequest} from "@/libs/goofy-protocol-core/crypto/connected/request/signed-request.mjs"
+import {
+    AsymmPrivKeyPair as _internalAsymmPrivKeyPair,
+    AsymmPubKeyPair as _internalAsymmPubKeyPair
+} from "@/libs/goofy-protocol-core/crypto/isolated/asymm/asymm-crypto-interface.mjs";
+import {
+    SignedRequest as _internalSignedRequest
+} from "@/libs/goofy-protocol-core/crypto/connected/request/signed-request.mjs"
 import {HandleCrypto} from "@/libs/goofy-protocol-core/crypto/connected/handle-crypto.mjs";
 import {SampleHandleHelper} from "@/libs/goofy-protocol-core/crypto/connected/sample-handle-helper.mjs";
+import {sha256} from "@/libs/goofy-protocol-core/crypto/isolated/secret-utils.mjs";
 
 const asymmCrypto = new GlobAsymmCrypto();
 const symmCrypto = new GlobSymmCrypto();
@@ -28,8 +35,7 @@ const handleCrypto = new HandleCrypto(handleCryptoHelper);
 // Asymmetric Stuff
 
 export async function generateAsymmKeypair(type: AsymmCryptoType = AsymmCryptoType.DEFAULT): Promise<AsymmFullKeyPair> {
-    const keypair = await asymmCrypto.generateKeypair(type);
-    return keypair;
+    return await asymmCrypto.generateKeypair(type);
 }
 
 export async function checkPublicSplitKey(pubSplitKey: AsymmPubKeyPair) {
@@ -42,6 +48,20 @@ export function parsePublicSplitKey(str: string): AsymmPubKeyPair {
 
 export function parsePrivateSplitKey(str: string): AsymmPrivKeyPair {
     return _internalAsymmPrivKeyPair.parse(str) as AsymmPrivKeyPair;
+}
+
+export function serializeFullKeypair(keypair: AsymmFullKeyPair): AsymmFullJsonKeypair {
+    return {
+        pub: keypair.pub.serialize(),
+        priv: keypair.priv.serialize(),
+    }
+}
+
+export function parseFullKeypair(keypair: AsymmFullJsonKeypair): AsymmFullKeyPair {
+    return {
+        pub: parsePublicSplitKey(keypair.pub),
+        priv: parsePrivateSplitKey(keypair.priv),
+    };
 }
 
 export async function asymmEncryptStr(str: string, pubSplitKey: AsymmPubKeyPair): Promise<EncodedString> {
@@ -131,4 +151,19 @@ export function getHeadersFromSignedRequestWithPubkey(signedRequest: SignedReque
 
 export function getHeadersFromSignedRequestWithHandle(signedRequest: SignedRequest, optHandleDomain: string | null = null): Map<string, string> {
     return (signedRequest as _internalSignedRequest).toHeadersWithHandle(optHandleDomain as never);
+}
+
+// Hash
+export function base64Encode(bytes: Uint8Array): string {
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_");
+}
+
+export async function sha256ToText(inputStr: string): Promise<string> {
+    const hash = await sha256(inputStr);
+    return base64Encode(hash);
 }

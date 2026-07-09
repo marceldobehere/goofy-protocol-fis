@@ -3,7 +3,7 @@ import {createSignedRequest, getHeadersFromSignedRequestWithHandle, getHeadersFr
 import {AllServerErrorCodes, FisExceptionDto, RequestError, RequestFisError} from "@/libs/dtos";
 import {getBaseServerUrl, getKeypair} from "@/libs/auth-store";
 
-export async function _internalDoReq<T>(_path: string, method: HttpMethod, body: object | null, keypair: AsymmFullKeyPair | null = null, extraHeaders: Map<string, string> = new Map(), rawResponse: boolean = false, sendHandle: boolean = true): Promise<T | Response> {
+export async function _internalDoReq<T>(_path: string, method: HttpMethod, body: object | string | null, keypair: AsymmFullKeyPair | null = null, extraHeaders: Map<string, string> = new Map(), rawResponse: boolean = false, sendHandle: boolean = true): Promise<T | Response> {
     const headers: Map<string, string> = new Map(extraHeaders);
     const isBodyStr = body != null && typeof body === "string";
     if (!isBodyStr && body != null)
@@ -48,7 +48,10 @@ export async function _internalDoReq<T>(_path: string, method: HttpMethod, body:
             if (resBody satisfies FisExceptionDto && (resBody as FisExceptionDto).errorCode == AllServerErrorCodes.PUBLIC_KEY_LOOKUP_FAILED ) {
                 return await _internalDoReq<T>(_path, method, body, keypair, extraHeaders, rawResponse, false);
             }
-        } catch (_) {}
+        } catch (e) {
+            if (e instanceof RequestError || e instanceof RequestFisError)
+                throw e;
+        }
 
         // Reconstruct Response and hope its fine
         res = new Response(resBodyStr, {status: res.status, statusText: res.statusText, headers: res.headers});
@@ -64,17 +67,21 @@ export async function _internalDoReq<T>(_path: string, method: HttpMethod, body:
         let errorObj: FisExceptionDto;
         try {
             errorObj = JSON.parse(errorStr) as FisExceptionDto;
-        } catch (_) {
+        } catch {
             throw new RequestError(res.status, errorStr);
         }
-        throw new RequestFisError(res.status, errorObj);
+
+        if (errorObj.errorCode != null)
+            throw new RequestFisError(res.status, errorObj);
+        else
+            throw new RequestError(res.status, errorStr);
     }
 
     // Convert to String or Object
     const resStr = await res.text();
     try {
         return JSON.parse(resStr) as T;
-    } catch (_) {
+    } catch {
         return resStr as T;
     }
 }
@@ -93,16 +100,16 @@ export async function getFixedAuth<T>(path: string, keypair: AsymmFullKeyPair): 
     return await _internalDoReq<T>(path, "GET", null, keypair) as T;
 }
 
-export async function postNoAuth<T>(path: string, body: object) {
+export async function postNoAuth<T>(path: string, body: object | string ) {
     return await _internalDoReq<T>(path, "POST", body) as T;
 }
-export async function postRawNoAuth(path: string, body: object): Promise<Response> {
+export async function postRawNoAuth(path: string, body: object | string ): Promise<Response> {
     return await _internalDoReq<Response>(path, "POST", body, null, new Map(), true) as Response;
 }
-export async function postAuth<T>(path: string, body: object) {
+export async function postAuth<T>(path: string, body: object | string ) {
     return await _internalDoReq<T>(path, "POST", body, await getKeypair()) as T;
 }
-export async function postFixedAuth<T>(path: string, body: object, keypair: AsymmFullKeyPair) {
+export async function postFixedAuth<T>(path: string, body: object | string , keypair: AsymmFullKeyPair) {
     return await _internalDoReq<T>(path, "POST", body, keypair) as T;
 }
 
