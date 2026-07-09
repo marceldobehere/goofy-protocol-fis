@@ -13,7 +13,7 @@ export async function isUser(): Promise<boolean> {
     try {
         const res: MyUserInfoDto = await getAuth("/api/user/info");
         return res.authRole == "REGISTERED_USER" || res.authRole == "ADMIN";
-    } catch (_) {
+    } catch {
         return false;
     }
 }
@@ -25,7 +25,7 @@ export async function isAdmin(): Promise<boolean> {
     try {
         const res: MyUserInfoDto = await getAuth("/api/user/info");
         return res.authRole == "ADMIN";
-    } catch (_) {
+    } catch {
         return false;
     }
 }
