@@ -1,9 +1,18 @@
 import {MyUserInfoDto} from "@/libs/dtos";
 import {getAuth} from "@/libs/req";
-import {hasKeypair} from "@/libs/auth-store";
+import {getKeypair, hasKeypair} from "@/libs/auth-store";
+import {deriveHandleFromPublicSplitKey} from "@/libs/crypto";
 
 export async function isLoggedIn(): Promise<boolean> {
     return await hasKeypair();
+}
+
+export async function getMyHandle(): Promise<string | null> {
+    if (!hasKeypair())
+        return null;
+
+    const keypair = await getKeypair();
+    return await deriveHandleFromPublicSplitKey(keypair.pub);
 }
 
 export async function isUser(): Promise<boolean> {
