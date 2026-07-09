@@ -1,7 +1,6 @@
-'use client';
-
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import {Metadata} from "next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,6 +12,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const metadata: Metadata = {
+  title: "Goofy FIS Frontend",
+  description: "Reference Frontend Implementation for the FIS",
+};
 
 export default function RootLayout({
   children,
@@ -21,9 +24,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-    <head>
-      <title>Goofy FIS Frontend</title>
-    </head>
       <body>{children}</body>
     </html>
   );

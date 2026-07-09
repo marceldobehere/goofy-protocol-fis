@@ -110,7 +110,7 @@ export default function Page() {
         console.log(resKeypair);
 
         const handle = await getMyHandle();
-        alert(`Logged in as ${handle}!`);
+        console.log(`Logged in as ${handle}!`);
         goPath("/user/home");
     }
 

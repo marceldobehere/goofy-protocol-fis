@@ -17,6 +17,7 @@ export default function Page() {
                 <div className={styles.MainButtons}>
                     <Link href={"/guest/login"}>Login</Link>
                     <Link href={"/guest/register"}>Register</Link>
+                    <Link href={"/user/home"}>Home</Link>
                 </div>
             </div>
         </main>
