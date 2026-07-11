@@ -55,6 +55,10 @@ export default function Page() {
         if (type == null)
             return;
 
+        const name = prompt("Enter a name/ote for the identity. Can be blank");
+        if (name == null)
+            return;
+
         const keypair = await generateAsymmKeypair(AsymmCryptoType.fromValue(type));
         const handle = await deriveHandleFromPublicSplitKey(keypair.pub);
         const serializedKeypair: AsymmFullJsonKeypair = serializeFullKeypair(keypair);
@@ -67,6 +71,7 @@ export default function Page() {
         // Create Entry Object and Submit
         const newEntry: IdentityStorageEntryDto = {
             handle: handle,
+            name: name,
             pubSplitKey: keypair.pub.serialize(),
             encKeypairEntry: encKeypair,
             encKeypairEntrySignature: encKeySig
@@ -130,7 +135,7 @@ export default function Page() {
                 <br/>
                 <ul>
                     {identityEntries.map((entry) => (<li key={entry.handle}>
-                            <span>{entry.handle}</span> (Size: {entry.pubSplitKey.length} / {entry.encKeypairEntry.length})
+                            <span>{entry.name} - {entry.handle}</span> (Size: {entry.pubSplitKey.length} / {entry.encKeypairEntry.length})
                             <span> </span>
                             <button onClick={() => {testIdentity(entry.handle).then()}}>Test</button>
                             <span> </span>

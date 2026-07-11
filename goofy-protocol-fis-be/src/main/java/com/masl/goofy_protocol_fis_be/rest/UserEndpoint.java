@@ -37,23 +37,24 @@ public class UserEndpoint {
 
     // Look Up User / Public Key Info based on Handle (Check if moved)
     // Set/Update external Handle Information (for example the domain of the user)
-
-    // - For each identity the user has, they can set global public and private data.
-    // - This data is basically just a JSON Object with keys and values.
-    // - Public Data for example should include a `services` key which has an object with service names and the urls of the service instance the handle is used on.
-    // - This can be useful if you use the same handle for several services and want others to find the instances.
-    // Get Public Data for User (Include Handle/Domain if moved)
-    // Set Public Data for User
-
-    // Get my Private Data
-    // Set my Private Data
+    // Also check for Identities and maybe have a special role like REGISTERED_IDENTITY or so to differentiate
+    // Would also need to affect all identities of the user
+    // Would be good to have an extra table that has every user and identity ever registered (just the handle) + information if they have moved FIS domains
+    // Additionally support moving a singular identity handle -> shouldn't be too hard, just have to watch out in the request i guess
+    // Additionally add a custom Fis Exception everywhere where its needed to indicate an Identity/Account was moved
 
     // Get Storage Details / Stats
 
     // Get Complete Account Export (What about Tables / Buckets)
-    // Import FIS Data?
+    // Import FIS Data
+    // Should maybe be a two step process like delete, because youd replace all your old data
+    // For clients therell be two options of importing an export (backup or when moving FIS), either direct import using the same keypair for registration
+    // - or decrypting and re-encrypting everything before importing it
 
     // Delete Account
     // Move Account (Would be the same as update external handle information?)
+    // Would also need to affect all identities of the user
+    // Should be a two step process with a token, ideally also enforce having done an export beforehand
+
     // Deactivate Handle (Highly specific, needs more thought put into it)
 }

@@ -7,6 +7,7 @@ import com.masl.goofy_protocol_fis_be.exception.client.InvalidPublicKey;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidSignedObject;
 import com.masl.goofy_protocol_fis_be.exception.client.NotMatchingPublicKey;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,6 +20,10 @@ public class IdentityStorageEntryDto {
     @NotBlank
     @Size(max = FieldSize.HANDLE_LEN)
     private String handle;
+
+    @NotNull
+    @Size(max = FieldSize.SHORT_TEXT_LEN)
+    private String name;
 
     @NotBlank
     @Size(max = FieldSize.PUB_KEY_LEN)

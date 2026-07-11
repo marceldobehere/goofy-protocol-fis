@@ -3,8 +3,10 @@ package com.masl.goofy_protocol_fis_be.crypto;
 import com.masl.goofy_protocol_core.crypto.connected.GenericHandleCrypto;
 import com.masl.goofy_protocol_core.crypto.connected.HandleCryptoHelper;
 import com.masl.goofy_protocol_fis_be.entity.CachedKeyHandleEntry;
+import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
 import com.masl.goofy_protocol_fis_be.entity.User;
 import com.masl.goofy_protocol_fis_be.repository.CachedKeyHandleRepository;
+import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +26,12 @@ public class HandleHelper implements HandleCryptoHelper {
 
     private final CachedKeyHandleRepository cachedKeyHandleRepository;
     private final UserRepository userRepository;
+    private final IdentityStorageEntryRepository identityRepository;
 
-    public HandleHelper(CachedKeyHandleRepository cachedKeyHandleRepository, UserRepository userRepository) {
+    public HandleHelper(CachedKeyHandleRepository cachedKeyHandleRepository, UserRepository userRepository, IdentityStorageEntryRepository identityRepository) {
         this.cachedKeyHandleRepository = cachedKeyHandleRepository;
         this.userRepository = userRepository;
+        this.identityRepository = identityRepository;
     }
 
     // Load Word List (Currently ~15000 Entries)
@@ -63,12 +67,22 @@ public class HandleHelper implements HandleCryptoHelper {
 
     @Override
     public Map<String, String> loadUserKeyToHandleMap() {
-        // TODO: Also Check Identity Storage
-        return userRepository.findAll().stream()
+        Map<String, String> resMap = new HashMap<>();
+
+        resMap.putAll(userRepository.findAll().stream()
                 .collect(Collectors.toMap(
                         User::getPubSplitKey,
                         User::getHandle,
-                        (_, b) -> b));
+                        (_, b) -> b)));
+
+        resMap.putAll(identityRepository.findAll().stream()
+                .collect(Collectors.toMap(
+                        IdentityStorageEntry::getPubSplitKey,
+                        IdentityStorageEntry::getHandle,
+                        (_, b) -> b)));
+
+
+        return resMap;
     }
 
     @Override

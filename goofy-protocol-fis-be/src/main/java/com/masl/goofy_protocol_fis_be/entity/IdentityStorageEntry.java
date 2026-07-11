@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -18,6 +19,11 @@ public class IdentityStorageEntry {
     @Id
     @Column(nullable = false, length = FieldSize.HANDLE_LEN)
     private String handle;
+
+    // NOTE: Not encrypted, because it's not really important
+    @Column(nullable = false, length = FieldSize.SHORT_TEXT_LEN)
+    @ColumnDefault("")
+    private String name;
 
     @Column(nullable = false, length = FieldSize.PUB_KEY_LEN)
     private String pubSplitKey;

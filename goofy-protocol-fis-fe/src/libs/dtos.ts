@@ -6,12 +6,12 @@ export interface FisExceptionDto {
 
 export class RequestError extends Error {
     httpCode: number;
-    error: string;
+    message: string;
 
     constructor(httpCode: number, error: string) {
         super();
         this.httpCode = httpCode;
-        this.error = error;
+        this.message = error;
     }
 
     toString(): string {
@@ -91,6 +91,7 @@ export interface RegistrationRequestDto {
 
 export interface IdentityStorageEntryDto {
     handle: string;
+    name: string;
     pubSplitKey: string;
     encKeypairEntry: string;
     encKeypairEntrySignature: string;

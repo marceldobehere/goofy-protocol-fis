@@ -89,6 +89,7 @@ public class IdentityStorageEndpoint {
 
             IdentityStorageEntry entry = new IdentityStorageEntry();
             entry.setHandle(entryDto.getHandle());
+            entry.setName(entryDto.getName());
             entry.setPubSplitKey(entryDto.getPubSplitKey());
             entry.setEncKeypairEntry(entryDto.getEncKeypairEntry());
             entry.setEncKeypairEntrySignature(entryDto.getEncKeypairEntrySignature());
@@ -107,12 +108,14 @@ public class IdentityStorageEndpoint {
         List<IdentityStorageEntry> entries = identityRepository.findAllByCreatedByHandle(auth.getHandle());
         return entries.stream().map(entry -> new IdentityStorageEntryDto(
                 entry.getHandle(),
+                entry.getName(),
                 entry.getPubSplitKey(),
                 entry.getEncKeypairEntry(),
                 entry.getEncKeypairEntrySignature()
         )).toList();
     }
 
+    // TODO: Make this a two step process / enforce export data first? To avoid data loss!
     @DeleteMapping("/{handle}")
     @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
     @FisEndpoint(summary = "Deletes the Identity Entry of the Users Storage if it exists")
@@ -130,9 +133,21 @@ public class IdentityStorageEndpoint {
 
         return new IdentityStorageEntryDto(
                 entry.getHandle(),
+                entry.getName(),
                 entry.getPubSplitKey(),
                 entry.getEncKeypairEntry(),
                 entry.getEncKeypairEntrySignature()
         );
     }
+
+    // TODO: Implement
+    // - For each identity the user has, they can set global public and private data.
+    // - This data is basically just a JSON Object with keys and values.
+    // - Public Data for example should include a `services` key which has an object with service names and the urls of the service instance the handle is used on.
+    // - This can be useful if you use the same handle for several services and want others to find the instances.
+    // Get Public Data for User (Include Handle/Domain if moved)
+    // Set Public Data for User
+
+    // Get my Private Data
+    // Set my Private Data
 }

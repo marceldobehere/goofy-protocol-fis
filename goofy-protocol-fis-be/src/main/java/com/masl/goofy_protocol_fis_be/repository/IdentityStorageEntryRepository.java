@@ -11,8 +11,9 @@ import java.util.List;
 @Repository
 public interface IdentityStorageEntryRepository extends JpaRepository<IdentityStorageEntry, String> {
     long countAllByCreatedByHandle(String createdByHandle);
-    IdentityStorageEntry findByHandle(String handle);
     List<IdentityStorageEntry> findAllByCreatedByHandle(String createdByHandle);
+
+    IdentityStorageEntry findByHandle(String handle);
     IdentityStorageEntry findByCreatedByHandle_AndHandle(String createdByHandle, String handle);
     void deleteByCreatedByHandle_AndHandle(String createdByHandle, String handle);
 }
