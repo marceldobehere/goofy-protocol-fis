@@ -127,5 +127,20 @@ public class ServiceEntryEndpoint {
         serviceEntryRepository.deleteByUuid_AndLinkedIdentity_Handle(uuid, auth.getHandle());
     }
 
+    @GetMapping("/{uuid}")
+    @PreAuthorize("hasRole('ROLE_REGISTERED_IDENTITY') and not hasRole('ROLE_REGISTERED_USER')")
+    @FisEndpoint(summary = "Gets a Service Entry for a Identity & UUID")
+    public ServiceEntryDto updateEntry(@PathVariable String uuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound {
+        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(uuid, auth.getHandle());
+        if (entry == null)
+            throw new ServiceEntryNotFound(uuid);
+
+        return new ServiceEntryDto(
+                entry.getName(),
+                entry.getUsedService(),
+                entry.getUuid()
+        );
+    }
+
     // TODO: Add Export
 }
