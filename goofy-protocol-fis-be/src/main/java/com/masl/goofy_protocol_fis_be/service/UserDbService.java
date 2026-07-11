@@ -41,23 +41,22 @@ public class UserDbService {
     }
 
     private void initDb(ServiceEntry entry) throws SQLException {
-        Connection test = getConnection(entry.getUuid());
-        if (test == null)
+        Connection conn = getConnection(entry.getUuid());
+        if (conn == null)
             throw new SQLException("Failed to create database connection for entry: " + entry.getUuid());
 
         // Check if everything works
-        List<String> tables = getAllTables(test);
+        List<String> tables = getAllTables(conn);
         log.info("Initialized database for entry: {}, tables: {}", entry.getUuid(), tables);
 
-        test.close();
+        conn.close();
     }
 
     public Connection getConnection(String uuid) throws SQLException {
         Path dbFile = fileStorageService.getDbFolderPath(uuid).resolve("userData");
         String dbBase = dbFile.toAbsolutePath().toString();
 
-        String url = "jdbc:h2:file:" + dbBase + ";DB_CLOSE_DELAY=-1" + ";AUTO_SERVER=TRUE";
-
+        String url = "jdbc:h2:file:" + dbBase + ";AUTO_SERVER=TRUE";
         return DriverManager.getConnection(url, "sa", "");
     }
 

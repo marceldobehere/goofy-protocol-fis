@@ -10,6 +10,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
+import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -41,4 +42,7 @@ public class IdentityStorageEntry {
 
     @Column(nullable = false)
     private Instant createdAt;
+
+    @OneToMany(mappedBy="linkedIdentity", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    private Set<ServiceEntry> serviceEntries;
 }

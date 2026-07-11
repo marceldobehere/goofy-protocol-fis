@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
+import java.util.Set;
 
 @Entity
 @Table(name = "fis_user")
@@ -35,6 +36,15 @@ public class User {
 
     @Column
     private Instant lastCheck;
+
+    @OneToMany(mappedBy="createdBy", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    private Set<IdentityStorageEntry> identityStorageEntries;
+
+    @OneToMany(mappedBy="createdBy", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    private Set<LoginStorageEntry> loginStorageEntries;
+
+    @OneToMany(mappedBy="createdBy", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    private Set<ServiceEntry> serviceEntries;
 
     @Override
     public String toString() {
