@@ -126,4 +126,15 @@ export async function deleteFixedAuth<T>(path: string, keypair: AsymmFullKeyPair
     return await _internalDoReq<T>(path, "DELETE", null, keypair) as T;
 }
 
-// TODO: Add more when needed
+export async function putNoAuth<T>(path: string, body: object | string ) {
+    return await _internalDoReq<T>(path, "PUT", body) as T;
+}
+export async function putRawNoAuth(path: string, body: object | string ): Promise<Response> {
+    return await _internalDoReq<Response>(path, "PUT", body, null, new Map(), true) as Response;
+}
+export async function putAuth<T>(path: string, body: object | string ) {
+    return await _internalDoReq<T>(path, "PUT", body, await getKeypair()) as T;
+}
+export async function putFixedAuth<T>(path: string, body: object | string , keypair: AsymmFullKeyPair) {
+    return await _internalDoReq<T>(path, "PUT", body, keypair) as T;
+}

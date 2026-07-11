@@ -9,10 +9,10 @@ import {getMyHandle, isUser} from "@/libs/auth";
 import {deleteAuth, getAuth, postAuth} from "@/libs/req";
 import {IdentityStorageEntryDto, MyIdentityEntryQuotasDto} from "@/libs/dtos";
 import {
-    asymmSignStr, asymmVerifyStr, checkPublicSplitKey,
+    asymmSignStr,
     deriveHandleFromPublicSplitKey,
-    generateAsymmKeypair, parseFullKeypair, parsePublicSplitKey, secretSymmKeyFromFullKey,
-    serializeFullKeypair, symmDecryptObj,
+    generateAsymmKeypair, secretSymmKeyFromFullKey,
+    serializeFullKeypair,
     symmEncryptObj
 } from "@/libs/crypto";
 import {AsymmCryptoType, AsymmFullJsonKeypair} from "@/libs/crypto-types";
@@ -55,7 +55,7 @@ export default function Page() {
         if (type == null)
             return;
 
-        const name = prompt("Enter a name/ote for the identity. Can be blank");
+        const name = prompt("Enter a name/note for the identity. Can be blank");
         if (name == null)
             return;
 
@@ -91,34 +91,6 @@ export default function Page() {
         await refresh();
     }
 
-    async function testIdentity(handle: string) {
-        const entryDto: IdentityStorageEntryDto = await getAuth("/api/identity-storage/" + encodeURIComponent(handle));
-
-        // Check Signature
-        const sigCheck = await asymmVerifyStr(entryDto.encKeypairEntry, entryDto.encKeypairEntrySignature, parsePublicSplitKey(entryDto.pubSplitKey));
-        if (!sigCheck) {
-            alert("Signature check failed for identity " + handle);
-            return;
-        }
-
-        // Decrypt
-        const myPrivSecret = await secretSymmKeyFromFullKey(await getKeypair());
-        const decKeypair = await symmDecryptObj<AsymmFullJsonKeypair>(entryDto.encKeypairEntry, myPrivSecret);
-        const keypair = parseFullKeypair(decKeypair);
-
-        console.log(keypair);
-
-        const checkValid = await checkPublicSplitKey(keypair.pub);
-        if (!checkValid) {
-            alert("Decrypted keypair is invalid for identity " + handle);
-            return;
-        }
-
-        alert("Successfully retrieved and verified identity " + handle + "!");
-
-    }
-
-
     // TODO: Styling
     return (
         <main>
@@ -137,7 +109,7 @@ export default function Page() {
                     {identityEntries.map((entry) => (<li key={entry.handle}>
                             <span>{entry.name} - {entry.handle}</span> (Size: {entry.pubSplitKey.length} / {entry.encKeypairEntry.length})
                             <span> </span>
-                            <button onClick={() => {testIdentity(entry.handle).then()}}>Test</button>
+                            <Link href={`/user/service-entry-test#${entry.handle}`}>Manage</Link>
                             <span> </span>
                             <button onClick={() => {deleteIdentity(entry.handle).then()}}>Delete</button>
                         </li>

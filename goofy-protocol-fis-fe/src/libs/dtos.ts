@@ -15,7 +15,7 @@ export class RequestError extends Error {
     }
 
     toString(): string {
-        return `${this.httpCode} -> ${this.error}`;
+        return `${this.httpCode} -> ${this.message}`;
     }
 }
 
@@ -100,4 +100,15 @@ export interface IdentityStorageEntryDto {
 export interface MyIdentityEntryQuotasDto {
     maxEntryCount: number;
     currentEntryCount: number;
+}
+
+export interface ServiceEntryDto {
+    name: string;
+    uuid: string;
+    usedService?: string;
+}
+
+export interface MyServiceEntryQuotasDto {
+    maxServiceEntryCount: number;
+    currentServiceEntryCount: number;
 }

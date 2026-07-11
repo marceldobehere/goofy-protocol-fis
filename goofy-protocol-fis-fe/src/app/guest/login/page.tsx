@@ -140,8 +140,8 @@ export default function Page() {
 
                 <br/><hr/><br/>
 
-                <button onClick={importKeypair}>Import Keypair</button><br/>
                 <button onClick={login}>Login</button><br/>
+                <button onClick={importKeypair}>Import Keypair</button><br/>
 
                 <div className={styles.MainButtons}>
                     <Link href={"/guest/register"}>Register</Link>
