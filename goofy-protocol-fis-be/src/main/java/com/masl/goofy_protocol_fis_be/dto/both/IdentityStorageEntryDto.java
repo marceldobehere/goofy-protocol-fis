@@ -22,7 +22,7 @@ public class IdentityStorageEntryDto {
     private String handle;
 
     @NotNull
-    @Size(max = FieldSize.SHORT_TEXT_LEN)
+    @Size(max = FieldSize.TITLE_LEN)
     private String name;
 
     @NotBlank

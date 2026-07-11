@@ -21,7 +21,7 @@ public class IdentityStorageEntry {
     private String handle;
 
     // NOTE: Not encrypted, because it's not really important
-    @Column(nullable = false, length = FieldSize.SHORT_TEXT_LEN)
+    @Column(nullable = false, length = FieldSize.TITLE_LEN)
     @ColumnDefault("")
     private String name;
 

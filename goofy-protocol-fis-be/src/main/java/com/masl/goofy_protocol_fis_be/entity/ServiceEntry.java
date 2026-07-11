@@ -27,7 +27,7 @@ public class ServiceEntry {
     private String uuid; // Should be randomly generated unless its coming from an import
 
     // NOTE: Not encrypted, because it's not really important
-    @Column(nullable = false, length = FieldSize.SHORT_TEXT_LEN)
+    @Column(nullable = false, length = FieldSize.TITLE_LEN)
     @ColumnDefault("")
     private String name;
 
