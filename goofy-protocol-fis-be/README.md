@@ -12,7 +12,10 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
   * Implement User Restriction
   * Implement User Account Deactivation
   * Implement User Account Deletion -> Should safely delete everything and not cause DB issues (Cache too)
-  * Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS
+    * Have @PreRemove or @PostRemove Hooks to delete the Bucket / DB data / etc
+    * Make it a two step process, first /request-delete which returns a signed token to be used and then /confirm-delete with the signed token to actually delete the account
+    * Also potentially enforce having done an account-export within 7 days of trying to delete the account to avoid unwanted data loss
+  * Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS / Maybe using Bucket4j
   * Implement Data Export (How to treat Buckets and Tables?)
   * Implement Data Import? (How to treat Buckets and Tables?)
 * Implement Exceptions for unsupported Crypto Requests
