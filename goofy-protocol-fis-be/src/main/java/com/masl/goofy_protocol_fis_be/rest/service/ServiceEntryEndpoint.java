@@ -80,7 +80,7 @@ public class ServiceEntryEndpoint {
             ServiceEntry entry = new ServiceEntry();
             entry.setUuid(UUID.randomUUID().toString());
             entry.setName(entryDto.getName());
-            entry.setUsedService(entry.getUsedService());
+            entry.setUsedService(entryDto.getUsedService());
             entry.setLinkedIdentity(identity);
             entry.setCreatedBy(identity.getCreatedBy());
             entry.setCreatedAt(Instant.now());
