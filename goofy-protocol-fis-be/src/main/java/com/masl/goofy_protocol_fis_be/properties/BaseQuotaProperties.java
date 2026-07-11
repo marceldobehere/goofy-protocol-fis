@@ -31,7 +31,7 @@ public class BaseQuotaProperties {
         private Integer maxFieldSize;
         private Integer maxTables;
         private Integer maxCols;
-        private Long maxRows;
+        private Integer maxRows;
         private Integer maxPermissionCount;
         private Integer maxLockDurationSeconds;
     }
@@ -47,7 +47,7 @@ public class BaseQuotaProperties {
     public static class Bucket {
         private Long maxBucketSize;
         private Long maxItemSize;
-        private Long maxItemCount;
+        private Integer maxItemCount;
         private Integer maxPermissionCount;
     }
 }

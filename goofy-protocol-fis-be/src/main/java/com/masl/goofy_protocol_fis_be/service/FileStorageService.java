@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
@@ -79,6 +80,24 @@ public class FileStorageService {
     public void deleteBucketFolder(String identityUuid) throws IOException {
         Path path = getBucketFolderPath(identityUuid);
         FileUtils.deleteDirectory(path.toFile());
+    }
+
+    public void createBucketFile(String identityUuid, String fileUuid, byte[] data) throws IOException {
+        Path path = getBucketFolderPath(identityUuid + "/" + fileUuid);
+        deleteBucketFile(identityUuid, fileUuid); // Ensure no existing file
+        Files.write(path, data);
+    }
+    public void deleteBucketFile(String identityUuid, String fileUuid) throws IOException {
+        Path path = getBucketFolderPath(identityUuid + "/" + fileUuid);
+        try {
+            Files.delete(path);
+        } catch (NoSuchFileException _) {
+            // Ignore
+        }
+    }
+    public byte[] getBucketFile(String identityUuid, String fileUuid) throws IOException {
+        Path path = getBucketFolderPath(identityUuid + "/" + fileUuid);
+        return Files.readAllBytes(path);
     }
 
     public void zipDbFolder(String identityUuid, ZipOutputStream stream) throws IOException {

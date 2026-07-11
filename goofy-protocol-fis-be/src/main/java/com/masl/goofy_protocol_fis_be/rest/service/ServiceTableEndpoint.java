@@ -16,6 +16,7 @@ public class ServiceTableEndpoint {
     // In general look into how that should work, maybe define a schema version and on launch the service/app checks the schema and updates it if needed?
     // This would also affect constraints, so maybe we shouldnt have constraints and really keep the tables simple
 
+    // TODO: Have access log table with the last x access entries, for example 10000, just like handle and serviec-uuid/file-uuid
 
     ### Service Table Access
     These Endpoints get used by services to access the tables.

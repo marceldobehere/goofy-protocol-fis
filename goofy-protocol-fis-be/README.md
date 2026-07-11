@@ -17,7 +17,6 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
   * Implement Data Export (How to treat Buckets and Tables?) (Probably export everything as a ZIP and assume the download should be ok)
   * Implement Data Import? (How to treat Buckets and Tables?)
 * Implement Exceptions for unsupported Crypto Requests
-* Check Multipart Upload with Signed Request + Query Parameters.
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc)
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests
@@ -88,6 +87,18 @@ The Admin Endpoints don't necessarily have to be implemented in the same way, bu
 I will at some point make the source include a PDF or Markdown file with the current API Specs but currently I've had issues with automatically generating those :(
 
 Later on the version will be copied to the base goofy-protocol repository.
+
+### Table/Bucket Access
+(TODO)
+```
+// TODO: Make sure that when using ServiceEntry.uuid the OUTSIDE_ENTITIES also have the handle of the user in the request, so that it can be used if the user moved FIS and the server ooesn't know yet?
+// Outside Access / Naming
+// Bucket/Table / ServiceEntry: [id_handle]+[service_uuid]
+// --- Allowed Chars ---
+// Handle:  a-z _ 0-9   . @ : (for potential domains)
+// UUID:    a-f   0-9 -
+// Names:   a-z _ 0-9
+```
 
 ### Error Codes
 For now, Errors are split into ClientErrors and ServerErrors, which all use unique Error Codes and have the following structure:

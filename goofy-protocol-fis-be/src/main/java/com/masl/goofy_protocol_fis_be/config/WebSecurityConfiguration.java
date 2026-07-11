@@ -83,6 +83,8 @@ public class WebSecurityConfiguration {
                     .requestMatchers("/api/identity-storage/**").hasRole(ROLES.REGISTERED_USER) // Identity Keypair Storage for Services.
 
                     .requestMatchers("/api/service-entry/**").hasRole(ROLES.REGISTERED_IDENTITY) // Service Entry Configuration
+
+                    // TODO: Potentially change if I decide that access requests for public content do not need to be signed
                     .requestMatchers("/api/service-bucket/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Bucket Access
                     .requestMatchers("/api/service-table/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Table Access
 

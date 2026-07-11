@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -47,20 +48,29 @@ public class ServiceEntry {
     @Column(nullable = false)
     private Instant createdAt;
 
+    // Bucket Perm Stuff
+    @ElementCollection
+    private Set<String> extraReadPerms; // By Default Empty (So Private, only accessible by the Identity), Will have an Entry for each Handle with Read Access or an Entry with "*" to make it public
+    @ElementCollection
+    private Set<String> extraWritePerms; // By Default Empty (So Private, only accessible by the Identity), Will have an Entry for each Handle with Write Access (No * for public write access!)
+
+    @OneToMany(mappedBy="linkedServiceEntry", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    private Set<ServiceBucketEntry> serviceBucketEntries;
+
     // Helper Stuff
 
     private static final Logger log = LoggerFactory.getLogger(ServiceEntry.class);
 
     @PrePersist
     public void initEntryHandler() throws IOException, SQLException {
-        log.info("Creating ServiceEntry: " + this.uuid);
+        log.info("Creating ServiceEntry: {}", uuid);
         UserDbService.getSingleton().createEntry(this);
         UserBucketService.getSingleton().createEntry(this);
     }
 
     @PreRemove
     public void deleteEntryHandler() throws IOException {
-        log.info("Deleting ServiceEntry: " + this.uuid);
+        log.info("Deleting ServiceEntry: {}", uuid);
         UserDbService.getSingleton().deleteEntry(this);
         UserBucketService.getSingleton().deleteEntry(this);
     }

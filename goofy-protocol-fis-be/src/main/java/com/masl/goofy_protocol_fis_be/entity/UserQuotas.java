@@ -46,7 +46,7 @@ public class UserQuotas {
     @Column
     private Integer tableMaxCols;
     @Column
-    private Long tableMaxRows;
+    private Integer tableMaxRows;
     @Column
     private Integer tableMaxPermissionCount;
     @Column
@@ -66,7 +66,7 @@ public class UserQuotas {
     @Column
     private Long bucketMaxItemSize;
     @Column
-    private Long bucketMaxItemCount;
+    private Integer bucketMaxItemCount;
     @Column
     private Integer bucketMaxPermissionCount;
 

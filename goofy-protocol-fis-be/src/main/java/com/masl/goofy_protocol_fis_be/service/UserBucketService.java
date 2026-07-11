@@ -33,4 +33,16 @@ public class UserBucketService {
     public void deleteEntry(ServiceEntry entry) throws IOException {
         fileStorageService.deleteBucketFolder(entry.getUuid());
     }
+
+    public void deleteBucketEntry(ServiceEntry entry, String fileUuid) throws IOException {
+        fileStorageService.deleteBucketFile(entry.getUuid(), fileUuid);
+    }
+
+    public void uploadBucketEntry(ServiceEntry entry, String fileUuid, byte[] body) throws IOException {
+        fileStorageService.createBucketFile(entry.getUuid(), fileUuid, body);
+    }
+
+    public byte[] getBucketEntry(ServiceEntry entry, String fileUuid) throws IOException {
+        return fileStorageService.getBucketFile(entry.getUuid(), fileUuid);
+    }
 }
