@@ -33,6 +33,8 @@ public class UserQuotas {
     // Identity
     @Column
     private Integer identityMaxEntries;
+    @Column
+    private Integer identityMaxServiceEntries;
 
     // Table
     @Column
@@ -102,6 +104,7 @@ public class UserQuotas {
 
         // Identity
         identity.setMaxEntries(valueOrDefault(identityMaxEntries, base.getIdentity().getMaxEntries()));
+        identity.setMaxServiceEntries(valueOrDefault(identityMaxServiceEntries, base.getIdentity().getMaxServiceEntries()));
 
         // Table
         table.setMaxDbSize(valueOrDefault(tableMaxDbSize, base.getTable().getMaxDbSize()));

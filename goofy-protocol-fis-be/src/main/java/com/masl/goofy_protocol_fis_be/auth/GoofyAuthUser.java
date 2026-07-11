@@ -10,17 +10,14 @@ import java.security.Principal;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter @Setter
 public class GoofyAuthUser implements Principal {
-    @Getter @Setter
     private String handle;
 
-    @Getter @Setter
     private Boolean user;
 
-    @Getter @Setter
     private Boolean admin;
 
-    @Getter @Setter
     private SignedRequest signedRequest;
 
     @Override

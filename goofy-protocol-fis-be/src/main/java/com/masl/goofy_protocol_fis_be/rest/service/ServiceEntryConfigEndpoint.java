@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/service-entry-config")
-@Tag(name = "Service Entry Config", description = "Endpoints related to configuring Service Entries.<br> For Each Identity Users may create \"Service Entries\" which a Service can then use to store data for the identity.")
+@Tag(name = "Service Entry Config", description = "Endpoints related to configuring Service Entries. <br>For Each Identity Users may create \"Service Entries\" which the User can then use to store data for the service & identity. <br>Additionally the User can allow a Service to read/write some tables")
 public class ServiceEntryConfigEndpoint {
     // For Each Identity you may create "Service Entries" which a Service can use to store data for the identity.
     // Each Entry basically has a unique name and has a defined Storage Limit/Quota.
@@ -14,7 +14,7 @@ public class ServiceEntryConfigEndpoint {
     // The Entries consist of a DB with Tables and Bucket for binary Data
 
     // TODO: Look into if I should maybe split it into 2 DBs per service entry: 1 for the service to access and one for the user to access (for example useful if the user stores extra info like chat messages which the server shouldnt interfere with / know about)
-    
+
     /*
     ### Service Entry Configuration
     Endpoints related to configuring Service Data Access Entries.

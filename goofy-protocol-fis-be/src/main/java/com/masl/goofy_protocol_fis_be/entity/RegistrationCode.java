@@ -14,34 +14,29 @@ import java.time.Instant;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter @Setter
 public class RegistrationCode {
     @Id
     @Column(nullable = false, length = FieldSize.GENERIC_CODE_LEN)
-    @Getter @Setter
     private String code;
 
     @Column(nullable = false)
-    @Getter @Setter
     @ColumnDefault("false")
     private Boolean admin;
 
     @ManyToOne
     @JoinColumn
     @OnDelete(action = OnDeleteAction.SET_NULL)
-    @Getter @Setter
     private User createdBy;
 
     @Column(nullable = false)
-    @Getter @Setter
     private Instant createdAt;
 
     @ManyToOne
     @JoinColumn
     @OnDelete(action = OnDeleteAction.SET_NULL)
-    @Getter @Setter
     private User usedBy;
 
     @Column
-    @Getter @Setter
     private Instant usedAt;
 }

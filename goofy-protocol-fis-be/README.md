@@ -16,7 +16,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
     * Make it a two step process, first /request-delete which returns a signed token to be used and then /confirm-delete with the signed token to actually delete the account
     * Also potentially enforce having done an account-export within 7 days of trying to delete the account to avoid unwanted data loss
   * Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS / Maybe using Bucket4j
-  * Implement Data Export (How to treat Buckets and Tables?)
+  * Implement Data Export (How to treat Buckets and Tables?) (Probably export everything as a ZIP and assume the download should be ok)
   * Implement Data Import? (How to treat Buckets and Tables?)
 * Implement Exceptions for unsupported Crypto Requests
 * Check Multipart Upload with Signed Request + Query Parameters.

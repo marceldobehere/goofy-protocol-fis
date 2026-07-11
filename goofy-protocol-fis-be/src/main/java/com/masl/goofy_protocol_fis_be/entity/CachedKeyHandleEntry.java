@@ -13,17 +13,15 @@ import java.time.Instant;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter @Setter
 public class CachedKeyHandleEntry {
     @Id
     @Column(nullable = false, length = FieldSize.PUB_KEY_LEN)
-    @Getter @Setter
     private String pubSplitKey;
 
     @Column(nullable = false, length = FieldSize.HANDLE_LEN)
-    @Getter @Setter
     private String handle;
 
     @Column(nullable = false)
-    @Getter @Setter
     private Instant createdAt;
 }

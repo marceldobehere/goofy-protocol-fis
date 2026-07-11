@@ -13,23 +13,20 @@ import java.time.Instant;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter @Setter
 public class LoginStorageEntry {
     @Id
     @Column(nullable = false, length = FieldSize.SHA256_LEN)
-    @Getter @Setter
     private String usernameHash;
 
     @Column(nullable = false, length = FieldSize.FULL_KEY_LEN)
-    @Getter @Setter
     private String encKeypair;
 
     @ManyToOne(optional = false)
     @JoinColumn(nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @Getter @Setter
     private User createdBy;
 
     @Column(nullable = false)
-    @Getter @Setter
     private Instant createdAt;
 }

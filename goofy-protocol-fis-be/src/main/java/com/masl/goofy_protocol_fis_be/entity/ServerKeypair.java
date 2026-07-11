@@ -11,17 +11,15 @@ import lombok.Setter;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter @Setter
 public class ServerKeypair {
     @Id
     @Column(nullable = false, length = FieldSize.HANDLE_LEN)
-    @Getter @Setter
     private String handle;
 
     @Column(nullable = false, length = FieldSize.PUB_KEY_LEN)
-    @Getter @Setter
     private String pubSplitKey;
 
     @Column(nullable = false, length = FieldSize.PRIV_KEY_LEN)
-    @Getter @Setter
     private String privSplitKey;
 }

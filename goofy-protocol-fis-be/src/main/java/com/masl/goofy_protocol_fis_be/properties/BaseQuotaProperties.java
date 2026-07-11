@@ -22,6 +22,7 @@ public class BaseQuotaProperties {
     @Data
     public static class Identity {
         private Integer maxEntries;
+        private Integer maxServiceEntries;
     }
 
     @Data

@@ -11,33 +11,27 @@ import java.time.Instant;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter @Setter
 public class RegistrationRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Getter @Setter
     private Long id;
 
     @Column(nullable = false, length = FieldSize.NORMAL_TEXT_LEN)
-    @Getter @Setter
     private String messsage;
 
     @Column(nullable = false, length = FieldSize.SHORT_TEXT_LEN)
-    @Getter @Setter
     private String generalContact;
 
     @Column(length = FieldSize.SHORT_TEXT_LEN)
-    @Getter @Setter
     private String optEmail;
 
     @Column(nullable = false)
-    @Getter @Setter
     private Instant createdAt;
 
     @Column(length = FieldSize.HANDLE_LEN)
-    @Getter @Setter
     private String createdByHandle;
 
     @Column
-    @Getter @Setter
     private Instant resolvedAt; // Also acts as boolean
 }

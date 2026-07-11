@@ -13,18 +13,16 @@ import java.time.Instant;
 @Table(name = "fis_user")
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter @Setter
 public class User {
     @Id
     @Column(nullable = false, length = FieldSize.HANDLE_LEN)
-    @Getter @Setter
     private String handle;
 
     @Column(nullable = false, length = FieldSize.PUB_KEY_LEN)
-    @Getter @Setter
     private String pubSplitKey;
 
     @Column(nullable = false)
-    @Getter @Setter
     @ColumnDefault("false")
     private boolean admin;
 
@@ -32,12 +30,10 @@ public class User {
     // Should ideally put the user in a basically read-only mode
     // TODO: Implement role or auth checks for that and add to required endpoints
     @Column(nullable = false)
-    @Getter @Setter
     @ColumnDefault("false")
     private boolean restricted;
 
     @Column
-    @Getter @Setter
     private Instant lastCheck;
 
     @Override
