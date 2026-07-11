@@ -54,7 +54,7 @@ public class RegistrationTests {
         Mockito.when(req.handle()).thenReturn(handle);
         Mockito.when(req.pubSplitKey()).thenReturn(keypair.pub().serialize());
 
-        return new GoofyAuthUser(handle, false, false, req);
+        return new GoofyAuthUser(handle, false, false, false, req);
     }
 
     @ParameterizedTest(name = "testRegistrationWithValidCode(isAdmin={0})")

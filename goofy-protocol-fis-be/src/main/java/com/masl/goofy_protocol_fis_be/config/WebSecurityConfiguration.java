@@ -82,7 +82,7 @@ public class WebSecurityConfiguration {
                     .requestMatchers("/api/login-storage/**").permitAll() // Password/Keypair Storage
                     .requestMatchers("/api/identity-storage/**").hasRole(ROLES.REGISTERED_USER) // Identity Keypair Storage for Services.
 
-                    .requestMatchers("/api/service-entry-config/**").hasRole(ROLES.REGISTERED_USER) // Service Entry Configuration
+                    .requestMatchers("/api/service-entry/**").hasRole(ROLES.REGISTERED_IDENTITY) // Service Entry Configuration
                     .requestMatchers("/api/service-bucket/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Bucket Access
                     .requestMatchers("/api/service-table/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Table Access
 

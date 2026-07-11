@@ -6,9 +6,11 @@ import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequest;
 import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequestValidator;
 import com.masl.goofy_protocol_core.crypto.exceptions.PubSplitKeyNotFound;
 import com.masl.goofy_protocol_fis_be.crypto.HandleHelper;
+import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
 import com.masl.goofy_protocol_fis_be.entity.User;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidSignature;
 import com.masl.goofy_protocol_fis_be.exception.server.PublicKeyLookupFailed;
+import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,15 +35,17 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
     private final SignedRequestValidator validator = new BasicRequestValidator();
     private final HandleCrypto handleCrypto;
     private final UserRepository userRepository;
+    private final IdentityStorageEntryRepository identityRepository;
     private final int maxRequestSizeBytes;
     private final boolean disableUniqueIdCheck;
     private final HandlerExceptionResolver resolver;
 
-    public GoofyAuthFilter(HandleHelper handleHelper, UserRepository userRepository, Environment env,
+    public GoofyAuthFilter(HandleHelper handleHelper, UserRepository userRepository, IdentityStorageEntryRepository identityRepository, Environment env,
                            @Value("${goofy.auth.max-cache-bytes}") int maxCacheBytes,
                            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
         this.handleCrypto = new HandleCrypto(handleHelper);
         this.userRepository = userRepository;
+        this.identityRepository = identityRepository;
         this.disableUniqueIdCheck = env.acceptsProfiles(Profiles.of("test")); // Important for Perf Testing
         this.maxRequestSizeBytes = maxCacheBytes;
         this.resolver = resolver;
@@ -53,7 +57,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
             Map<String, String> headers = Collections.list(request.getHeaderNames())
                     .stream().collect(Collectors.toMap(h -> h, request::getHeader));
 
-            // If the Request is not signed, we dont need to check it
+            // If the Request is not signed, we don't need to check it
             if (!SignedRequest.hasAllRequestHeaders(headers)) {
                 SecurityContextHolder.getContext().setAuthentication(new GoofyAuth());
                 filterChain.doFilter(request, response);
@@ -83,9 +87,17 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
 
             // Get User Data and Create Authentication
             User user = userRepository.findByHandle(req.handle());
+            boolean isIdentity = user != null; // Could have the Role be exclusive but i'd rather explicitly check against it in the respective Endpoints to avoid misunderstandings
             boolean isUser = user != null;
             boolean isAdmin = user != null && user.isAdmin();
-            SecurityContextHolder.getContext().setAuthentication(new GoofyAuth(req, isUser, isAdmin));
+
+            // Check if it's a Registered Identity
+            if (!isUser) {
+                IdentityStorageEntry identity = identityRepository.findByHandle(req.handle());
+                isIdentity = identity != null;
+            }
+
+            SecurityContextHolder.getContext().setAuthentication(new GoofyAuth(req, isIdentity, isUser, isAdmin));
 
             // Fix Body for Filter
             RequestBodyContentWrapper wrapped = new RequestBodyContentWrapper(_wrapped, maxRequestSizeBytes);

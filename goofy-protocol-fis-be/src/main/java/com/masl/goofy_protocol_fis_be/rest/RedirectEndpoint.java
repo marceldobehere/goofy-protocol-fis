@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Redirects", description = "Endpoints to get Frontend URL Redirects for Service Login/Config/Access")
 public class RedirectEndpoint {
     // TODO: Think about Fis Clients and if they need federation too / what to do with the redirects then? Maybe standardize and let user save their frontend url or just say frontend is set by backend?
+
+    // TODO: Look into how Services would request a user to create a service entry + tables with access + bucket access?
+
     /*
     ### External Service Access
     These Endpoints get used by services.

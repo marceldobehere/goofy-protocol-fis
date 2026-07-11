@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ServiceTableEndpoint {
     /*
 
+    // TODO: Make sure that when using ServiceEntry.uuid the OUTSIDE_ENTITIES also have the handle of the user in the request, so that it can be used if the user moved FIS and the server ooesn't know yet?
+
     // TODO: Look into behaviour for modifying tables so simple "migration", ideally force the user to define explicit default values when changing the schema
     // In general look into how that should work, maybe define a schema version and on launch the service/app checks the schema and updates it if needed?
     // This would also affect constraints, so maybe we shouldnt have constraints and really keep the tables simple
@@ -24,6 +26,8 @@ public class ServiceTableEndpoint {
 
     #### Get Tables
     Think about showing all tables depending on global or local scope.
+
+    ### Reset All Tables / Entire DB
 
     #### Get Tables Quota
     How much storage can be used / is used, and how many tables can be created / have been created. Also how many columns/rows a table can have.
@@ -72,5 +76,31 @@ public class ServiceTableEndpoint {
     Some kind of way to query tables with specific column constraints and also define what data/columns you want. should be basic but make life easier and increase performance.
 
     FIS for queries maybe yoink some stuff from drizzle orm? Select([])from().where().sort() etc
+    */
+
+        /*
+    // TODO: This shoul be inside the ServiceBucket and ServiceTable Endpoints
+    ### Service Data Access Configuration
+    Being able to list, view and modify the tables / data inside.
+
+    How much storage can be used / is used, and how many tables can be created / have been created. Also how many columns/rows a table can have.
+
+    Also being able to set the visibility of data (either private or public or select services maybe?)
+
+
+    The finding Tables/Buckets + direct manipulation of Table/Bucket data + Visibility Status can use the API inside the `Service Table Access` Section by using the global scope and correct Service name.
+
+    #### Get Total Quota Stats
+    Aggregation of Table and Bucket Stats
+
+    #### Get Table Access
+
+    #### Set Table Access
+    Manage which handles can access the table
+
+    #### Get Bucket Access
+
+    #### Set Bucket Access
+    Manage which handles can access the table and if its read/write or readonly
     */
 }

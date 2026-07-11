@@ -115,7 +115,7 @@ public class IdentityStorageEndpoint {
         )).toList();
     }
 
-    // TODO: Make this a two step process / enforce export data first? To avoid data loss!
+    // TODO: Don't make it a two step process but enforce that the data has been exported atleast 72h before attempting to delete the entry (IF IT IS NOT EMPTY -> then it doesnt matter)
     @DeleteMapping("/{handle}")
     @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
     @FisEndpoint(summary = "Deletes the Identity Entry of the Users Storage if it exists")
@@ -139,6 +139,8 @@ public class IdentityStorageEndpoint {
                 entry.getEncKeypairEntrySignature()
         );
     }
+
+    // TODO: Add Export
 
     // TODO: Implement
     // - For each identity the user has, they can set global public and private data.

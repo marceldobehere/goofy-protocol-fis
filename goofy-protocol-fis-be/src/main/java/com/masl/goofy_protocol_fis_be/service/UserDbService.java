@@ -1,6 +1,6 @@
 package com.masl.goofy_protocol_fis_be.service;
 
-import com.masl.goofy_protocol_fis_be.entity.ServiceConfigEntry;
+import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,17 +30,17 @@ public class UserDbService {
         singleton = this;
     }
 
-    public void createEntry(ServiceConfigEntry entry) throws IOException, SQLException {
+    public void createEntry(ServiceEntry entry) throws IOException, SQLException {
         deleteEntry(entry); // Ensure no existing folder
         fileStorageService.createDbFolder(entry.getUuid());
         initDb(entry);
     }
 
-    public void deleteEntry(ServiceConfigEntry entry) throws IOException {
+    public void deleteEntry(ServiceEntry entry) throws IOException {
         fileStorageService.deleteDbFolder(entry.getUuid());
     }
 
-    private void initDb(ServiceConfigEntry entry) throws SQLException {
+    private void initDb(ServiceEntry entry) throws SQLException {
         Connection test = getConnection(entry.getUuid());
         if (test == null)
             throw new SQLException("Failed to create database connection for entry: " + entry.getUuid());

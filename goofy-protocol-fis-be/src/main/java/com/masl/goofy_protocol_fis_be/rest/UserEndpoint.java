@@ -3,9 +3,11 @@ package com.masl.goofy_protocol_fis_be.rest;
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import com.masl.goofy_protocol_fis_be.config.ROLES;
 import com.masl.goofy_protocol_fis_be.dto.response.MyUserInfoDto;
+import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
 import com.masl.goofy_protocol_fis_be.entity.User;
 import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
 import com.masl.goofy_protocol_fis_be.properties.GeneralProperties;
+import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,20 +21,28 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "User", description = "Endpoints relating to User Info")
 public class UserEndpoint {
     private final UserRepository userRepository;
+    private final IdentityStorageEntryRepository identityRepository;
     private final GeneralProperties generalProperties;
 
-    public UserEndpoint(UserRepository userRepository, GeneralProperties generalProperties) {
+    public UserEndpoint(UserRepository userRepository, IdentityStorageEntryRepository identityRepository, GeneralProperties generalProperties) {
         this.userRepository = userRepository;
+        this.identityRepository = identityRepository;
         this.generalProperties = generalProperties;
     }
 
     // Get My User Info (Handle, Public Key, Auth Role, ...)
     @GetMapping("/info")
-    @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
-    @FisEndpoint(summary = "Gets Information for the current User", description = "This Endpoint returns information about the current user, including their handle, public key, and authentication role.")
+    @PreAuthorize("hasRole('ROLE_REGISTERED_IDENTITY')")
+    @FisEndpoint(summary = "Gets Information for the current User", description = "This Endpoint returns information about the current user/identity, including their handle, public key, and authentication role.")
     public MyUserInfoDto myInfo(@AuthenticationPrincipal GoofyAuthUser auth) {
-        User user = userRepository.findByHandle(auth.getHandle());
-        return new MyUserInfoDto(user.getHandle(), generalProperties.getDomain(), user.getPubSplitKey(), user.isAdmin() ? ROLES.AuthRoleEnumDto.ADMIN : ROLES.AuthRoleEnumDto.REGISTERED_USER, user.isRestricted());
+        if (auth.getUser()) {
+            User user = userRepository.findByHandle(auth.getHandle());
+            return new MyUserInfoDto(auth.getHandle(), generalProperties.getDomain(), user.getPubSplitKey(), user.isAdmin() ? ROLES.AuthRoleEnumDto.ADMIN : ROLES.AuthRoleEnumDto.REGISTERED_USER, user.isRestricted());
+        } else if (auth.getIdentity()) {
+            IdentityStorageEntry entry = identityRepository.findByHandle(auth.getHandle());
+            return new MyUserInfoDto(auth.getHandle(), generalProperties.getDomain(), entry.getPubSplitKey(), ROLES.AuthRoleEnumDto.REGISTERED_IDENTITY, false);
+        }
+        return new MyUserInfoDto(auth.getHandle(), "", "", ROLES.AuthRoleEnumDto.OUTSIDE_ENTITY, false);
     }
 
     // Look Up User / Public Key Info based on Handle (Check if moved)

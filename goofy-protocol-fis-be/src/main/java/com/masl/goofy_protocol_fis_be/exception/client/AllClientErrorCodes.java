@@ -24,4 +24,7 @@ public class AllClientErrorCodes {
     public static final int IDENTITY_ENTRY_INVALID = 1_005_003;
     public static final int IDENTITY_ENTRY_QUOTA_EXCEEDED = 1_005_004;
 
+    public static final int SERVICE_ENTRY_QUOTA_EXCEEDED = 1_006_001;
+    public static final int SERVICE_ENTRY_NOT_FOUND = 1_006_002;
+    public static final int SERVICE_ENTRY_INVALID = 1_006_003;
 }

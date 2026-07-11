@@ -12,8 +12,6 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
   * Implement User Restriction
   * Implement User Account Deactivation
   * Implement User Account Deletion -> Should safely delete everything and not cause DB issues (Cache too)
-    * Have @PreRemove or @PostRemove Hooks to delete the Bucket / DB data / etc
-    * Make it a two step process, first /request-delete which returns a signed token to be used and then /confirm-delete with the signed token to actually delete the account
     * Also potentially enforce having done an account-export within 7 days of trying to delete the account to avoid unwanted data loss
   * Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS / Maybe using Bucket4j
   * Implement Data Export (How to treat Buckets and Tables?) (Probably export everything as a ZIP and assume the download should be ok)
@@ -37,6 +35,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Move the Crypto Core Lib into a seperate package with tests, known values and pom.xml
 * Look into Canonical Builds
 * Improve CORS?
+* Potentially overhaul the simplistic quota system and let users set quotas for specific entries too.
 
 
 ## Features
@@ -77,6 +76,9 @@ public FileStorageService(@Value("${app.storage.dir}") String dir) {
 
 The Test Data Path should also be fully reset on launch of the Test Profile, so that tests can be executed without any side effects from previous test runs.
 
+## ROLES
+(TODO)
+
 ## API Docs
 The actual specs will can be found by starting the application in the `dev` Profile and checking http://localhost:8080/swagger-ui/index.html.
 
@@ -104,6 +106,26 @@ The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be
 
 ## Implementation Details
 (TODO)
+* Firstly work on the Crypto Core Lib, either porting it or creating it and then testing it properly (Known Value Tests are quite useful)
+* Implement the Exception Handling System so that the Error Codes and Structures match
+* Implement the Signed Request filtering and Role System
+* Start implementing API Endpoints
+* Start working on the Main DB, Entities and general Persistence
+* Start working on the File Storage System & User DB Management
+* Start working on the Config And Quota System
+* Either use/adapt the reference Frontend Client or implement one yourself
+* Work more on the Endpoints & Services
+  * Root & General Endpoints
+  * Registration & User Endpoints
+  * Login Storage
+  * Identity Storage
+  * Service Entry
+  * Service Bucket
+  * Service Table
+  * Redirects
+  * Admin Endpoints
+* Keep testing and use the reference implementation for the client and backend as help.
+
 
 
 
@@ -349,7 +371,8 @@ The username is hashed with sha256 and encoded using Base64URL.
 ### Identity Storage
 (TODO)
 
-
+### Service Entry
+(TODO)
 
 
 

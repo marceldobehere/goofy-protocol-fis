@@ -1,6 +1,6 @@
 package com.masl.goofy_protocol_fis_be.service;
 
-import com.masl.goofy_protocol_fis_be.entity.ServiceConfigEntry;
+import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +24,13 @@ public class UserBucketService {
         singleton = this;
     }
 
-    public void createEntry(ServiceConfigEntry entry) throws IOException {
+    public void createEntry(ServiceEntry entry) throws IOException {
         deleteEntry(entry); // Ensure no existing folder
         fileStorageService.createBucketFolder(entry.getUuid());
         log.info("Created bucket folder for entry: {}", entry.getUuid());
     }
 
-    public void deleteEntry(ServiceConfigEntry entry) throws IOException {
+    public void deleteEntry(ServiceEntry entry) throws IOException {
         fileStorageService.deleteBucketFolder(entry.getUuid());
     }
 }
