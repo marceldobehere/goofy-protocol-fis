@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 
@@ -25,6 +27,7 @@ public class RegistrationCode {
 
     @ManyToOne
     @JoinColumn
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     @Getter @Setter
     private User createdBy;
 
@@ -34,6 +37,7 @@ public class RegistrationCode {
 
     @ManyToOne
     @JoinColumn
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     @Getter @Setter
     private User usedBy;
 

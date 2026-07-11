@@ -13,15 +13,23 @@ import java.time.Instant;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginStorageEntry {
+public class IdentityStorageEntry {
     @Id
-    @Column(nullable = false, length = FieldSize.SHA256_LEN)
+    @Column(nullable = false, length = FieldSize.HANDLE_LEN)
     @Getter @Setter
-    private String usernameHash;
+    private String handle;
+
+    @Column(nullable = false, length = FieldSize.PUB_KEY_LEN)
+    @Getter @Setter
+    private String pubSplitKey;
 
     @Column(nullable = false, length = FieldSize.FULL_KEY_LEN)
     @Getter @Setter
-    private String encKeypair;
+    private String encKeypairEntry;
+
+    @Column(nullable = false, length = FieldSize.SIGNATURE_LEN)
+    @Getter @Setter
+    private String encKeypairEntrySignature;
 
     @ManyToOne(optional = false)
     @JoinColumn(nullable = false)

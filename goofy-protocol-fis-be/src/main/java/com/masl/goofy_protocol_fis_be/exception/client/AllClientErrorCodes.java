@@ -15,4 +15,13 @@ public class AllClientErrorCodes {
     public static final int LOGIN_ENTRY_NOT_FOUND = 1_003_002;
     public static final int LOGIN_ENTRY_INVALID = 1_003_003;
 
+    public static final int INVALID_SIGNED_OBJECT = 1_004_001;
+    public static final int INVALID_PUBLIC_KEY = 1_004_002;
+    public static final int INVALID_PUBLIC_KEY_HANDLE_MAPPING = 1_004_003;
+
+    public static final int IDENTITY_ENTRY_ALREADY_EXISTS = 1_005_001;
+    public static final int IDENTITY_ENTRY_NOT_FOUND = 1_005_002;
+    public static final int IDENTITY_ENTRY_INVALID = 1_005_003;
+    public static final int IDENTITY_ENTRY_QUOTA_EXCEEDED = 1_005_004;
+
 }

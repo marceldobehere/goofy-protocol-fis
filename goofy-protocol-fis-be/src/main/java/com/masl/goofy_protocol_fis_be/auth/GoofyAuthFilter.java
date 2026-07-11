@@ -7,7 +7,7 @@ import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequestValida
 import com.masl.goofy_protocol_core.crypto.exceptions.PubSplitKeyNotFound;
 import com.masl.goofy_protocol_fis_be.crypto.HandleHelper;
 import com.masl.goofy_protocol_fis_be.entity.User;
-import com.masl.goofy_protocol_fis_be.exception.client.InvalidSignatureException;
+import com.masl.goofy_protocol_fis_be.exception.client.InvalidSignature;
 import com.masl.goofy_protocol_fis_be.exception.server.PublicKeyLookupFailed;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
 import jakarta.servlet.FilterChain;
@@ -75,7 +75,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
             // Check Validity
             SignedRequest.SignedRequestValidity valid = req.isValid(handleCrypto, validator);
             if (!valid.equals(SignedRequest.SignedRequestValidity.VALID))
-                throw new InvalidSignatureException(valid);
+                throw new InvalidSignature(valid);
 
             // Invalidate ID
             if (!disableUniqueIdCheck)

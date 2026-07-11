@@ -9,7 +9,6 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Work on Frontend
 * Work on Implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
 * Work on more Implementation Stuff
-  * Have correct Behavior for deleting Entities (on delete cascade/set null)
   * Implement User Restriction
   * Implement User Account Deactivation
   * Implement User Account Deletion -> Should safely delete everything and not cause DB issues (Cache too)
@@ -342,7 +341,13 @@ ML-KEM (1024) + ML-DSA (87):  ~6,300 bytes
 
 ### Login Storage
 (TODO)
-The username will be hashed with sha256 and encoded using Base64URL.
+The username is hashed with sha256 and encoded using Base64URL.
+
+### Identity Storage
+(TODO)
+
+
+
 
 
 

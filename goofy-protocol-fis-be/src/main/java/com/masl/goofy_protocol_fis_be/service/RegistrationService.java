@@ -5,11 +5,13 @@ import com.masl.goofy_protocol_fis_be.dto.request.RegistrationRequestDto;
 import com.masl.goofy_protocol_fis_be.entity.RegistrationCode;
 import com.masl.goofy_protocol_fis_be.entity.RegistrationRequest;
 import com.masl.goofy_protocol_fis_be.entity.User;
+import com.masl.goofy_protocol_fis_be.entity.UserQuotas;
 import com.masl.goofy_protocol_fis_be.exception.client.HandleAlreadyRegistered;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidRegisterCode;
 import com.masl.goofy_protocol_fis_be.exception.client.RegistrationCodeAlreadyUsed;
 import com.masl.goofy_protocol_fis_be.repository.RegistrationCodeRepository;
 import com.masl.goofy_protocol_fis_be.repository.RegistrationRequestRepository;
+import com.masl.goofy_protocol_fis_be.repository.UserQuotasRepository;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,11 +28,13 @@ public class RegistrationService {
     private final RegistrationCodeRepository registrationCodeRepository;
     private final RegistrationRequestRepository registrationRequestRepository;
     private final UserRepository userRepository;
+    private final UserQuotasRepository userQuotasRepository;
 
-    public RegistrationService(RegistrationCodeRepository registrationCodeRepository, RegistrationRequestRepository registrationRequestRepository, UserRepository userRepository) {
+    public RegistrationService(RegistrationCodeRepository registrationCodeRepository, RegistrationRequestRepository registrationRequestRepository, UserRepository userRepository, UserQuotasRepository userQuotasRepository) {
         this.registrationCodeRepository = registrationCodeRepository;
         this.registrationRequestRepository = registrationRequestRepository;
         this.userRepository = userRepository;
+        this.userQuotasRepository = userQuotasRepository;
     }
 
     public RegistrationCode createNewRegistrationCode(boolean isAdmin) {
@@ -98,6 +102,11 @@ public class RegistrationService {
         user.setPubSplitKey(auth.getSignedRequest().pubSplitKey());
         user.setAdmin(regCode.getAdmin());
         userRepository.save(user);
+
+        // Create User Quotas
+        UserQuotas quotas = new UserQuotas();
+        quotas.setUser(user);
+        userQuotasRepository.save(quotas);
 
         // Use Code
         useCode(code, user);
