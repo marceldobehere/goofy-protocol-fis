@@ -167,3 +167,11 @@ export async function sha256ToText(inputStr: string): Promise<string> {
     const hash = await sha256(inputStr);
     return base64Encode(hash);
 }
+
+export async function secretSymmKeyFromPrivateKey(privKey: AsymmPrivKeyPair): Promise<string> {
+    return await sha256ToText(privKey.serialize());
+}
+
+export async function secretSymmKeyFromFullKey(keypair: AsymmFullKeyPair): Promise<string> {
+    return await sha256ToText(keypair.priv.serialize());
+}

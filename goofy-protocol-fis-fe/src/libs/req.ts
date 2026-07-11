@@ -113,4 +113,17 @@ export async function postFixedAuth<T>(path: string, body: object | string , key
     return await _internalDoReq<T>(path, "POST", body, keypair) as T;
 }
 
+export async function deleteNoAuth<T>(path: string): Promise<T> {
+    return await _internalDoReq<T>(path, "DELETE", null) as T;
+}
+export async function deleteRawNoAuth(path: string): Promise<Response> {
+    return await _internalDoReq<Response>(path, "DELETE", null, null, new Map(), true) as Response;
+}
+export async function deleteAuth<T>(path: string): Promise<T> {
+    return await _internalDoReq<T>(path, "DELETE", null, await getKeypair()) as T;
+}
+export async function deleteFixedAuth<T>(path: string, keypair: AsymmFullKeyPair): Promise<T> {
+    return await _internalDoReq<T>(path, "DELETE", null, keypair) as T;
+}
+
 // TODO: Add more when needed

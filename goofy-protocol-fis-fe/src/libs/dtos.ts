@@ -88,3 +88,15 @@ export interface RegistrationRequestDto {
     contact: string;
     optEmail?: string;
 }
+
+export interface IdentityStorageEntryDto {
+    handle: string;
+    pubSplitKey: string;
+    encKeypairEntry: string;
+    encKeypairEntrySignature: string;
+}
+
+export interface MyIdentityEntryQuotasDto {
+    maxEntryCount: number;
+    currentEntryCount: number;
+}
