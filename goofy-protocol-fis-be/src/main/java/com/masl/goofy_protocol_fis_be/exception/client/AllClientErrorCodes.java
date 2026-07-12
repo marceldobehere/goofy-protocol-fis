@@ -27,7 +27,6 @@ public class AllClientErrorCodes {
     public static final int SERVICE_ENTRY_QUOTA_EXCEEDED = 1_006_001;
     public static final int SERVICE_ENTRY_NOT_FOUND = 1_006_002;
     public static final int SERVICE_ENTRY_INVALID = 1_006_003;
-    public static final int SERVICE_ENTRY_PATH_INVALID = 1_006_004;
 
     public static final int SERVICE_BUCKET_PERMS_INVALID = 1_007_001;
     public static final int SERVICE_BUCKET_NOT_FOUND = 1_007_002;

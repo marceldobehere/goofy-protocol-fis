@@ -13,7 +13,7 @@ export async function sendRegistrationRequest(request: RegistrationRequestDto, k
         return null;
     } catch (e) {
         if (e instanceof RequestError)
-                return e.error;
+                return e.message;
         else if (e instanceof RequestFisError)
             return e.message + ` (Details: ${JSON.stringify(e.details)})`;
         return (e as Error).message;
@@ -26,7 +26,7 @@ export async function doRegistration(code: string, keypair: AsymmFullKeyPair): P
         return null;
     } catch (e) {
         if (e instanceof RequestError)
-            return e.error;
+            return e.message;
         else if (e instanceof RequestFisError)
             return e.message;
         return (e as Error).message;
@@ -45,7 +45,7 @@ export async function storeLogin(username: string, password: string, keypair: As
         return null;
     } catch (e) {
         if (e instanceof RequestError)
-            return e.error;
+            return e.message;
         else if (e instanceof RequestFisError)
             return e.message;
         return (e as Error).message;

@@ -24,12 +24,11 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
-import java.util.regex.Pattern;
 
 // TODO: Write Tests
 @RestController
 @RequestMapping("/api/service-bucket")
-@Tag(name = "Service Bucket Access", description = "Endpoints related to accessing Buckets and their contents. <br>Important Note: These Endpoints need to be signed/access using the Identity Keypair, not the User. <br>ServiceEntry Format: `[id_handle]+[service_uuid]`")
+@Tag(name = "Service Bucket Access", description = "Endpoints related to accessing Buckets and their contents. <br>Important Note: These Endpoints need to be signed/access using the Identity Keypair, not the User.")
 public class ServiceBucketEndpoint {
     private final ServiceBucketEntryRepository bucketEntryRepository;
     private final ServiceEntryRepository serviceEntryRepository;
@@ -47,19 +46,19 @@ public class ServiceBucketEndpoint {
 
     // TODO: Add access log table with the last x access entries, for example 10000, just like handle and serviec-uuid/file-uuid
 
+
     // --- IDENTITY ONLY ---
 
+
+    // TODO: Do Admins realistically need access to these endpoints too?
+
     // Get Full Bucket Permissions (Read Access, Write Access, ...)
-    @GetMapping("/{serviceEntry}/perms")
+    @GetMapping("/{serviceUuid}/perms")
     @PreAuthorize("hasRole('ROLE_REGISTERED_IDENTITY') and not hasRole('ROLE_REGISTERED_USER')")
     @FisEndpoint(summary = "Gets the Bucket Permissions", description = "Gets the full Bucket Permission Lists, for now a List of Read and Write Access Permissions. <br>Consists of a List of Strings (handles of the identities with Access) <br>Additionally, readAccess can have an entry with just a \"*\" which makes the Bucket publicly visible by default.")
-    public ServiceBucketPermissionDto getBucketPermissions(@PathVariable String serviceEntry, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound {
-        ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
-
-        // Get Service Entry Identity
-        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(path.serviceUuid(), auth.getHandle());
-        if (entry == null)
-            throw new ServiceEntryNotFound(path.serviceUuid());
+    public ServiceBucketPermissionDto getBucketPermissions(@PathVariable String serviceUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound {
+        ServiceEntry entry = findServiceEntry(auth.getHandle(), serviceUuid);
+        // No extra Permission Checks needed
 
         return new ServiceBucketPermissionDto(
                 entry.getExtraReadPerms().toArray(new String[0]),
@@ -68,20 +67,13 @@ public class ServiceBucketEndpoint {
     }
 
     // Set Full Bucket Permissions (Read Access, Write Access, ...)
-    @PutMapping("/{serviceEntry}/perms")
+    @PutMapping("/{serviceUuid}/perms")
     @PreAuthorize("hasRole('ROLE_REGISTERED_IDENTITY') and not hasRole('ROLE_REGISTERED_USER')")
     @FisEndpoint(summary = "Sets the Bucket Permissions", description = "Sets the full Bucket Permission Lists, for now a List of Read and Write Access Permissions. <br>Consists of a List of Strings (handles of the identities with Access) <br>Additionally, readAccess can have an entry with just a \"*\" which makes the Bucket publicly visible by default.")
-    public void setBucketPermissions(@PathVariable String serviceEntry, @Valid @RequestBody ServiceBucketPermissionDto permDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketPermsInvalid {
-        ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
-
-        // Get Service Entry Identity
-        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(path.serviceUuid(), auth.getHandle());
-        if (entry == null)
-            throw new ServiceEntryNotFound(path.serviceUuid());
-
-        // Get Quotas
-        UserQuotas quotas = userQuotasRepository.findByUserHandle(entry.getCreatedBy().getHandle());
-        BaseQuotaProperties userQuotas = UserQuotas.getUserQuotas(quotas, baseQuotaProperties);
+    public void setBucketPermissions(@PathVariable String serviceUuid, @Valid @RequestBody ServiceBucketPermissionDto permDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketPermsInvalid {
+        ServiceEntry entry = findServiceEntry(auth.getHandle(), serviceUuid);
+        BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
+        // No extra Permission Checks needed
 
         // Check the Entry Counts against the Quotas
         if (permDto.getHandlesWithReadPerms().length > userQuotas.getBucket().getMaxPermissionCount() ||
@@ -95,50 +87,22 @@ public class ServiceBucketEndpoint {
     }
 
 
-
     // --- OUTSIDE ENTITIES ---
 
-    public record ServiceEntryPath(String idHandle, String serviceUuid) {
-        static ServiceEntryPath fromStr(String str) throws ServiceEntryPathInvalid {
-            if (str == null || !str.contains("+"))
-                throw new ServiceEntryPathInvalid();
-
-            String[] split = str.split(Pattern.quote("+"));
-            if (split.length != 2 || split[0].isEmpty() || split[1].isEmpty())
-                throw new ServiceEntryPathInvalid();
-
-            return new ServiceEntryPath(split[0], split[1]);
-        }
-
-        String toStr() {
-            return idHandle + "+" + serviceUuid;
-        }
-    }
 
     // Get Bucket Quota and Stats (Count & Size)
-    @GetMapping("/{serviceEntry}/quotas")
+    @GetMapping("/{idHandle}/{serviceUuid}/quotas")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Gets the Bucket Quotas and Stats", description = "Gets the Bucket Quotas and Stats (Count & Size).")
-    public ServiceBucketQuotasDto getBucketQuotas(@PathVariable String serviceEntry, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound {
-        ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
-
-        // Get Service Entry Identity
-        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(path.serviceUuid(), path.idHandle());
-        if (entry == null)
-            throw new ServiceEntryNotFound(path.serviceUuid());
-
-        // Check Permissions
-        if (!entry.getExtraReadPerms().contains("*") && !entry.getExtraReadPerms().contains(auth.getHandle()) && !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))
-            throw new ServiceEntryNotFound(path.serviceUuid());
-
-        // Get Quotas
-        UserQuotas quotas = userQuotasRepository.findByUserHandle(entry.getCreatedBy().getHandle());
-        BaseQuotaProperties userQuotas = UserQuotas.getUserQuotas(quotas, baseQuotaProperties);
+    public ServiceBucketQuotasDto getBucketQuotas(@PathVariable String idHandle, @PathVariable String serviceUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound {
+        ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
+        checkServiceEntryReadPermissions(entry, auth);
+        BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
         // Get Stats
-        List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle(path.idHandle());
+        List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle(idHandle);
         int currentItemCount = bucketEntries.size();
-        long currentBucketSize = bucketEntries.stream().reduce(0L, (acc, bucketEntry) -> acc + bucketEntry.getContentSize(), Long::sum);
+        long currentBucketSize = getCurrentBucketSize(bucketEntries);
 
         return new ServiceBucketQuotasDto(
                 userQuotas.getBucket().getMaxBucketSize(),
@@ -150,40 +114,17 @@ public class ServiceBucketEndpoint {
         );
     }
 
-    private ServiceBucketEntryDto fromServiceBucketEntry(ServiceBucketEntry entry) {
-        return new ServiceBucketEntryDto(
-                entry.getFileUuid(),
-                entry.getContentType(),
-                entry.getFilename(),
-                entry.getContentSize(),
-                entry.getCreatedAt(),
-                entry.getExtraReadPerms().toArray(new String[0]),
-                entry.getExtraWritePerms().toArray(new String[0])
-        );
-    }
-
-    public ServiceBucketEntryDto uploadBucketEntry(String serviceEntry, String uuid, String filename, String accessHandle, byte[] body, String contentType) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
-        ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
-
-        // Get Service Entry Identity
-        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(path.serviceUuid(), path.idHandle());
-        if (entry == null)
-            throw new ServiceEntryNotFound(path.serviceUuid());
-
-        // Check Permissions
-        if (!entry.getExtraWritePerms().contains(accessHandle) && !entry.getLinkedIdentity().getHandle().equals(accessHandle))
-            throw new ServiceEntryNotFound(path.serviceUuid());
-
-        // Get Quotas
-        UserQuotas quotas = userQuotasRepository.findByUserHandle(entry.getCreatedBy().getHandle());
-        BaseQuotaProperties userQuotas = UserQuotas.getUserQuotas(quotas, baseQuotaProperties);
+    public ServiceBucketEntryDto uploadBucketEntry(String idHandle, String serviceUuid, String uuid, String filename, GoofyAuthUser auth, byte[] body, String contentType) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
+        ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
+        checkServiceEntryWritePermissions(entry, auth);
+        BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
         // Check Max Item Size against Quota
         if (body.length > userQuotas.getBucket().getMaxItemSize())
             throw new ServiceBucketQuotaExceeded("maxItemSize");
 
         // Get Bucket Entry / Create if it doesn't exist
-        ServiceBucketEntry bucketEntry = bucketEntryRepository.findByFileUuid_AndLinkedIdentity_Handle(uuid, path.idHandle());
+        ServiceBucketEntry bucketEntry = bucketEntryRepository.findByFileUuid_AndLinkedIdentity_Handle(uuid, idHandle);
         if (bucketEntry == null) {
             bucketEntry = new ServiceBucketEntry();
             bucketEntry.setFileUuid(uuid);
@@ -197,19 +138,19 @@ public class ServiceBucketEndpoint {
             bucketEntry.setExtraWritePerms(new HashSet<>());
 
             // Check Max Item Count against Quota
-            long count = bucketEntryRepository.countAllByLinkedIdentity_Handle(path.idHandle());
+            long count = bucketEntryRepository.countAllByLinkedIdentity_Handle(idHandle);
             if (count >= userQuotas.getBucket().getMaxItemCount())
                 throw new ServiceBucketQuotaExceeded("maxItemCount");
 
             // Check Max Bucket Size against Quota
-            List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle(path.idHandle());
-            long currentBucketSize = bucketEntries.stream().reduce(0L, (acc, currBucketEntry) -> acc + currBucketEntry.getContentSize(), Long::sum);
+            List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle(idHandle);
+            long currentBucketSize = getCurrentBucketSize(bucketEntries);
             if (currentBucketSize + body.length > userQuotas.getBucket().getMaxBucketSize())
                 throw new ServiceBucketQuotaExceeded("maxBucketSize");
         } else {
             // Check Max Bucket Size against Quota
-            List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle(path.idHandle());
-            long currentBucketSize = bucketEntries.stream().reduce(0L, (acc, currBucketEntry) -> acc + currBucketEntry.getContentSize(), Long::sum);
+            List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle(idHandle);
+            long currentBucketSize = getCurrentBucketSize(bucketEntries);
             if (currentBucketSize - bucketEntry.getContentSize() + body.length > userQuotas.getBucket().getMaxBucketSize())
                 throw new ServiceBucketQuotaExceeded("maxBucketSize");
         }
@@ -230,146 +171,86 @@ public class ServiceBucketEndpoint {
     }
 
     // Upload Bucket Entry (Default, no UUID) (will be private by default)
-    @PostMapping("/{serviceEntry}/upload")
+    @PostMapping("/{idHandle}/{serviceUuid}/upload")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Uploads a Bucket Entry", description = "Upload Bucket Entry (Default, no UUID) (will be private by default). <br>The data should be raw bytes in the POST Body + A `Content-Type` Header + A `X-Filename` Header. <br>Returns the ServiceBucketEntryDto.")
-    public ServiceBucketEntryDto uploadRandomBucketEntry(@PathVariable String serviceEntry, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @RequestHeader(name = "X-Filename") String filename, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
-        return uploadBucketEntry(serviceEntry, UUID.randomUUID().toString(), filename, auth.getHandle(), body, contentType);
+    public ServiceBucketEntryDto uploadRandomBucketEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @RequestHeader(name = "X-Filename") String filename, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
+        return uploadBucketEntry(idHandle, serviceUuid, UUID.randomUUID().toString(), filename, auth, body, contentType);
     }
+
     // Upload/Update Bucket Entry (UUID Set) (will be private by default)
-    @PostMapping("/{serviceEntry}/upload/{fileUuid}")
+    @PostMapping("/{idHandle}/{serviceUuid}/upload/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Uploads/Updates a Bucket Entry with a specific UUID", description = "Upload Bucket Entry using a UUID (will be private by default). <br>The data should be raw bytes in the POST Body + A `Content-Type` Header. <br>Returns the ServiceBucketEntryDto.")
-    public ServiceBucketEntryDto uploadUuidBucketEntry(@PathVariable String serviceEntry, @PathVariable String fileUuid, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
-        return uploadBucketEntry(serviceEntry, fileUuid, null, auth.getHandle(), body, contentType);
+    public ServiceBucketEntryDto uploadUuidBucketEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String fileUuid, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
+        return uploadBucketEntry(idHandle, serviceUuid, fileUuid, null, auth, body, contentType);
     }
 
     // Get Bucket Entry Config (Content-Type, Read Access, Write Access, Size, Timestamp, ...)
-    @GetMapping("/{serviceEntry}/entry/{fileUuid}")
+    @GetMapping("/{idHandle}/{serviceUuid}/entry/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Gets a Bucket Entry", description = "Get the Bucket Entry for a specific File UUID")
-    public ServiceBucketEntryDto getBucketEntry(@PathVariable String serviceEntry, @PathVariable String fileUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketNotFound {
-        ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
-
-        // Get Service Entry Identity
-        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(path.serviceUuid(), path.idHandle());
-        if (entry == null)
-            throw new ServiceEntryNotFound(path.serviceUuid());
-
-        // Get Bucket Entry / Create if it doesn't exist
-        ServiceBucketEntry bucketEntry = bucketEntryRepository.findByFileUuid_AndLinkedIdentity_Handle(fileUuid, path.idHandle());
-        if (bucketEntry == null)
-            throw new ServiceBucketNotFound(fileUuid);
-
-        // Check Permissions
-        if (!entry.getExtraReadPerms().contains("*") && !entry.getExtraReadPerms().contains(auth.getHandle()) && !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))
-            if (!bucketEntry.getExtraReadPerms().contains("*") && !bucketEntry.getExtraReadPerms().contains(auth.getHandle()))
-                throw new ServiceEntryNotFound(path.serviceUuid());
+    public ServiceBucketEntryDto getBucketEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String fileUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketNotFound {
+        ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
+        ServiceBucketEntry bucketEntry = findServiceBucketEntry(idHandle, fileUuid);
+        checkServiceBucketEntryReadPermissions(entry, bucketEntry, auth);
 
         return fromServiceBucketEntry(bucketEntry);
     }
 
     // Set Bucket Entry Config (Content-Type, Read Access, Write Access, ...)
-    @PutMapping("/{serviceEntry}/entry/{fileUuid}")
+    @PutMapping("/{idHandle}/{serviceUuid}/entry/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Sets a Bucket Entry", description = "Set the Bucket Entry for a specific File UUID. <br>To be more specific the `Content-Type` and Permissions")
-    public void setBucketEntry(@PathVariable String serviceEntry, @PathVariable String fileUuid, @Valid @RequestBody ServiceBucketEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketNotFound {
-        ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
-
-        // Get Service Entry Identity
-        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(path.serviceUuid(), path.idHandle());
-        if (entry == null)
-            throw new ServiceEntryNotFound(path.serviceUuid());
-
-        // Get Bucket Entry / Create if it doesn't exist
-        ServiceBucketEntry bucketEntry = bucketEntryRepository.findByFileUuid_AndLinkedIdentity_Handle(fileUuid, path.idHandle());
-        if (bucketEntry == null)
-            throw new ServiceBucketNotFound(fileUuid);
-
-        // Check Permissions
-        if (!entry.getExtraWritePerms().contains(auth.getHandle()) && !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))
-            if (!bucketEntry.getExtraWritePerms().contains(auth.getHandle()))
-                throw new ServiceEntryNotFound(path.serviceUuid());
+    public void setBucketEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String fileUuid, @Valid @RequestBody ServiceBucketEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketNotFound {
+        ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
+        ServiceBucketEntry bucketEntry = findServiceBucketEntry(idHandle, fileUuid);
+        checkServiceBucketEntryWritePermissions(entry, bucketEntry, auth);
 
         // Update Bucket Entry
         bucketEntry.setContentType(entryDto.getContentType());
         bucketEntry.setExtraReadPerms(new HashSet<>(Arrays.asList(entryDto.getHandlesWithReadPerms())));
 
         // Update Bucket Entry Perms, (only for the linked Identity)
-        if (entry.getLinkedIdentity().getHandle().equals(auth.getHandle())) {
+        if (entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))
             bucketEntry.setExtraWritePerms(new HashSet<>(Arrays.asList(entryDto.getHandlesWithWritePerms())));
-        }
 
         // Save
         bucketEntryRepository.save(bucketEntry);
     }
 
     // Delete Bucket Entry
-    @DeleteMapping("/{serviceEntry}/entry/{fileUuid}")
+    @DeleteMapping("/{idHandle}/{serviceUuid}/entry/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Deletes a Bucket Entry", description = "Deletes a Bucket Entry based on a specific File UUID")
-    public void deleteBucketEntry(@PathVariable String serviceEntry, @PathVariable String fileUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketNotFound {
-        ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
-
-        // Get Service Entry Identity
-        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(path.serviceUuid(), path.idHandle());
-        if (entry == null)
-            throw new ServiceEntryNotFound(path.serviceUuid());
-
-        // Get Bucket Entry / Create if it doesn't exist
-        ServiceBucketEntry bucketEntry = bucketEntryRepository.findByFileUuid_AndLinkedIdentity_Handle(fileUuid, path.idHandle());
-        if (bucketEntry == null)
-            throw new ServiceBucketNotFound(fileUuid);
-
-        // Check Permissions
-        if (!entry.getExtraWritePerms().contains(auth.getHandle()) && !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))
-            if (!bucketEntry.getExtraWritePerms().contains(auth.getHandle()))
-                throw new ServiceEntryNotFound(path.serviceUuid());
+    public void deleteBucketEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String fileUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketNotFound {
+        ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
+        ServiceBucketEntry bucketEntry = findServiceBucketEntry(idHandle, fileUuid);
+        checkServiceBucketEntryWritePermissions(entry, bucketEntry, auth);
 
         // Delete Bucket Entry
-        bucketEntryRepository.deleteByFileUuid_AndLinkedIdentity_Handle(fileUuid, path.idHandle());
+        bucketEntryRepository.deleteByFileUuid_AndLinkedIdentity_Handle(fileUuid, idHandle);
     }
 
     // Get All Bucket Entries
-    @GetMapping("/{serviceEntry}/entry")
+    @GetMapping("/{idHandle}/{serviceUuid}/entry")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Gets all Bucket Entries", description = "Get all Bucket Entries")
-    public List<ServiceBucketEntryDto> getAllBucketEntries(@PathVariable String serviceEntry, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound {
-        ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
-
-        // Get Service Entry Identity
-        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(path.serviceUuid(), path.idHandle());
-        if (entry == null)
-            throw new ServiceEntryNotFound(path.serviceUuid());
-
-        // Check Permissions
-        if (!entry.getExtraReadPerms().contains("*") && !entry.getExtraReadPerms().contains(auth.getHandle()) && !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))
-            throw new ServiceEntryNotFound(path.serviceUuid());
+    public List<ServiceBucketEntryDto> getAllBucketEntries(@PathVariable String idHandle, @PathVariable String serviceUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound {
+        ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
+        checkServiceEntryReadPermissions(entry, auth);
 
         return entry.getServiceBucketEntries().stream().map(this::fromServiceBucketEntry).toList();
     }
 
     // Get Bucket Entry Data
-    @GetMapping("/{serviceEntry}/content/{fileUuid}")
+    @GetMapping("/{idHandle}/{serviceUuid}/content/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Gets the Bucket Entry Content", description = "Get the Raw Conent of a Bucket Entry with a specific File UUID")
-    public ResponseEntity getBucketEntryContent(@PathVariable String serviceEntry, @PathVariable String fileUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketNotFound, ServiceBucketFileError {
-        ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
-
-        // Get Service Entry Identity
-        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(path.serviceUuid(), path.idHandle());
-        if (entry == null)
-            throw new ServiceEntryNotFound(path.serviceUuid());
-
-        // Get Bucket Entry / Create if it doesn't exist
-        ServiceBucketEntry bucketEntry = bucketEntryRepository.findByFileUuid_AndLinkedIdentity_Handle(fileUuid, path.idHandle());
-        if (bucketEntry == null)
-            throw new ServiceBucketNotFound(fileUuid);
-
-        // Check Permissions
-        if (!entry.getExtraReadPerms().contains("*") && !entry.getExtraReadPerms().contains(auth.getHandle()) && !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))
-            if (!bucketEntry.getExtraReadPerms().contains("*") && !bucketEntry.getExtraReadPerms().contains(auth.getHandle()))
-                throw new ServiceEntryNotFound(path.serviceUuid());
+    @FisEndpoint(summary = "Gets the Bucket Entry Content", description = "Get the Raw Content of a Bucket Entry with a specific File UUID")
+    public ResponseEntity<byte[]> getBucketEntryContent(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String fileUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketNotFound, ServiceBucketFileError {
+        ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
+        ServiceBucketEntry bucketEntry = findServiceBucketEntry(idHandle, fileUuid);
+        checkServiceBucketEntryReadPermissions(entry, bucketEntry, auth);
 
         try {
             // TODO: Look into if i should add Content-Disposition Header with Filename
@@ -379,5 +260,67 @@ public class ServiceBucketEndpoint {
         } catch (IOException e) {
             throw new ServiceBucketFileError();
         }
+    }
+
+
+    // --- Helper Methods ---
+
+
+    private ServiceBucketEntryDto fromServiceBucketEntry(ServiceBucketEntry entry) {
+        return new ServiceBucketEntryDto(
+                entry.getFileUuid(),
+                entry.getContentType(),
+                entry.getFilename(),
+                entry.getContentSize(),
+                entry.getCreatedAt(),
+                entry.getExtraReadPerms().toArray(new String[0]),
+                entry.getExtraWritePerms().toArray(new String[0])
+        );
+    }
+
+    private ServiceEntry findServiceEntry(String idHandle, String serviceUuid) throws ServiceEntryNotFound {
+        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(serviceUuid, idHandle);
+        if (entry == null)
+            throw new ServiceEntryNotFound(serviceUuid);
+        return entry;
+    }
+
+    private ServiceBucketEntry findServiceBucketEntry(String idHandle, String fileUuid) throws ServiceBucketNotFound {
+        ServiceBucketEntry bucketEntry = bucketEntryRepository.findByFileUuid_AndLinkedIdentity_Handle(fileUuid, idHandle);
+        if (bucketEntry == null)
+            throw new ServiceBucketNotFound(fileUuid);
+        return bucketEntry;
+    }
+
+    private long getCurrentBucketSize(List<ServiceBucketEntry> bucketEntries) {
+        return bucketEntries.stream().reduce(0L, (acc, currBucketEntry) -> acc + currBucketEntry.getContentSize(), Long::sum);
+    }
+
+    private BaseQuotaProperties getServiceEntryQuotas(ServiceEntry entry) {
+        UserQuotas quotas = userQuotasRepository.findByUserHandle(entry.getCreatedBy().getHandle());
+        return UserQuotas.getUserQuotas(quotas, baseQuotaProperties);
+    }
+
+    private void checkServiceEntryReadPermissions(ServiceEntry entry, GoofyAuthUser auth) throws ServiceEntryNotFound {
+        if (!entry.getExtraReadPerms().contains("*") && !entry.getExtraReadPerms().contains(auth.getHandle()) &&
+                !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()) && !auth.getAdmin())
+            throw new ServiceEntryNotFound(entry.getUuid());
+    }
+
+    private void checkServiceEntryWritePermissions(ServiceEntry entry, GoofyAuthUser auth) throws ServiceEntryNotFound {
+        if (!entry.getExtraWritePerms().contains(auth.getHandle()) && !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()) && !auth.getAdmin())
+            throw new ServiceEntryNotFound(entry.getUuid());
+    }
+
+    private void checkServiceBucketEntryReadPermissions(ServiceEntry entry, ServiceBucketEntry bucketEntry, GoofyAuthUser auth) throws ServiceEntryNotFound {
+        if (!entry.getExtraReadPerms().contains("*") && !entry.getExtraReadPerms().contains(auth.getHandle()) && !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))
+            if (!bucketEntry.getExtraReadPerms().contains("*") && !bucketEntry.getExtraReadPerms().contains(auth.getHandle()) && !auth.getAdmin())
+                throw new ServiceEntryNotFound(entry.getUuid());
+    }
+
+    private void checkServiceBucketEntryWritePermissions(ServiceEntry entry, ServiceBucketEntry bucketEntry, GoofyAuthUser auth) throws ServiceEntryNotFound {
+        if (!entry.getExtraWritePerms().contains(auth.getHandle()) && !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))
+            if (!bucketEntry.getExtraWritePerms().contains(auth.getHandle()) && !auth.getAdmin())
+                throw new ServiceEntryNotFound(entry.getUuid());
     }
 }

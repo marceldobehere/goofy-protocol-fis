@@ -21,7 +21,7 @@ public class RootEndpoint {
 
     @GetMapping
     @FisEndpoint(summary = "Redirects to the Frontend URL (should be static)")
-    public ResponseEntity index() {
+    public ResponseEntity<String> index() {
         return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
                 .location(URI.create(generalProperties.getFrontendUrl()))
                 .build();

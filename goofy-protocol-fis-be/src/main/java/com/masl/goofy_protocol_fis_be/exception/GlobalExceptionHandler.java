@@ -64,6 +64,8 @@ public class GlobalExceptionHandler {
                 .body("An unexpected Error occurred!");
     }
 
+    // TODO: Add Handler for DataIntegrityViolationException (and maybe other related ones)
+
     // Validation Exceptions
 
     public record ValidationError(String field, String message) {}

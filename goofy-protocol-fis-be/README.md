@@ -7,9 +7,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
 ## TODOs (Currently)
 * Bucket Stuff
-  * Potentially rewrite the paths to just use `/id_handle/service_uuid/...` instead of using `+` for it, as its kinda pointless?
   * Add Uploaded/Update Entry in Bucket DB for uploaded files and updated entries
-  * Add Permission Checks for Admins
 * Frontend Add a Settings Menu (Ideally position absolute icon in the corner) to always be able to set the Server and Storage Mode
 * Backend Add Setting for User to set a custom frontend URL and use that when redirecting stuff.
 * Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
@@ -102,15 +100,6 @@ Later on the version will be copied to the base goofy-protocol repository.
 
 ### Table/Bucket Access
 (TODO)
-```
-// TODO: Make sure that when using ServiceEntry.uuid the OUTSIDE_ENTITIES also have the handle of the user in the request, so that it can be used if the user moved FIS and the server ooesn't know yet?
-// Outside Access / Naming
-// Bucket/Table / ServiceEntry: [id_handle]+[service_uuid]
-// --- Allowed Chars ---
-// Handle:  a-z _ 0-9   . @ : (for potential domains)
-// UUID:    a-f   0-9 -
-// Names:   a-z _ 0-9
-```
 
 ### Error Codes
 For now, Errors are split into ClientErrors and ServerErrors, which all use unique Error Codes and have the following structure:

@@ -174,7 +174,3 @@ export async function getServiceEntries(identityKeypair: AsymmFullKeyPair): Prom
 export async function getServiceEntry(identityKeypair: AsymmFullKeyPair, uuid: string): Promise<ServiceEntryDto> {
     return await getFixedAuth("/api/service-entry/" + encodeURIComponent(uuid), identityKeypair);
 }
-
-export function createServiceEntryString(idHandle: string, serviceUuid: string): string {
-    return `${idHandle}+${serviceUuid}`;
-}

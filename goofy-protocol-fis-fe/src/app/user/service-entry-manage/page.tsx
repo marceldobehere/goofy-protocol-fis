@@ -2,7 +2,7 @@
 
 import styles from "./page.module.css";
 import Link from "next/link";
-import {createServiceEntryString, getIdentityKeypair, getServiceEntry} from "@/libs/auth-store";
+import {getIdentityKeypair, getServiceEntry} from "@/libs/auth-store";
 import {useEffect, useState} from "react";
 import {goPath} from "@/libs/go-path";
 import {isUser} from "@/libs/auth";
@@ -72,7 +72,7 @@ export default function Page() {
         if (identityKeypair == null || serviceEntry == null || identityHandle == null)
             return;
 
-        const entries: ServiceBucketEntryDto[] = await getFixedAuth(`/api/service-bucket/${createServiceEntryString(identityHandle, serviceEntry.uuid)}/entry`, identityKeypair);
+        const entries: ServiceBucketEntryDto[] = await getFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/entry`, identityKeypair);
         entries.forEach(entry => {
             if (entry.createdAt != null)
                 entry.createdAtDate = new Date(entry.createdAt)
@@ -87,7 +87,7 @@ export default function Page() {
         if (identityKeypair == null || serviceEntry == null || identityHandle == null)
             return;
 
-        const perms: ServiceBucketPermissionDto = await getFixedAuth(`/api/service-bucket/${createServiceEntryString(identityHandle, serviceEntry.uuid)}/perms`, identityKeypair);
+        const perms: ServiceBucketPermissionDto = await getFixedAuth(`/api/service-bucket/${serviceEntry.uuid}/perms`, identityKeypair);
         setPerms(perms);
     }
 
@@ -95,7 +95,7 @@ export default function Page() {
         if (identityKeypair == null || serviceEntry == null || identityHandle == null)
             return;
 
-        const quotas: ServiceBucketQuotasDto = await getFixedAuth(`/api/service-bucket/${createServiceEntryString(identityHandle, serviceEntry.uuid)}/quotas`, identityKeypair);
+        const quotas: ServiceBucketQuotasDto = await getFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/quotas`, identityKeypair);
         setQuotas(quotas);
     }
 
@@ -112,7 +112,7 @@ export default function Page() {
         const bytes = await readFileBytes(data);
 
         try {
-            await postFixedAuth(`/api/service-bucket/${createServiceEntryString(identityHandle, serviceEntry.uuid)}/upload`,
+            await postFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/upload`,
                 bytes, identityKeypair, new Map([["Content-Type", dataType], ["X-Filename", encodeURIComponent(filename)]]));
         } catch (e) {
             console.log(e);
@@ -126,7 +126,7 @@ export default function Page() {
             return;
 
         try {
-            await deleteFixedAuth(`/api/service-bucket/${createServiceEntryString(identityHandle, serviceEntry.uuid)}/entry/${fileUuid}`, identityKeypair);
+            await deleteFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/entry/${fileUuid}`, identityKeypair);
         } catch (e) {
             console.log(e);
             alert("Failed to delete Bucket Entry: " + (e as Error).message);
@@ -140,8 +140,8 @@ export default function Page() {
 
         try {
             // Load Data
-            const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${createServiceEntryString(identityHandle, serviceEntry.uuid)}/entry/${fileUuid}`, identityKeypair);
-            const data: Uint8Array = await getFixedAuthBytes(`/api/service-bucket/${createServiceEntryString(identityHandle, serviceEntry.uuid)}/content/${fileUuid}`, identityKeypair);
+            const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/entry/${fileUuid}`, identityKeypair);
+            const data: Uint8Array = await getFixedAuthBytes(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/content/${fileUuid}`, identityKeypair);
 
             // Create Blob URL
             const blob = new Blob([data as BlobPart], { type: details.contentType });
@@ -163,7 +163,7 @@ export default function Page() {
         if (identityHandle == null || serviceEntry == null || identityKeypair == null)
             return;
 
-        const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${createServiceEntryString(identityHandle, serviceEntry.uuid)}/entry/${fileUuid}`, identityKeypair);
+        const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/entry/${fileUuid}`, identityKeypair);
         alert(`Details for Bucket Entry ${fileUuid}:\n` + JSON.stringify(details));
     }
 
@@ -191,7 +191,7 @@ export default function Page() {
         }
 
         try {
-            await putFixedAuth(`/api/service-bucket/${createServiceEntryString(identityHandle, serviceEntry.uuid)}/perms`, localPerms, identityKeypair);
+            await putFixedAuth(`/api/service-bucket/${serviceEntry.uuid}/perms`, localPerms, identityKeypair);
         } catch (e) {
             console.log(e);
             alert("Failed to edit Bucket Entry Permissions: " + (e as Error).message);
@@ -249,7 +249,7 @@ export default function Page() {
                 <br/>
                 <ul>
                     {entries?.map((entry) => (<li key={entry.fileUuid}>
-                        <span>{entry.filename} ({entry.fileUuid?.substring(0, 16)}...) (Type: {entry.contentType}, Size: {entry.contentSize}, Created At: {entry.createdAtDate!.toLocaleDateString()})</span>
+                        <span>{entry.filename} ({entry.fileUuid?.substring(0, 16)}...) (Type: {entry.contentType}, Size: {((entry.contentSize ?? 0) / (1024*1024)).toFixed(2)}MB, Created At: {entry.createdAtDate!.toLocaleDateString()})</span>
                         <span> </span>
                         <button onClick={() => {getEntryDetails(entry.fileUuid).then()}}>Details</button>
                         <span> </span>
