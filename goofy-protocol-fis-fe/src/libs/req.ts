@@ -3,10 +3,15 @@ import {createSignedRequest, getHeadersFromSignedRequestWithHandle, getHeadersFr
 import {AllServerErrorCodes, FisExceptionDto, RequestError, RequestFisError} from "@/libs/dtos";
 import {getBaseServerUrl, getKeypair} from "@/libs/auth-store";
 
-export async function _internalDoReq<T>(_path: string, method: HttpMethod, body: object | string | null, keypair: AsymmFullKeyPair | null = null, extraHeaders: Map<string, string> = new Map(), rawResponse: boolean = false, sendHandle: boolean = true): Promise<T | Response> {
+function _isBinaryBody(body: object): body is Uint8Array {
+    return body instanceof Uint8Array;
+}
+
+export async function _internalDoReq<T>(_path: string, method: HttpMethod, body: object | Uint8Array | string | null, keypair: AsymmFullKeyPair | null = null, extraHeaders: Map<string, string> = new Map(), bodyBytes: boolean = false, rawResponse: boolean = false, sendHandle: boolean = true): Promise<T | Response> {
     const headers: Map<string, string> = new Map(extraHeaders);
     const isBodyStr = body != null && typeof body === "string";
-    if (!isBodyStr && body != null)
+    const isBodyBinary = body != null && _isBinaryBody(body as object);
+    if (!isBodyStr && body != null && !isBodyBinary)
         headers.set("Content-Type", "application/json");
 
     // Fix Path
@@ -17,8 +22,8 @@ export async function _internalDoReq<T>(_path: string, method: HttpMethod, body:
 
     // Generate Signed Request and add Headers
     if (keypair != null) {
-        const bodyVal = (body == null) ? null : (isBodyStr ? body : JSON.stringify(body));
-        const req = await createSignedRequest(keypair, method, basePath, bodyVal);
+        const bodyVal = (body == null) ? null : ((isBodyStr || isBodyBinary) ? body : JSON.stringify(body));
+        const req = await createSignedRequest(keypair, method, basePath, bodyVal as Uint8Array | string | null);
         const reqHeaders = sendHandle ? getHeadersFromSignedRequestWithHandle(req) : getHeadersFromSignedRequestWithPubkey(req);
         for (const [key, value] of reqHeaders.entries())
             headers.set(key, value);
@@ -32,7 +37,7 @@ export async function _internalDoReq<T>(_path: string, method: HttpMethod, body:
 
     // Add Body if needed
     if (body != null)
-        reqOptions.body = isBodyStr ? body : JSON.stringify(body);
+        reqOptions.body = (isBodyStr || isBodyBinary) ? body as BodyInit : JSON.stringify(body);
 
     // console.log(`> Sending ${method} Request to ${path} ${keypair == null ? 'without auth' : 'with auth'} and options: `, reqOptions, body);
 
@@ -46,7 +51,7 @@ export async function _internalDoReq<T>(_path: string, method: HttpMethod, body:
         try {
             const resBody = JSON.parse(resBodyStr);
             if (resBody satisfies FisExceptionDto && (resBody as FisExceptionDto).errorCode == AllServerErrorCodes.PUBLIC_KEY_LOOKUP_FAILED ) {
-                return await _internalDoReq<T>(_path, method, body, keypair, extraHeaders, rawResponse, false);
+                return await _internalDoReq<T>(_path, method, body, keypair, extraHeaders, bodyBytes, rawResponse, false);
             }
         } catch (e) {
             if (e instanceof RequestError || e instanceof RequestFisError)
@@ -77,6 +82,10 @@ export async function _internalDoReq<T>(_path: string, method: HttpMethod, body:
             throw new RequestError(res.status, errorStr);
     }
 
+    // Get Raw Bytes if wanted
+    if (bodyBytes)
+        return await res.bytes() as T;
+
     // Convert to String or Object
     const resStr = await res.text();
     try {
@@ -91,7 +100,7 @@ export async function getNoAuth<T>(path: string): Promise<T> {
     return await _internalDoReq<T>(path, "GET", null) as T;
 }
 export async function getRawNoAuth(path: string): Promise<Response> {
-    return await _internalDoReq<Response>(path, "GET", null, null, new Map(), true) as Response;
+    return await _internalDoReq<Response>(path, "GET", null, null, new Map(), false, true) as Response;
 }
 export async function getAuth<T>(path: string): Promise<T> {
     return await _internalDoReq<T>(path, "GET", null, await getKeypair()) as T;
@@ -99,25 +108,28 @@ export async function getAuth<T>(path: string): Promise<T> {
 export async function getFixedAuth<T>(path: string, keypair: AsymmFullKeyPair): Promise<T> {
     return await _internalDoReq<T>(path, "GET", null, keypair) as T;
 }
+export async function getFixedAuthBytes<T>(path: string, keypair: AsymmFullKeyPair): Promise<T> {
+    return await _internalDoReq<T>(path, "GET", null, keypair, new Map(), true) as T;
+}
 
 export async function postNoAuth<T>(path: string, body: object | string ) {
     return await _internalDoReq<T>(path, "POST", body) as T;
 }
 export async function postRawNoAuth(path: string, body: object | string ): Promise<Response> {
-    return await _internalDoReq<Response>(path, "POST", body, null, new Map(), true) as Response;
+    return await _internalDoReq<Response>(path, "POST", body, null, new Map(), false, true) as Response;
 }
 export async function postAuth<T>(path: string, body: object | string ) {
     return await _internalDoReq<T>(path, "POST", body, await getKeypair()) as T;
 }
-export async function postFixedAuth<T>(path: string, body: object | string , keypair: AsymmFullKeyPair) {
-    return await _internalDoReq<T>(path, "POST", body, keypair) as T;
+export async function postFixedAuth<T>(path: string, body: object | string , keypair: AsymmFullKeyPair, extraHeaders: Map<string, string> = new Map()) {
+    return await _internalDoReq<T>(path, "POST", body, keypair, extraHeaders) as T;
 }
 
 export async function deleteNoAuth<T>(path: string): Promise<T> {
     return await _internalDoReq<T>(path, "DELETE", null) as T;
 }
 export async function deleteRawNoAuth(path: string): Promise<Response> {
-    return await _internalDoReq<Response>(path, "DELETE", null, null, new Map(), true) as Response;
+    return await _internalDoReq<Response>(path, "DELETE", null, null, new Map(), false, true) as Response;
 }
 export async function deleteAuth<T>(path: string): Promise<T> {
     return await _internalDoReq<T>(path, "DELETE", null, await getKeypair()) as T;
@@ -130,7 +142,7 @@ export async function putNoAuth<T>(path: string, body: object | string ) {
     return await _internalDoReq<T>(path, "PUT", body) as T;
 }
 export async function putRawNoAuth(path: string, body: object | string ): Promise<Response> {
-    return await _internalDoReq<Response>(path, "PUT", body, null, new Map(), true) as Response;
+    return await _internalDoReq<Response>(path, "PUT", body, null, new Map(), false, true) as Response;
 }
 export async function putAuth<T>(path: string, body: object | string ) {
     return await _internalDoReq<T>(path, "PUT", body, await getKeypair()) as T;

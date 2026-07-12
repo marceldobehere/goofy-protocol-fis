@@ -68,6 +68,17 @@ export async function readFileStr(file: File): Promise<string> {
     });
 }
 
+export async function readFileBytes(file: File): Promise<Uint8Array> {
+    return await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            res(new Uint8Array(reader.result as ArrayBuffer));
+        };
+        reader.onerror = (e) => rej(e);
+        reader.readAsArrayBuffer(file);
+    });
+}
+
 export async function readJsonFile<T>(file: File): Promise<T | null> {
     try {
         return JSON.parse(await readFileStr(file)) as T;

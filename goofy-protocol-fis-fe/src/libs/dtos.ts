@@ -112,3 +112,31 @@ export interface MyServiceEntryQuotasDto {
     maxServiceEntryCount: number;
     currentServiceEntryCount: number;
 }
+
+export interface ServiceBucketEntryDto {
+    fileUuid: string;
+    contentType: string;
+
+    filename?: string;
+    contentSize?: number;
+    createdAt?: string; // Format: "2026-07-12T00:40:21.272978Z"
+    createdAtDate?: Date;
+
+    handlesWithReadPerms: string[];
+    handlesWithWritePerms: string[];
+}
+
+export interface ServiceBucketPermissionDto {
+    handlesWithReadPerms: string[];
+    handlesWithWritePerms: string[];
+}
+
+export interface ServiceBucketQuotasDto {
+    maxBucketSize: number;
+    maxItemSize: number;
+    maxItemCount: number;
+    maxUniquePermissionCount: number;
+
+    currentBucketSize: number;
+    currentItemCount: number;
+}

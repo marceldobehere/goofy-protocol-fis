@@ -41,7 +41,7 @@ export default function Page() {
                 <button onClick={logout}>Logout</button><br/>
 
                 <div className={styles.MainButtons}>
-                    <Link href="/user/identity-test">Identity Storage Test</Link>
+                    <Link href="/user/identity-storage">Identity Storage</Link>
                     <Link href={"/"}>Index</Link>
                 </div>
             </div>

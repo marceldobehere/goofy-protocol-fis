@@ -2,18 +2,13 @@
 
 import styles from "./page.module.css";
 import Link from "next/link";
-import {getKeypair} from "@/libs/auth-store";
+import {getIdentityKeypair, getServiceEntries} from "@/libs/auth-store";
 import {useEffect, useState} from "react";
 import {goPath} from "@/libs/go-path";
 import {getMyHandle, isUser} from "@/libs/auth";
-import {deleteFixedAuth, getAuth, getFixedAuth, postFixedAuth, putFixedAuth} from "@/libs/req";
-import {IdentityStorageEntryDto, MyServiceEntryQuotasDto, ServiceEntryDto} from "@/libs/dtos";
-import {
-    asymmVerifyStr, checkPublicSplitKey,
-    parseFullKeypair, parsePublicSplitKey, secretSymmKeyFromFullKey,
-    symmDecryptObj
-} from "@/libs/crypto";
-import {AsymmFullJsonKeypair, AsymmFullKeyPair} from "@/libs/crypto-types";
+import {deleteFixedAuth, getFixedAuth, postFixedAuth, putFixedAuth} from "@/libs/req";
+import {MyServiceEntryQuotasDto, ServiceEntryDto} from "@/libs/dtos";
+import {AsymmFullKeyPair} from "@/libs/crypto-types";
 
 export default function Page() {
     const [userHandle, setUserHandle] = useState<string | null>(null);
@@ -40,27 +35,8 @@ export default function Page() {
             // window.location.hash = "#" + fragmentHandle;
 
             try {
-                const entryDto: IdentityStorageEntryDto = await getAuth("/api/identity-storage/" + encodeURIComponent(fragmentHandle));
-
-                // Check Signature
-                const sigCheck = await asymmVerifyStr(entryDto.encKeypairEntry, entryDto.encKeypairEntrySignature, parsePublicSplitKey(entryDto.pubSplitKey));
-                if (!sigCheck) {
-                    alert("Signature check failed for identity " + fragmentHandle);
-                    return;
-                }
-
-                // Decrypt
-                const myPrivSecret = await secretSymmKeyFromFullKey(await getKeypair());
-                const decKeypair = await symmDecryptObj<AsymmFullJsonKeypair>(entryDto.encKeypairEntry, myPrivSecret);
-                const keypair = parseFullKeypair(decKeypair);
-
-                const checkValid = await checkPublicSplitKey(keypair.pub);
-                if (!checkValid) {
-                    alert("Decrypted keypair is invalid for identity " + fragmentHandle);
-                    return;
-                }
-
-                setIdentityHandle(entryDto.handle);
+                const keypair = await getIdentityKeypair(fragmentHandle);
+                setIdentityHandle(fragmentHandle);
                 setIdentityKeypair(keypair);
             } catch (e) {
                 console.log(e);
@@ -93,8 +69,7 @@ export default function Page() {
         if (identityKeypair == null)
             return;
 
-        const entries: ServiceEntryDto[] = await getFixedAuth("/api/service-entry", identityKeypair);
-        setServiceEntries(entries);
+        setServiceEntries(await getServiceEntries(identityKeypair));
     }
 
     async function createEntry() {
@@ -159,7 +134,7 @@ export default function Page() {
     return (
         <main>
             <div className={styles.MainCont}>
-                <h2 className={styles.Title}>Service Entry Test</h2>
+                <h2 className={styles.Title}>Service Entry List</h2>
 
                 <br/>
                 <p>
@@ -172,6 +147,8 @@ export default function Page() {
                 <ul>
                     {serviceEntries.map((entry) => (<li key={entry.uuid}>
                             <span>{entry.name} - Service: {entry.usedService}</span> (UUID: {entry.uuid})
+                            <span> </span>
+                            <Link href={`/user/service-entry-manage#${identityHandle}@${entry.uuid}`}>Manage</Link>
                             <span> </span>
                             <button onClick={() => {updateEntry(entry.uuid, entry.name, entry.usedService ?? "").then()}}>Update</button>
                             <span> </span>
@@ -189,7 +166,7 @@ export default function Page() {
                 <br/><hr/><br/>
 
                 <div className={styles.MainButtons}>
-                    <Link href="/user/identity-test">Identity Storage Test</Link>
+                    <Link href="/user/identity-storage">Identity Storage</Link>
                     <Link href="/user/home">Home</Link>
                     <Link href={"/"}>Index</Link>
                 </div>

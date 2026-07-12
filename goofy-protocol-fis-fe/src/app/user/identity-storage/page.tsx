@@ -2,7 +2,7 @@
 
 import styles from "./page.module.css";
 import Link from "next/link";
-import {getKeypair} from "@/libs/auth-store";
+import {getAllUserIdentities, getKeypair} from "@/libs/auth-store";
 import {useEffect, useState} from "react";
 import {goPath} from "@/libs/go-path";
 import {getMyHandle, isUser} from "@/libs/auth";
@@ -46,8 +46,7 @@ export default function Page() {
     }
 
     async function getIdentities() {
-        const identities: IdentityStorageEntryDto[] = await getAuth("/api/identity-storage");
-        setIdentityEntries(identities);
+        setIdentityEntries(await getAllUserIdentities());
     }
 
     async function createIdentity() {
@@ -95,7 +94,7 @@ export default function Page() {
     return (
         <main>
             <div className={styles.MainCont}>
-                <h2 className={styles.Title}>Identity Storage Test</h2>
+                <h2 className={styles.Title}>Identity Storage List</h2>
 
                 <br/>
                 <p>
@@ -109,7 +108,7 @@ export default function Page() {
                     {identityEntries.map((entry) => (<li key={entry.handle}>
                             <span>{entry.name} - {entry.handle}</span> (Size: {entry.pubSplitKey.length} / {entry.encKeypairEntry.length})
                             <span> </span>
-                            <Link href={`/user/service-entry-test#${entry.handle}`}>Manage</Link>
+                            <Link href={`/user/service-entry-list#${entry.handle}`}>Manage</Link>
                             <span> </span>
                             <button onClick={() => {deleteIdentity(entry.handle).then()}}>Delete</button>
                         </li>
