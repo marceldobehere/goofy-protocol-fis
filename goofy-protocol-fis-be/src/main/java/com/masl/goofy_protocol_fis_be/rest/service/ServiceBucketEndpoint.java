@@ -23,9 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 // TODO: Write Tests
@@ -91,8 +89,8 @@ public class ServiceBucketEndpoint {
             throw new ServiceBucketPermsInvalid();
 
         // Update Permissions
-        entry.setExtraReadPerms(Set.of(permDto.getHandlesWithReadPerms()));
-        entry.setExtraWritePerms(Set.of(permDto.getHandlesWithWritePerms()));
+        entry.setExtraReadPerms(new HashSet<>(Arrays.asList(permDto.getHandlesWithReadPerms())));
+        entry.setExtraWritePerms(new HashSet<>(Arrays.asList(permDto.getHandlesWithWritePerms())));
         serviceEntryRepository.save(entry);
     }
 
@@ -156,6 +154,7 @@ public class ServiceBucketEndpoint {
         return new ServiceBucketEntryDto(
                 entry.getFileUuid(),
                 entry.getContentType(),
+                entry.getFilename(),
                 entry.getContentSize(),
                 entry.getCreatedAt(),
                 entry.getExtraReadPerms().toArray(new String[0]),
@@ -163,7 +162,7 @@ public class ServiceBucketEndpoint {
         );
     }
 
-    public ServiceBucketEntryDto uploadBucketEntry(String serviceEntry, String uuid, String accessHandle, byte[] body, String contentType) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketFileError {
+    public ServiceBucketEntryDto uploadBucketEntry(String serviceEntry, String uuid, String filename, String accessHandle, byte[] body, String contentType) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketFileError {
         ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
 
         // Get Service Entry Identity
@@ -175,6 +174,8 @@ public class ServiceBucketEndpoint {
         if (!entry.getExtraWritePerms().contains(accessHandle) && !entry.getLinkedIdentity().getHandle().equals(accessHandle))
             throw new ServiceEntryNotFound(path.serviceUuid());
 
+        // TODO; CHECK FILESIZE AGAINST MAX FILE SIZE QUOTA
+
         // Get Bucket Entry / Create if it doesn't exist
         ServiceBucketEntry bucketEntry = bucketEntryRepository.findByFileUuid_AndLinkedIdentity_Handle(uuid, path.idHandle());
         if (bucketEntry == null) {
@@ -183,11 +184,18 @@ public class ServiceBucketEndpoint {
             bucketEntry.setLinkedIdentity(entry.getLinkedIdentity());
             bucketEntry.setLinkedServiceEntry(entry);
             bucketEntry.setCreatedAt(Instant.now());
+            bucketEntry.setFilename(filename);
 
             // Private by default
-            bucketEntry.setExtraReadPerms(Set.of());
-            bucketEntry.setExtraWritePerms(Set.of());
+            bucketEntry.setExtraReadPerms(new HashSet<>());
+            bucketEntry.setExtraWritePerms(new HashSet<>());
+
+            // TODO: CHECK FILE COUNT AGAINST QUOTA
         }
+
+        // TODO: CHECK FILESIZE AGAINST MAX BUCKET SIZE QUOTA
+        // If new, check with sum + new
+        // If update, check with sum - old + new
 
         // Upload File
         try {
@@ -207,16 +215,16 @@ public class ServiceBucketEndpoint {
     // Upload Bucket Entry (Default, no UUID) (will be private by default)
     @PostMapping("/{serviceEntry}/upload")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Uploads a Bucket Entry", description = "Upload Bucket Entry (Default, no UUID) (will be private by default). <br>The data should be raw bytes in the POST Body + A Content-Type Header. <br>Returns the ServiceBucketEntryDto.")
-    public ServiceBucketEntryDto uploadRandomBucketEntry(@PathVariable String serviceEntry, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketFileError {
-        return uploadBucketEntry(serviceEntry, UUID.randomUUID().toString(), auth.getHandle(), body, contentType);
+    @FisEndpoint(summary = "Uploads a Bucket Entry", description = "Upload Bucket Entry (Default, no UUID) (will be private by default). <br>The data should be raw bytes in the POST Body + A `Content-Type` Header + A `X-Filename` Header. <br>Returns the ServiceBucketEntryDto.")
+    public ServiceBucketEntryDto uploadRandomBucketEntry(@PathVariable String serviceEntry, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @RequestHeader(name = "X-Filename") String filename, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketFileError {
+        return uploadBucketEntry(serviceEntry, UUID.randomUUID().toString(), filename, auth.getHandle(), body, contentType);
     }
     // Upload/Update Bucket Entry (UUID Set) (will be private by default)
     @PostMapping("/{serviceEntry}/upload/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Uploads/Updates a Bucket Entry with a specific UUID", description = "Upload Bucket Entry using a UUID (will be private by default). <br>The data should be raw bytes in the POST Body + A Content-Type Header. <br>Returns the ServiceBucketEntryDto.")
+    @FisEndpoint(summary = "Uploads/Updates a Bucket Entry with a specific UUID", description = "Upload Bucket Entry using a UUID (will be private by default). <br>The data should be raw bytes in the POST Body + A `Content-Type` Header. <br>Returns the ServiceBucketEntryDto.")
     public ServiceBucketEntryDto uploadUuidBucketEntry(@PathVariable String serviceEntry, @PathVariable String fileUuid, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketFileError {
-        return uploadBucketEntry(serviceEntry, fileUuid, auth.getHandle(), body, contentType);
+        return uploadBucketEntry(serviceEntry, fileUuid, null, auth.getHandle(), body, contentType);
     }
 
     // Get Bucket Entry Config (Content-Type, Read Access, Write Access, Size, Timestamp, ...)
@@ -247,7 +255,7 @@ public class ServiceBucketEndpoint {
     // Set Bucket Entry Config (Content-Type, Read Access, Write Access, ...)
     @PutMapping("/{serviceEntry}/entry/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Sets a Bucket Entry", description = "Set the Bucket Entry for a specific File UUID. <br>To be more specific the Content-Type and Permissions")
+    @FisEndpoint(summary = "Sets a Bucket Entry", description = "Set the Bucket Entry for a specific File UUID. <br>To be more specific the `Content-Type` and Permissions")
     public void setBucketEntry(@PathVariable String serviceEntry, @PathVariable String fileUuid, @Valid @RequestBody ServiceBucketEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryPathInvalid, ServiceEntryNotFound, ServiceBucketNotFound {
         ServiceEntryPath path = ServiceEntryPath.fromStr(serviceEntry);
 
@@ -268,11 +276,11 @@ public class ServiceBucketEndpoint {
 
         // Update Bucket Entry
         bucketEntry.setContentType(entryDto.getContentType());
-        bucketEntry.setExtraReadPerms(Set.of(entryDto.getHandlesWithReadPerms()));
+        bucketEntry.setExtraReadPerms(new HashSet<>(Arrays.asList(entryDto.getHandlesWithReadPerms())));
 
         // Update Bucket Entry Perms, (only for the linked Identity)
         if (entry.getLinkedIdentity().getHandle().equals(auth.getHandle())) {
-            bucketEntry.setExtraWritePerms(Set.of(entryDto.getHandlesWithWritePerms()));
+            bucketEntry.setExtraWritePerms(new HashSet<>(Arrays.asList(entryDto.getHandlesWithWritePerms())));
         }
 
         // Save
@@ -347,6 +355,7 @@ public class ServiceBucketEndpoint {
                 throw new ServiceEntryNotFound(path.serviceUuid());
 
         try {
+            // TODO: Look into if i should add Content-Disposition Header with Filename
             return ResponseEntity.ok()
                     .header("Content-Type", bucketEntry.getContentType())
                     .body(userBucketService.getBucketEntry(entry, fileUuid));

@@ -27,6 +27,9 @@ public class ServiceBucketEntry {
     @Column(nullable = false, length = FieldSize.SHORT_TEXT_LEN)
     private String contentType;
 
+    @Column(nullable = false, length = FieldSize.SHORT_TEXT_LEN)
+    private String filename;
+
     @Column(nullable = false)
     private Long contentSize;
 

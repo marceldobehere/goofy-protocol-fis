@@ -22,6 +22,10 @@ public class ServiceBucketEntryDto {
     @Size(max = FieldSize.SHORT_TEXT_LEN)
     private String contentType;
 
+    @NotEmpty
+    @Size(max = FieldSize.SHORT_TEXT_LEN)
+    private String filename;
+
     private Long contentSize;
 
     private Instant createdAt;
