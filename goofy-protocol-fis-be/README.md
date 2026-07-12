@@ -6,6 +6,13 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 (TODO)
 
 ## TODOs (Currently)
+* Bucket Stuff
+  * Potentially rewrite the paths to just use `/id_handle/service_uuid/...` instead of using `+` for it, as its kinda pointless?
+  * Add Uploaded/Update Entry in Bucket DB for uploaded files and updated entries
+  * Add Permission Checks for Admins
+* Frontend Add a Settings Menu (Ideally position absolute icon in the corner) to always be able to set the Server and Storage Mode
+* Backend Add Setting for User to set a custom frontend URL and use that when redirecting stuff.
+* Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
 * Work on Frontend
 * Work on Implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
 * Work on more Implementation Stuff
@@ -17,10 +24,12 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
   * Implement Data Export (How to treat Buckets and Tables?) (Probably export everything as a ZIP and assume the download should be ok)
   * Implement Data Import? (How to treat Buckets and Tables?)
 * Implement Exceptions for unsupported Crypto Requests
+* Add Home / Explanation Page to FIS Frontend
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc)
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests
 * Create extra DB Table for known FIS Domains ?
+* Look into ML-KEM using Seed for Private key and compatibility with JS (Potentially using Rust ML-KEM compiled to WASM) (Will have to see)
 
 ## TODOs (Later)
 * Create a sample Endpoint / document the potential runtime errors (Mostly in Signed Request filtering / Forbidden)
@@ -35,6 +44,9 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Look into Canonical Builds
 * Improve CORS?
 * Potentially overhaul the simplistic quota system and let users set quotas for specific entries too.
+* Optimize Quota & Storage Calculations in Bucket and probably Table Service
+* Add a simple "Notification" / Warning System that alerts Users when their storage quotas are about to be exceeded or if they have some content deleted or are restricted
+* 
 
 
 ## Features
