@@ -77,6 +77,9 @@ export default function Page() {
             if (entry.createdAt != null)
                 entry.createdAtDate = new Date(entry.createdAt)
         })
+
+        entries.sort((a, b) => a.filename!.localeCompare(b.filename!) || 0);
+
         setEntries(entries);
     }
 

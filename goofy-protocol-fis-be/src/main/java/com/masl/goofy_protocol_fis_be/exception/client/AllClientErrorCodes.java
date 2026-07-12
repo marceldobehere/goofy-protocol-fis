@@ -32,4 +32,5 @@ public class AllClientErrorCodes {
     public static final int SERVICE_BUCKET_PERMS_INVALID = 1_007_001;
     public static final int SERVICE_BUCKET_NOT_FOUND = 1_007_002;
     public static final int SERVICE_BUCKET_FILE_ERROR = 1_007_003;
+    public static final int SERVICE_BUCKET_QUOTA_EXCEEDED = 1_007_004;
 }
