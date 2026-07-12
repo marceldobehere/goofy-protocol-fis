@@ -130,7 +130,7 @@ public class ServiceBucketEndpoint {
             throw new ServiceEntryNotFound(path.serviceUuid());
 
         // Check Permissions
-        if (!entry.getExtraReadPerms().contains("*") && !entry.getExtraReadPerms().contains(auth.getHandle()))
+        if (!entry.getExtraReadPerms().contains("*") && !entry.getExtraReadPerms().contains(auth.getHandle()) && !entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))
             throw new ServiceEntryNotFound(path.serviceUuid());
 
         // Get Quotas
