@@ -43,8 +43,24 @@ public class ServiceBucketEntry {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private ServiceEntry linkedServiceEntry;
 
+    // Useful information in case we need to find out who originally uploaded the file and when
+    @Column
+    private String createdBy;
     @Column(nullable = false)
     private Instant createdAt;
+
+    // Useful information in case we need to find out who last changed the file content and when
+    @Column
+    private String lastUploadedBy;
+    @Column
+    private Instant lastUploadedAt;
+
+    // Useful information in case we need to find out who last updated the entry and when
+    @Column
+    private String lastUpdatedBy;
+    @Column
+    private Instant lastUpdatedAt;
+
 
     // Bucket Entry Perm Stuff
     @ElementCollection

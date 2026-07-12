@@ -99,7 +99,7 @@ export default function Page() {
         setQuotas(quotas);
     }
 
-    async function uploadEntry() {
+    async function uploadEntry(fileUuid: string | null = null) {
         if (identityHandle == null || serviceEntry == null || identityKeypair == null)
             return;
 
@@ -112,7 +112,10 @@ export default function Page() {
         const bytes = await readFileBytes(data);
 
         try {
-            await postFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/upload`,
+            const uploadUrl = fileUuid == null ?
+                `/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/upload` :
+                `/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/upload/${fileUuid}`;
+            await postFixedAuth(uploadUrl,
                 bytes, identityKeypair, new Map([["Content-Type", dataType], ["X-Filename", encodeURIComponent(filename)]]));
         } catch (e) {
             console.log(e);
@@ -200,6 +203,7 @@ export default function Page() {
     }
 
 
+    // TODO: Edit Permissions of an Entry
     // TODO: Test Accessing Data from other places with Permissions
     // TODO: Test Updating Bucket Entry Metadata + Permissions
     // TODO: Styling
@@ -211,7 +215,7 @@ export default function Page() {
                 <br/>
                 <p>
                     Checking Service Entry &quot;{serviceEntry?.name || serviceEntry?.usedService || serviceEntry?.uuid}&quot; (for {identityHandle}) <br/>
-                    Service Entry List Quota: (Count: {quotas?.currentItemCount} / {quotas?.maxItemCount}, Size: {((quotas?.currentBucketSize ?? 0) / (1024*1024)).toFixed(2)}MB / {((quotas?.maxBucketSize ?? 0) / (1024*1024)).toFixed(2)}MB)<br/>
+                    Service Entry List Quota: (Count: {quotas?.currentItemCount} / {quotas?.maxItemCount}, Size: {((quotas?.currentBucketSize ?? 0) / (1000*1000)).toFixed(2)}MB / {((quotas?.maxBucketSize ?? 0) / (1000*1000)).toFixed(2)}MB) (Max Item Size: {((quotas?.maxItemSize ?? 0) / (1000*1000)).toFixed(2)}MB)<br/>
                     Here is the information for your Service Entry:
                 </p>
 
@@ -249,11 +253,13 @@ export default function Page() {
                 <br/>
                 <ul>
                     {entries?.map((entry) => (<li key={entry.fileUuid}>
-                        <span>{entry.filename} ({entry.fileUuid?.substring(0, 16)}...) (Type: {entry.contentType}, Size: {((entry.contentSize ?? 0) / (1024*1024)).toFixed(2)}MB, Created At: {entry.createdAtDate!.toLocaleDateString()})</span>
+                        <span>{entry.filename} ({entry.fileUuid?.substring(0, 16)}...) (Type: {entry.contentType}, Size: {((entry.contentSize ?? 0) / (1000*1000)).toFixed(2)}MB, Created At: {entry.createdAtDate!.toLocaleDateString()})</span>
                         <span> </span>
                         <button onClick={() => {getEntryDetails(entry.fileUuid).then()}}>Details</button>
                         <span> </span>
                         <button onClick={() => {viewEntry(entry.fileUuid).then()}}>View</button>
+                        <span> </span>
+                        <button onClick={() => {uploadEntry(entry.fileUuid).then()}}>Reupload</button>
                         <span> </span>
                         <button onClick={() => {deleteEntry(entry.fileUuid).then()}}>Delete</button>
                     </li>))}
@@ -262,7 +268,7 @@ export default function Page() {
                 <br/>
                 <br/><hr/><br/>
 
-                <button onClick={uploadEntry}>Upload Entry</button><br/>
+                <button onClick={() => {uploadEntry().then()}}>Upload Entry</button><br/>
                 <button onClick={refresh}>Refresh</button><br/>
 
                 <br/><hr/><br/>

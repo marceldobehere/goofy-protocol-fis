@@ -100,13 +100,13 @@ public class ServiceBucketEndpoint {
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
         // Get Stats
-        List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle(idHandle);
+        List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle_AndLinkedServiceEntry_Uuid(idHandle, serviceUuid);
         int currentItemCount = bucketEntries.size();
         long currentBucketSize = getCurrentBucketSize(bucketEntries);
 
         return new ServiceBucketQuotasDto(
                 userQuotas.getBucket().getMaxBucketSize(),
-                userQuotas.getBucket().getMaxBucketSize(),
+                userQuotas.getBucket().getMaxItemSize(),
                 userQuotas.getBucket().getMaxItemCount(),
                 userQuotas.getBucket().getMaxPermissionCount(),
                 currentBucketSize,
@@ -130,6 +130,7 @@ public class ServiceBucketEndpoint {
             bucketEntry.setFileUuid(uuid);
             bucketEntry.setLinkedIdentity(entry.getLinkedIdentity());
             bucketEntry.setLinkedServiceEntry(entry);
+            bucketEntry.setCreatedBy(auth.getHandle());
             bucketEntry.setCreatedAt(Instant.now());
             bucketEntry.setFilename(filename);
 
@@ -138,21 +139,25 @@ public class ServiceBucketEndpoint {
             bucketEntry.setExtraWritePerms(new HashSet<>());
 
             // Check Max Item Count against Quota
-            long count = bucketEntryRepository.countAllByLinkedIdentity_Handle(idHandle);
+            long count = bucketEntryRepository.countAllByLinkedIdentity_Handle_AndLinkedServiceEntry_Uuid(idHandle, serviceUuid);
             if (count >= userQuotas.getBucket().getMaxItemCount())
                 throw new ServiceBucketQuotaExceeded("maxItemCount");
 
             // Check Max Bucket Size against Quota
-            List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle(idHandle);
+            List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle_AndLinkedServiceEntry_Uuid(idHandle, serviceUuid);
             long currentBucketSize = getCurrentBucketSize(bucketEntries);
             if (currentBucketSize + body.length > userQuotas.getBucket().getMaxBucketSize())
                 throw new ServiceBucketQuotaExceeded("maxBucketSize");
         } else {
             // Check Max Bucket Size against Quota
-            List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle(idHandle);
+            List<ServiceBucketEntry> bucketEntries = bucketEntryRepository.findAllByLinkedIdentity_Handle_AndLinkedServiceEntry_Uuid(idHandle, serviceUuid);
             long currentBucketSize = getCurrentBucketSize(bucketEntries);
             if (currentBucketSize - bucketEntry.getContentSize() + body.length > userQuotas.getBucket().getMaxBucketSize())
                 throw new ServiceBucketQuotaExceeded("maxBucketSize");
+
+            // Potentially overwrite/set filename
+            if (filename != null && !filename.isEmpty())
+                bucketEntry.setFilename(filename);
         }
 
         // Upload File
@@ -165,6 +170,8 @@ public class ServiceBucketEndpoint {
         // Save Bucket Entry Data
         bucketEntry.setContentSize((long)body.length);
         bucketEntry.setContentType(contentType);
+        bucketEntry.setLastUploadedBy(auth.getHandle());
+        bucketEntry.setLastUploadedAt(Instant.now());
         bucketEntryRepository.save(bucketEntry);
 
         return fromServiceBucketEntry(bucketEntry);
@@ -181,9 +188,9 @@ public class ServiceBucketEndpoint {
     // Upload/Update Bucket Entry (UUID Set) (will be private by default)
     @PostMapping("/{idHandle}/{serviceUuid}/upload/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Uploads/Updates a Bucket Entry with a specific UUID", description = "Upload Bucket Entry using a UUID (will be private by default). <br>The data should be raw bytes in the POST Body + A `Content-Type` Header. <br>Returns the ServiceBucketEntryDto.")
-    public ServiceBucketEntryDto uploadUuidBucketEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String fileUuid, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
-        return uploadBucketEntry(idHandle, serviceUuid, fileUuid, null, auth, body, contentType);
+    @FisEndpoint(summary = "Uploads/Updates a Bucket Entry with a specific UUID", description = "Upload Bucket Entry using a UUID (will be private by default). <br>The data should be raw bytes in the POST Body + A `Content-Type` Header + An (optional) `X-Filename` Header. <br>Returns the ServiceBucketEntryDto.")
+    public ServiceBucketEntryDto uploadUuidBucketEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String fileUuid, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @RequestHeader(name = "X-Filename", required = false) String filename, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
+        return uploadBucketEntry(idHandle, serviceUuid, fileUuid, filename, auth, body, contentType);
     }
 
     // Get Bucket Entry Config (Content-Type, Read Access, Write Access, Size, Timestamp, ...)
@@ -210,6 +217,8 @@ public class ServiceBucketEndpoint {
         // Update Bucket Entry
         bucketEntry.setContentType(entryDto.getContentType());
         bucketEntry.setExtraReadPerms(new HashSet<>(Arrays.asList(entryDto.getHandlesWithReadPerms())));
+        bucketEntry.setLastUpdatedAt(Instant.now());
+        bucketEntry.setLastUpdatedBy(auth.getHandle());
 
         // Update Bucket Entry Perms, (only for the linked Identity)
         if (entry.getLinkedIdentity().getHandle().equals(auth.getHandle()))

@@ -6,8 +6,6 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 (TODO)
 
 ## TODOs (Currently)
-* Bucket Stuff
-  * Add Uploaded/Update Entry in Bucket DB for uploaded files and updated entries
 * Frontend Add a Settings Menu (Ideally position absolute icon in the corner) to always be able to set the Server and Storage Mode
 * Backend Add Setting for User to set a custom frontend URL and use that when redirecting stuff.
 * Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
