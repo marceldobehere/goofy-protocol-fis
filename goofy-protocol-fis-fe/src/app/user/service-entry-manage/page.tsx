@@ -116,7 +116,7 @@ export default function Page() {
                 `/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/upload` :
                 `/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/upload/${fileUuid}`;
             await postFixedAuth(uploadUrl,
-                bytes, identityKeypair, new Map([["Content-Type", dataType], ["X-Filename", encodeURIComponent(filename)]]));
+                bytes, identityKeypair, new Map([["Content-Type", dataType], ["X-Filename", encodeURIComponent(filename)], /*["X-Cache-Duration", "NONE"]*/]));
         } catch (e) {
             console.log(e);
             alert("Failed to upload Bucket Entry: " + (e as Error).message);
@@ -203,7 +203,7 @@ export default function Page() {
     }
 
 
-    // TODO: Edit Permissions of an Entry
+    // TODO: Edit Permissions + Filename + Cache Duration of an Entry
     // TODO: Test Accessing Data from other places with Permissions
     // TODO: Test Updating Bucket Entry Metadata + Permissions
     // TODO: Styling

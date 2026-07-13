@@ -113,17 +113,19 @@ export interface MyServiceEntryQuotasDto {
     currentServiceEntryCount: number;
 }
 
+export type CacheDuration = "NONE" | "SHORT" | "NORMAL" | "LONG" | "VERY_LONG";
+
 export interface ServiceBucketEntryDto {
     fileUuid: string;
     contentType: string;
+    filename: string;
+    cacheDuration: CacheDuration;
+    handlesWithReadPerms: string[];
+    handlesWithWritePerms: string[];
 
-    filename?: string;
     contentSize?: number;
     createdAt?: string; // Format: "2026-07-12T00:40:21.272978Z"
     createdAtDate?: Date;
-
-    handlesWithReadPerms: string[];
-    handlesWithWritePerms: string[];
 }
 
 export interface ServiceBucketPermissionDto {
