@@ -52,6 +52,8 @@ public class HandleHelper implements HandleCryptoHelper {
 
     @Override
     public Map<String, String> loadPersistedKeyToHandleMapCache() {
+        // TODO: Add pruning of old entries if the table has exceeded a certain amount of entries
+
         return cachedKeyHandleRepository.findAll().stream()
                 .collect(Collectors.toMap(
                         CachedKeyHandleEntry::getPubSplitKey,
