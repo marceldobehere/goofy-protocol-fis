@@ -8,7 +8,10 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 ## TODOs (Currently)
 * Frontend Add a Settings Menu (Ideally position absolute icon in the corner) to always be able to set the Server and Storage Mode
 * Backend Add Setting for User to set a custom frontend URL and use that when redirecting stuff.
+* Also have the Backend Root Redirect set the Backend URL inside the Frontend, so that the Frontend contacts the correct backend, lol
 * Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
+* Check Caching Behavior for Signed Requests + and add Cache Option to the Bucket Entries (No Cache/Normal Cache/Long Cache)
+* Add Quota Overviews for Users, showing all Storage related stuff for an entire user/identity (+ Useful for Admins having an overview)
 * Work on Frontend
 * Work on Implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
 * Work on more Implementation Stuff
@@ -24,6 +27,8 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc)
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests
+* Prepare Docker Stuff for hosting it and test#
+* Create 2 FIS Instances (one main instance and one demo for others to try out, which is very limited but ppl can switch over or self host later)
 * Create extra DB Table for known FIS Domains ?
 * Look into ML-KEM using Seed for Private key and compatibility with JS (Potentially using Rust ML-KEM compiled to WASM) (Will have to see)
 
