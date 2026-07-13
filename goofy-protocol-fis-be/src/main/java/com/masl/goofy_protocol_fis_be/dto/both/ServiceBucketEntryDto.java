@@ -1,5 +1,6 @@
 package com.masl.goofy_protocol_fis_be.dto.both;
 
+import com.masl.goofy_protocol_fis_be.config.CacheDuration;
 import com.masl.goofy_protocol_fis_be.entity.FieldSize;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -25,6 +26,9 @@ public class ServiceBucketEntryDto {
     @NotEmpty
     @Size(max = FieldSize.SHORT_TEXT_LEN)
     private String filename;
+
+    @NotNull
+    private CacheDuration cacheDuration;
 
     private Long contentSize;
 

@@ -1,11 +1,13 @@
 package com.masl.goofy_protocol_fis_be.entity;
 
+import com.masl.goofy_protocol_fis_be.config.CacheDuration;
 import com.masl.goofy_protocol_fis_be.service.UserBucketService;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.slf4j.Logger;
@@ -42,6 +44,11 @@ public class ServiceBucketEntry {
     @JoinColumn(nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private ServiceEntry linkedServiceEntry;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @ColumnDefault("'NORMAL'")
+    private CacheDuration cacheDuration;
 
     // Useful information in case we need to find out who originally uploaded the file and when
     @Column

@@ -1,6 +1,7 @@
 package com.masl.goofy_protocol_fis_be.rest.service;
 
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
+import com.masl.goofy_protocol_fis_be.config.CacheDuration;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceBucketEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceBucketPermissionDto;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceBucketQuotasDto;
@@ -114,7 +115,7 @@ public class ServiceBucketEndpoint {
         );
     }
 
-    public ServiceBucketEntryDto uploadBucketEntry(String idHandle, String serviceUuid, String uuid, String filename, GoofyAuthUser auth, byte[] body, String contentType) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
+    public ServiceBucketEntryDto uploadBucketEntry(String idHandle, String serviceUuid, String uuid, String filename, CacheDuration cacheDuration, GoofyAuthUser auth, byte[] body, String contentType) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         checkServiceEntryWritePermissions(entry, auth);
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
@@ -133,6 +134,7 @@ public class ServiceBucketEndpoint {
             bucketEntry.setCreatedBy(auth.getHandle());
             bucketEntry.setCreatedAt(Instant.now());
             bucketEntry.setFilename(filename);
+            bucketEntry.setCacheDuration(cacheDuration != null ? cacheDuration : CacheDuration.NORMAL);
 
             // Private by default
             bucketEntry.setExtraReadPerms(new HashSet<>());
@@ -155,7 +157,7 @@ public class ServiceBucketEndpoint {
             if (currentBucketSize - bucketEntry.getContentSize() + body.length > userQuotas.getBucket().getMaxBucketSize())
                 throw new ServiceBucketQuotaExceeded("maxBucketSize");
 
-            // Potentially overwrite/set filename
+            // Potentially overwrite filename
             if (filename != null && !filename.isEmpty())
                 bucketEntry.setFilename(filename);
         }
@@ -180,9 +182,9 @@ public class ServiceBucketEndpoint {
     // Upload Bucket Entry (Default, no UUID) (will be private by default)
     @PostMapping("/{idHandle}/{serviceUuid}/upload")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Uploads a Bucket Entry", description = "Upload Bucket Entry (Default, no UUID) (will be private by default). <br>The data should be raw bytes in the POST Body + A `Content-Type` Header + A `X-Filename` Header. <br>Returns the ServiceBucketEntryDto.")
-    public ServiceBucketEntryDto uploadRandomBucketEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @RequestHeader(name = "X-Filename") String filename, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
-        return uploadBucketEntry(idHandle, serviceUuid, UUID.randomUUID().toString(), filename, auth, body, contentType);
+    @FisEndpoint(summary = "Uploads a Bucket Entry", description = "Upload Bucket Entry (Default, no UUID) (will be private by default). <br>The data should be raw bytes in the POST Body + A `Content-Type` Header + A `X-Filename` Header + An (optional) `X-Cache-Duration` Header (With the String Value of the Enum). <br>Returns the ServiceBucketEntryDto.")
+    public ServiceBucketEntryDto uploadRandomBucketEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @RequestHeader(name = "X-Filename") String filename, @RequestHeader(name = "X-Cache-Duration", required = false) CacheDuration cacheDuration, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
+        return uploadBucketEntry(idHandle, serviceUuid, UUID.randomUUID().toString(), filename, cacheDuration, auth, body, contentType);
     }
 
     // Upload/Update Bucket Entry (UUID Set) (will be private by default)
@@ -190,7 +192,7 @@ public class ServiceBucketEndpoint {
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Uploads/Updates a Bucket Entry with a specific UUID", description = "Upload Bucket Entry using a UUID (will be private by default). <br>The data should be raw bytes in the POST Body + A `Content-Type` Header + An (optional) `X-Filename` Header. <br>Returns the ServiceBucketEntryDto.")
     public ServiceBucketEntryDto uploadUuidBucketEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String fileUuid, @RequestBody byte[] body, @RequestHeader(name = "Content-Type") String contentType, @RequestHeader(name = "X-Filename", required = false) String filename, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
-        return uploadBucketEntry(idHandle, serviceUuid, fileUuid, filename, auth, body, contentType);
+        return uploadBucketEntry(idHandle, serviceUuid, fileUuid, filename, null, auth, body, contentType);
     }
 
     // Get Bucket Entry Config (Content-Type, Read Access, Write Access, Size, Timestamp, ...)
@@ -216,6 +218,8 @@ public class ServiceBucketEndpoint {
 
         // Update Bucket Entry
         bucketEntry.setContentType(entryDto.getContentType());
+        bucketEntry.setFilename(entryDto.getFilename());
+        bucketEntry.setCacheDuration(entryDto.getCacheDuration());
         bucketEntry.setExtraReadPerms(new HashSet<>(Arrays.asList(entryDto.getHandlesWithReadPerms())));
         bucketEntry.setLastUpdatedAt(Instant.now());
         bucketEntry.setLastUpdatedBy(auth.getHandle());
@@ -265,6 +269,7 @@ public class ServiceBucketEndpoint {
             // TODO: Look into if i should add Content-Disposition Header with Filename
             return ResponseEntity.ok()
                     .header("Content-Type", bucketEntry.getContentType())
+                    .cacheControl(bucketEntry.getCacheDuration().getCacheControl())
                     .body(userBucketService.getBucketEntry(entry, fileUuid));
         } catch (IOException e) {
             throw new ServiceBucketFileError();
@@ -280,6 +285,7 @@ public class ServiceBucketEndpoint {
                 entry.getFileUuid(),
                 entry.getContentType(),
                 entry.getFilename(),
+                entry.getCacheDuration(),
                 entry.getContentSize(),
                 entry.getCreatedAt(),
                 entry.getExtraReadPerms().toArray(new String[0]),

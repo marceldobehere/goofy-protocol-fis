@@ -10,8 +10,6 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Backend Add Setting for User to set a custom frontend URL and use that when redirecting stuff.
 * Also have the Backend Root Redirect set the Backend URL inside the Frontend, so that the Frontend contacts the correct backend, lol
 * Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
-* Check Caching Behavior for Signed Requests + and add Cache Option to the Bucket Entries (No Cache/Normal Cache/Long Cache)
-* Add Quota Overviews for Users, showing all Storage related stuff for an entire user/identity (+ Useful for Admins having an overview)
 * Work on Frontend
 * Work on Implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
 * Work on more Implementation Stuff
@@ -33,6 +31,8 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Look into ML-KEM using Seed for Private key and compatibility with JS (Potentially using Rust ML-KEM compiled to WASM) (Will have to see)
 
 ## TODOs (Later)
+* Add Caching to relevant Endpoints with relevant durations (Handle Lookup, General Info, Maybe redirects, etc.)
+* Add Quota Overviews for Users, showing all Storage related stuff for an entire user/identity (+ Useful for Admins having an overview)
 * Create a sample Endpoint / document the potential runtime errors (Mostly in Signed Request filtering / Forbidden)
 * Potentially add examples to the DTOs using annotations or so for swagger
 * Maybe Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
