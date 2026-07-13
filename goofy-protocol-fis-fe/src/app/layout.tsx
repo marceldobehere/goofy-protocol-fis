@@ -1,6 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import styles from "./layout.module.css";
 import "./globals.css";
 import {Metadata} from "next";
+import SettingsModal from "./components/settings-modal/component";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,9 +25,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
+    return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <body>
+      {children}
+
+      <button id={styles.FloatingSettingsButton} command={"show-modal"} commandfor={styles.FloatingSettings}>&#x2699;</button>
+      <dialog id={styles.FloatingSettings}>
+          <button command={"close"} commandfor={styles.FloatingSettings}>X</button>
+          <SettingsModal></SettingsModal>
+      </dialog>
+      </body>
     </html>
   );
 }

@@ -33,9 +33,33 @@ export async function init() {
     // Load Keypair
     currKeypair = await _loadKeypair(currentStorageMode);
     initDone = true;
+
+    // check override BackendURL Query Param
+    const urlParams = new URLSearchParams(window.location.search);
+    const overrideBackendUrl = urlParams.get("overrideBackendUrl");
+    if (overrideBackendUrl) {
+        console.log("Override backend url: ", overrideBackendUrl);
+        await setBaseServerUrl(overrideBackendUrl);
+
+        // Remove from URL
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete("overrideBackendUrl");
+        window.location.search = newUrl.search;
+    }
 }
 
 // Public Functions
+
+export async function deleteAllCachedStorage() {
+    await init();
+    await setStorageMode("NONE");
+    window.location.reload();
+}
+
+export async function getStorageMode(): Promise<StorageMode> {
+    await init();
+    return currentStorageMode;
+}
 
 export async function setStorageMode(mode: StorageMode) {
     // Delete Old Data

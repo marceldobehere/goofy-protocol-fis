@@ -6,7 +6,6 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 (TODO)
 
 ## TODOs (Currently)
-* Frontend Add a Settings Menu (Ideally position absolute icon in the corner) to always be able to set the Server and Storage Mode
 * Backend Add Setting for User to set a custom frontend URL and use that when redirecting stuff.
 * Also have the Backend Root Redirect set the Backend URL inside the Frontend, so that the Frontend contacts the correct backend, lol
 * Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
