@@ -107,6 +107,8 @@ There are some downsides / tradeoffs that need to be considered:
     * Private data should be encrypted with your own keypair
     * Important public data should be signed with your own keypair
     * If you handle your data safely, the only problem could be data loss. Only use FIS instances you trust 
+  * Some FIS Instances can and realistically will impose limits (Data Storage, Quotas, etc.) which could be too limiting for you.
+  * Keep in mind, you should always be able to move to a different instance if you want to
 * Your identity keypairs get used a lot for all sorts of activities and could potentially be accessible during the runtime of clients
   * You should trust your device and make sure it is not compromised
   * You should only use Service & FIS clients that you trust and can check the code of. Ideally statically hosting them yourself
