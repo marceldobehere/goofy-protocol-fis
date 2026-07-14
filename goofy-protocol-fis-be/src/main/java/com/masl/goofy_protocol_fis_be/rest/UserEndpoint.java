@@ -67,4 +67,6 @@ public class UserEndpoint {
     // Should be a two step process with a token, ideally also enforce having done an export beforehand
 
     // Deactivate Handle (Highly specific, needs more thought put into it)
+
+    // You should also be able to move identities to a different identity, e. g. if you change your handle (because maybe you changed to a post quantum cryptography algo and now have a new keypair/identity)
 }

@@ -9,6 +9,9 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Backend Add Setting for User to set a custom frontend URL and use that when redirecting stuff.
 * Also have the Backend Root Redirect set the Backend URL inside the Frontend, so that the Frontend contacts the correct backend, lol
 * Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
+* Add Synchronised Block for Post & Put Operations to avoid Race Conditions (Especially for Bucket & Table Stuff and everything quota related!!) 
+  * Ideally have a synchronized block with a lock per relevant Object (User, Service Entry / Bucket / Table, Table Entry, etc.)
+  * Should mark the Endpoints as `@Transactional` and either use a `ReentrantLock` or a general Lock for (e.g) the Service UUID or the `@Lock` annotation.
 * Work on Frontend
 * Work on Implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
 * Work on more Implementation Stuff
@@ -30,6 +33,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Look into ML-KEM using Seed for Private key and compatibility with JS (Potentially using Rust ML-KEM compiled to WASM) (Will have to see)
 
 ## TODOs (Later)
+* Change some FIS Exceptions to use more detailed HTTP Error Codes (404 for not found, etc.)
 * Add Caching to relevant Endpoints with relevant durations (Handle Lookup, General Info, Maybe redirects, etc.)
 * Add Quota Overviews for Users, showing all Storage related stuff for an entire user/identity (+ Useful for Admins having an overview)
 * Create a sample Endpoint / document the potential runtime errors (Mostly in Signed Request filtering / Forbidden)
@@ -40,13 +44,73 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
   * Requests without a special cookies token will have to wait some time before their request is processed / get extra low prio / strong rate limiting, then they will get the special cookie
   * Ideally Requests without the special cookie dont even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks
   * Requests with the cookie will get individual rate limiting based on their unique cookie (if valid) / maybe also based on the handle
+  * Add to all relevant endpoints
 * Move the Crypto Core Lib into a seperate package with tests, known values and pom.xml
 * Look into Canonical Builds
 * Improve CORS?
 * Potentially overhaul the simplistic quota system and let users set quotas for specific entries too.
 * Optimize Quota & Storage Calculations in Bucket and probably Table Service
 * Add a simple "Notification" / Warning System that alerts Users when their storage quotas are about to be exceeded or if they have some content deleted or are restricted
-* 
+* Look into how to handle a whole FIS instance moving to a different domain
+
+## Short Rundown of Goofy Protocol
+(TODO, This will probably be moved to the main Goofy Protocol Repo later)
+
+
+### (Personal) Issues with current stuff
+Currently there are already Federated Services for different things (Social Media like Mastodon, Chats like Matrix, etc.) but there are a few issues:
+* The Services work very differently and are not really compatible with each other
+* Cryptographic algorithms, parameters, practices and standards and usage vary a lot between different services
+* Users cannot necessarily have the same identity (or even handle/username/tag format) across different services
+* Most of the identities are bound to a specific Domain and do not directly have anything (Crypto Keys, etc.) linked to them
+* The identities are not really portable, so if a user wants to switch to another service, they have to create a new identity and start over, losing all their data and connections
+  * Additionally, you often need to provide your email or something to every single service, which is not ideal for privacy and security
+* User Data for Services is also not usually portable, which makes moving/importing/exporting all data painful
+* User Data for Services is stored in different formats in different locations, usually at the Service itself, which makes managing all of your data more difficult
+  * Additionally, if for a service you store all data client side, synchronization across devices can get complicated and have issues
+* The hosting of some of the services can be complicated and cumbersome, even more if you have performance in mind
+  * As well as needing to set up and provision plenty of storage for every single service and managing everything separately
+
+E2EE Encryption is already well done by applications like Signal and Matrix, though things like Matrix can be lacking in UI/UX and not intuitive.
+There are also projects related to Federated Storage, like Solid Pods or IPFS.
+But those all solve one part of the problem, while not being being directly compatible and still have problems related to global identities.
+
+
+### What does Goofy Protocol offer
+Goofy Protocol defines identities/handles to be globally unique (but human readable with hopefully enough bits to avoid collission) and directly bound to a cryptographic identity (public keys).
+This means that a user can have the same identity across different services without issues. A
+Additionally, it means that an identity is no longer tied to a domain or service, which allows portability and freedom for the user to move between different domains.
+
+The identities as well as cryptographic algorithms and parameters are defined in a standard way, which is compatible across services and platforms. 
+Also having (wip) support for Post Quantum Cryptography out of the box.
+
+As for data storage, Goofy Protocol defines the FIS (Federated Identity Server) to be a central point for storing and managing all data related to a user.
+The FIS stores all data for a user (Encrypted Keypairs, Public Data, Tables for structured data and Buckets for files) and allows the user to access/manage that data as well as share access with other users and services.
+This means that different services should be built to let users decide where their data is stored and how it is shared, while still being compatible with other services.
+The FIS also allows for several identities to be managed by a user, to allow for privacy/isolation to the services themselves. (Or can use different FIS instances too)
+
+If a person wants to host several services for a group of people, they can host their own FIS and have the services check the identities against the FIS.
+This means that for example only users who registered on the group FIS can use the services and also don't need to have different credentials across the services.
+
+
+### Downside of Goofy Protocol
+There are some downsides / tradeoffs that need to be considered:
+* The identity is not bound to a domain/service but to a keypair, similar to a cryptowallet
+  * If you completely lose your keypair, you lose your identity. You cannot do anything with it. (You can of course talk to the FIS owner and at least try to get an export your data)
+  * If your keypair is compromised, then your identity is compromised and the only thing you can do is deactivate/delete your account
+  * Since your keypair is mapped to a cryptographic keypair, it is fixed to that
+    * This means that the Algorithm used for your identity cannot be changed without changing your identity.
+    * This is relevant for the choice of algorithm as well as post quantum security
+* The FIS of your choice will be the central store of your data
+  * If the FIS stops working, your data could be lost. (Should have exports/backups)
+  * If the FIS is compromised or malicious, then data could be deleted, manipulated or shared.
+    * Private data should be encrypted with your own keypair
+    * Important public data should be signed with your own keypair
+    * If you handle your data safely, the only problem could be data loss. Only use FIS instances you trust 
+* Your identity keypairs get used a lot for all sorts of activities and could potentially be accessible during the runtime of clients
+  * You should trust your device and make sure it is not compromised
+  * You should only use Service & FIS clients that you trust and can check the code of. Ideally statically hosting them yourself
+  * If you don't fully trust a Service / Client, you should use a separate/isolated identity for it
 
 
 ## Features
