@@ -38,6 +38,8 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Add Quota Overviews for Users, showing all Storage related stuff for an entire user/identity (+ Useful for Admins having an overview)
 * Create a sample Endpoint / document the potential runtime errors (Mostly in Signed Request filtering / Forbidden)
 * Potentially add examples to the DTOs using annotations or so for swagger
+* Add Exporting User Keypair with a password + Importing a password encrypted Keypair (For safety reasons)
+* Allow Securing your Fis Frontend Client with a password too, (Encrypted Local Storage)
 * Maybe Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
 * Create automated API Spec genertion in PDF/MD format
 * Implement silly Rate Limiting (only for prod/develop), Base: https://www.baeldung.com/spring-bucket4j
@@ -85,7 +87,7 @@ The identities as well as cryptographic algorithms and parameters are defined in
 Also having (wip) support for Post Quantum Cryptography out of the box.
 
 As for data storage, Goofy Protocol defines the FIS (Federated Identity Server) to be a central point for storing and managing all data related to a user.
-The FIS stores all data for a user (Encrypted Keypairs, Public Data, Tables for structured data and Buckets for files) and allows the user to access/manage that data as well as share access with other users and services.
+The FIS stores all data for a user (Full Identity Keypairs (encrypted at rest), Public Data, Tables for structured data and Buckets for files) and allows the user to access/manage that data as well as share access with other users and services.
 This means that different services should be built to let users decide where their data is stored and how it is shared, while still being compatible with other services.
 The FIS also allows for several identities to be managed by a user, to allow for privacy/isolation to the services themselves. (Or can use different FIS instances too)
 
@@ -114,6 +116,9 @@ There are some downsides / tradeoffs that need to be considered:
   * You should only use Service & FIS clients that you trust and can check the code of. Ideally statically hosting them yourself
   * If you don't fully trust a Service / Client, you should use a separate/isolated identity for it
 
+
+There has been some thought put into having a Root Identity Keypair, which is only used to sign a temporary keypair for use in cryptographic stuff, which would shift the issues about keypair algos being tied to one single identity and the issue with compromising to the Root Identity, which could be a large PQC Keypair for maximum security.
+Though this introduces a lot of extra complexity and overhead so it is not implemented in this system for now. Maybe at some future point it will.
 
 ## Features
 (TODO)
