@@ -61,7 +61,7 @@ public class ServiceEntryEndpoint {
     @PostMapping
     @PreAuthorize("hasRole('ROLE_REGISTERED_IDENTITY') and not hasRole('ROLE_REGISTERED_USER')")
     @FisEndpoint(summary = "Sets a Service Entry for a Identity", description = "The UUID Field should not be set.")
-    public void createEntry(@Valid @RequestBody ServiceEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryQuotaExceeded, ServiceEntryInvalid {
+    public String createEntry(@Valid @RequestBody ServiceEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryQuotaExceeded, ServiceEntryInvalid {
         // Get Identity
         IdentityStorageEntry identity = identityRepository.findByHandle(auth.getHandle());
 
@@ -85,6 +85,7 @@ public class ServiceEntryEndpoint {
             entry.setCreatedBy(identity.getCreatedBy());
             entry.setCreatedAt(Instant.now());
             serviceEntryRepository.save(entry);
+            return entry.getUuid();
         } catch (Exception e) {
             throw new ServiceEntryInvalid();
         }
