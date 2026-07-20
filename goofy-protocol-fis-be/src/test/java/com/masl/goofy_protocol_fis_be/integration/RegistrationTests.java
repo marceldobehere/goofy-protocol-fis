@@ -3,6 +3,7 @@ package com.masl.goofy_protocol_fis_be.integration;
 import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
 import com.masl.goofy_protocol_core.crypto.connected.IsolatedHandleHelper;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
+import com.masl.goofy_protocol_fis_be.IsolatedTestConfig;
 import com.masl.goofy_protocol_fis_be.dto.request.RegistrationRequestDto;
 import com.masl.goofy_protocol_fis_be.entity.User;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
@@ -20,7 +21,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
-import static com.masl.goofy_protocol_fis_be.integration.SignedRequestUtils.*;
+import static com.masl.goofy_protocol_fis_be.integration.signed_request.SignedRequestUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 

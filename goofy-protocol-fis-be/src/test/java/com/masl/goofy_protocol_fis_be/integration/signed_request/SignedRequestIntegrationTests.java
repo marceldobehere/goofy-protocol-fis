@@ -1,9 +1,10 @@
-package com.masl.goofy_protocol_fis_be.integration;
+package com.masl.goofy_protocol_fis_be.integration.signed_request;
 
 import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
 import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequest;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
+import com.masl.goofy_protocol_fis_be.IsolatedTestConfig;
 import com.masl.goofy_protocol_fis_be.exception.client.AllClientErrorCodes;
 import com.masl.goofy_protocol_fis_be.exception.server.AllServerErrorCodes;
 import com.masl.goofy_protocol_fis_be.test_data.test_only.TestDataUser;
@@ -27,8 +28,8 @@ import org.springframework.util.MultiValueMap;
 
 import java.util.Map;
 
-import static com.masl.goofy_protocol_fis_be.integration.SignedRequestUtils.performSignedRequest;
-import static com.masl.goofy_protocol_fis_be.integration.SignedRequestUtils.performUnsignedRequest;
+import static com.masl.goofy_protocol_fis_be.integration.signed_request.SignedRequestUtils.performSignedRequest;
+import static com.masl.goofy_protocol_fis_be.integration.signed_request.SignedRequestUtils.performUnsignedRequest;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;

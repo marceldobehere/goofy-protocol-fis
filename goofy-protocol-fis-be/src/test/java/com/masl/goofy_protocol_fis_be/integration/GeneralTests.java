@@ -2,6 +2,7 @@ package com.masl.goofy_protocol_fis_be.integration;
 
 import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
 import com.masl.goofy_protocol_core.crypto.connected.IsolatedHandleHelper;
+import com.masl.goofy_protocol_fis_be.IsolatedTestConfig;
 import com.masl.goofy_protocol_fis_be.dto.request.GeneralReportDto;
 import com.masl.goofy_protocol_fis_be.service.GeneralReportService;
 import com.masl.goofy_protocol_fis_be.test_data.test_only.TestDataUser;
@@ -19,7 +20,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
-import static com.masl.goofy_protocol_fis_be.integration.SignedRequestUtils.*;
+import static com.masl.goofy_protocol_fis_be.integration.signed_request.SignedRequestUtils.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Tag("integration")

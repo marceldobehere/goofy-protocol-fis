@@ -24,6 +24,7 @@ public class TestDataUser {
     private final HandleCrypto handleCrypto;
 
     public AsymmCrypto.AsymmFullKeyPair testUser;
+    public AsymmCrypto.AsymmFullKeyPair testUserTwo;
     public AsymmCrypto.AsymmFullKeyPair testAdmin;
 
     public TestDataUser(UserRepository userRepository, HandleCryptoHelper helper) {
@@ -47,6 +48,16 @@ public class TestDataUser {
         testUserEntity.setAdmin(false);
         userRepository.save(testUserEntity);
         log.info("> Generated Test User: {}", handleCrypto.deriveHandle(testUser.pub().serialize()));
+
+
+        // Test User 2
+        testUserTwo = asymmCrypto.generateKeypair();
+        User testUserTwoEntity = new User();
+        testUserTwoEntity.setPubSplitKey(testUserTwo.pub().serialize());
+        testUserTwoEntity.setHandle(handleCrypto.deriveHandle(testUserTwo.pub().serialize()));
+        testUserTwoEntity.setAdmin(false);
+        userRepository.save(testUserTwoEntity);
+        log.info("> Generated Test User 2: {}", handleCrypto.deriveHandle(testUserTwo.pub().serialize()));
 
         // Test Admin
         testAdmin = asymmCrypto.generateKeypair();

@@ -1,4 +1,4 @@
-package com.masl.goofy_protocol_fis_be.integration;
+package com.masl.goofy_protocol_fis_be.integration.signed_request;
 
 import com.masl.goofy_protocol_core.crypto.connected.GenericHandleCrypto;
 import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequest;

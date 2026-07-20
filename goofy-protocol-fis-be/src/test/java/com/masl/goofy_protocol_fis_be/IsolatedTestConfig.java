@@ -1,4 +1,4 @@
-package com.masl.goofy_protocol_fis_be.integration;
+package com.masl.goofy_protocol_fis_be;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

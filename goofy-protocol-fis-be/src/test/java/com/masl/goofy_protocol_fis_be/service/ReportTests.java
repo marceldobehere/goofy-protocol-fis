@@ -1,7 +1,7 @@
 package com.masl.goofy_protocol_fis_be.service;
 
 import com.masl.goofy_protocol_fis_be.dto.request.GeneralReportDto;
-import com.masl.goofy_protocol_fis_be.integration.IsolatedTestConfig;
+import com.masl.goofy_protocol_fis_be.IsolatedTestConfig;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;

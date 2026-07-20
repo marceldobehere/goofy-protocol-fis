@@ -1,4 +1,4 @@
-package com.masl.goofy_protocol_fis_be.integration;
+package com.masl.goofy_protocol_fis_be.integration.signed_request;
 
 import com.github.noconnor.junitperf.JUnitPerfInterceptor;
 import com.github.noconnor.junitperf.JUnitPerfReportingConfig;
@@ -11,6 +11,7 @@ import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequest;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.AsymmCryptoType;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
+import com.masl.goofy_protocol_fis_be.IsolatedTestConfig;
 import com.masl.goofy_protocol_fis_be.test_data.test_only.TestDataUser;
 import com.masl.goofy_protocol_core.crypto.connected.IsolatedHandleHelper;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -36,8 +37,8 @@ import org.springframework.util.MultiValueMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.masl.goofy_protocol_fis_be.integration.SignedRequestUtils.performSignedRequest;
-import static com.masl.goofy_protocol_fis_be.integration.SignedRequestUtils.performUnsignedRequest;
+import static com.masl.goofy_protocol_fis_be.integration.signed_request.SignedRequestUtils.performSignedRequest;
+import static com.masl.goofy_protocol_fis_be.integration.signed_request.SignedRequestUtils.performUnsignedRequest;
 import static java.lang.System.getProperty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
