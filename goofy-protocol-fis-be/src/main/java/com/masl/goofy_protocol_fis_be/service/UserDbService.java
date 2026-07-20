@@ -41,7 +41,7 @@ public class UserDbService {
     }
 
     public Long getDbSize(ServiceEntry entry) throws IOException {
-        Path dbFile = fileStorageService.getDbFolderPath(entry.getUuid()).resolve("userData");
+        Path dbFile = fileStorageService.getDbFolderPath(entry.getUuid()).resolve("userData.mv.db");
         File file = dbFile.toFile();
         if (!file.exists())
             throw new IOException("Database file does not exist for entry: " + entry.getUuid());
@@ -163,15 +163,15 @@ public class UserDbService {
 
             // Create Query String
             StringBuilder createQuery = new StringBuilder();
-            createQuery.append("CREATE TABLE ").append(tableName).append(" (");
+            createQuery.append("CREATE TABLE \"").append(tableName).append("\" (");
             StringJoiner colDefs = new StringJoiner(", ");
             for (TableColumnDto colDto : tableEntryDto.getColumns()) {
                 StringJoiner colDef = new StringJoiner(" ");
-                colDef.add(colDto.getColName());
+                colDef.add("\"" + colDto.getColName() + "\"");
                 colDef.add(colDto.toSqlTypeString());
                 colDef.add(colDto.toSqlConstraintsString());
                 if (colDto.getDefaultValue() != null)
-                    colDef.add("DEFAULT ?");
+                    colDef.add("DEFAULT " + colDto.defaultToSqlValueString());
 
                 colDefs.add(colDef.toString());
             }
@@ -179,15 +179,8 @@ public class UserDbService {
             createQuery.append(");");
 
             // Execute
-            try (PreparedStatement statement = conn.prepareStatement(createQuery.toString())) {
-
-                // Default values
-                int pI = 1;
-                for (TableColumnDto colDto : tableEntryDto.getColumns())
-                    if (colDto.getDefaultValue() != null)
-                        colDto.addDefaultValueToPreparedStatement(statement, pI++);
-
-                statement.execute();
+            try (Statement statement = conn.createStatement()) {
+                statement.execute(createQuery.toString());
             }
         }
     }

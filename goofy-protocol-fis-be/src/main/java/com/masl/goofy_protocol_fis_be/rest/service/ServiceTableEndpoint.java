@@ -285,7 +285,7 @@ public class ServiceTableEndpoint {
     }
 
     // Create Table Entry (Default, no UUID) (will be private by default)
-    @PutMapping("/{idHandle}/{serviceUuid}/entry")
+    @PostMapping("/{idHandle}/{serviceUuid}/entry")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Create a Table Entry", description = "Creates a Table Entry (Default, no UUID) (will be private by default). ")
     public ServiceTableEntryDto createTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @Valid @RequestBody ServiceTableEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableQuotaExceeded, ServiceTableEntryInvalid, ServiceTableSqlError {
@@ -332,8 +332,6 @@ public class ServiceTableEndpoint {
                 throw new ServiceTableEntryInvalid("Duplicate Column Name: " + colDto.getColName());
             else
                 colNames.add(colDto.getColName());
-            if (colDto.getConstraints().contains(TableColumnDto.Constraint.NOT_NULL) && colDto.getDefaultValue() == null)
-                throw new ServiceTableEntryInvalid("New NOT NULL Column must have a Default Value: " + colDto.getColName());
             if (colDto.getColName().length() > userQuotas.getGeneral().getMaxNameSize())
                 throw new ServiceTableQuotaExceeded("generalMaxNameSize");
             if (TableColumnDto.getTypeSize(colDto.getType(), colDto.getTypeSize()) > userQuotas.getTable().getMaxFieldSize())
@@ -351,6 +349,8 @@ public class ServiceTableEndpoint {
         tableEntry.setCreatedBy(auth.getHandle());
         tableEntry.setExtraReadPerms(new HashSet<>(Arrays.asList(entryDto.getHandlesWithReadPerms())));
         tableEntry.setExtraWritePerms(new HashSet<>(Arrays.asList(entryDto.getHandlesWithWritePerms())));
+
+        entryDto.setTableUuid(tableEntry.getTableUuid());
 
         // Create Table in DB
         try {

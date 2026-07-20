@@ -12,8 +12,6 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ServiceTableEntryDto {
-    @NotBlank
-    @Size(max = FieldSize.GENERIC_CODE_LEN)
     private String tableUuid;
 
     @NotBlank

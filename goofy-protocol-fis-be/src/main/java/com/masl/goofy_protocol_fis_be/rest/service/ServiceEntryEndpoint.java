@@ -24,7 +24,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-// TODO: Write Tests
 @RestController
 @RequestMapping("/api/service-entry")
 @Tag(name = "Service Entry", description = "Endpoints related to configuring Service Entries. <br>For Each Identity Users may create \"Service Entries\" which the User can then use to store data for the service. <br>Additionally the User can allow a Service to read/write some tables or view/access the bucket.<br>Important Note: These Endpoints need to be signed/access using the Identity Keypair, not the User")

@@ -36,7 +36,7 @@ public class TableColumnDto {
         FIXED_STRING_N, VAR_STRING_N, // (N, 1-MAX_FIELD_SIZE)
         BOOLEAN,
         TINYINT, SMALLINT, INT, BIGINT,
-        NUMERIC_N /*(N, 0-100)*/, FLOAT, DOUBLE,
+        FLOAT, DOUBLE,
         DATE, TIME
     }
 
@@ -58,7 +58,6 @@ public class TableColumnDto {
             case SMALLINT -> 2;
             case INT -> 4;
             case BIGINT -> 8;
-            case NUMERIC_N -> 16;
             case FLOAT -> 4;
             case DOUBLE -> 8;
             case DATE -> 8;
@@ -75,8 +74,7 @@ public class TableColumnDto {
             case SMALLINT -> "SMALLINT";
             case INT -> "INT";
             case BIGINT -> "BIGINT";
-            case NUMERIC_N -> "NUMERIC(" + typeSize + ")";
-            case FLOAT -> "FLOAT";
+            case FLOAT -> "REAL";
             case DOUBLE -> "DOUBLE";
             case DATE -> "DATE";
             case TIME -> "TIME";
@@ -100,8 +98,6 @@ public class TableColumnDto {
             case "SMALLINT" -> Type.SMALLINT;
             case "INT", "INTEGER" -> Type.INT;
             case "BIGINT" -> Type.BIGINT;
-
-            case "NUMERIC", "DECIMAL" -> Type.NUMERIC_N;
 
             case "REAL", "FLOAT" -> Type.FLOAT;
             case "DOUBLE", "DOUBLE PRECISION" -> Type.DOUBLE;
@@ -134,7 +130,6 @@ public class TableColumnDto {
                 case SMALLINT -> java.sql.Types.SMALLINT;
                 case INT -> java.sql.Types.INTEGER;
                 case BIGINT -> java.sql.Types.BIGINT;
-                case NUMERIC_N -> java.sql.Types.NUMERIC;
                 case FLOAT -> java.sql.Types.FLOAT;
                 case DOUBLE -> java.sql.Types.DOUBLE;
                 case DATE -> java.sql.Types.DATE;
@@ -170,12 +165,6 @@ public class TableColumnDto {
             case BIGINT -> {
                 if (value instanceof Number n) statement.setLong(index, n.longValue());
                 else statement.setLong(index, Long.parseLong(String.valueOf(value)));
-            }
-
-            case NUMERIC_N -> {
-                if (value instanceof java.math.BigDecimal bd) statement.setBigDecimal(index, bd);
-                else if (value instanceof Number n) statement.setBigDecimal(index, java.math.BigDecimal.valueOf(n.doubleValue()));
-                else statement.setBigDecimal(index, new java.math.BigDecimal(String.valueOf(value)));
             }
 
             case FLOAT -> {
@@ -214,6 +203,60 @@ public class TableColumnDto {
         addValueToPreparedStatement(statement, index, defaultValue, type);
     }
 
+    public String defaultToSqlValueString() {
+        return toSqlValueString(defaultValue, type);
+    }
+
+    private static String escapeSqlString(String s) {
+        // TODO: Check if the code is secure from injection attacks, for now it looks ok
+        String escaped = s.replace("'", "''");
+        return "'" + escaped + "'";
+    }
+
+    public static String toSqlValueString(Object defaultValue, Type type) {
+        if (defaultValue == null) return "NULL";
+
+        return switch (type) {
+            case FIXED_STRING_N, VAR_STRING_N -> escapeSqlString(String.valueOf(defaultValue));
+
+            case BOOLEAN -> {
+                boolean b = switch (defaultValue) {
+                    case Boolean v -> v;
+                    case Number n -> n.intValue() != 0;
+                    default -> Boolean.parseBoolean(String.valueOf(defaultValue));
+                };
+                yield b ? "TRUE" : "FALSE";
+            }
+
+            case TINYINT, SMALLINT, INT, BIGINT -> String.valueOf(defaultValue);
+
+            case FLOAT, DOUBLE -> {
+                if (defaultValue instanceof Number n) yield String.valueOf(n); // float/double numeric literal
+                yield String.valueOf(Double.parseDouble(String.valueOf(defaultValue)));
+            }
+
+            case DATE -> {
+                java.sql.Date d = switch (defaultValue) {
+                    case java.sql.Date v -> v;
+                    case java.time.LocalDate v -> java.sql.Date.valueOf(v);
+                    case java.util.Date v -> new java.sql.Date(v.getTime());
+                    default -> java.sql.Date.valueOf(String.valueOf(defaultValue));
+                };
+                yield "DATE '" + d.toString() + "'";
+            }
+
+            case TIME -> {
+                java.sql.Time t = switch (defaultValue) {
+                    case java.sql.Time v -> v;
+                    case java.time.LocalTime v -> java.sql.Time.valueOf(v);
+                    case java.util.Date v -> new java.sql.Time(v.getTime());
+                    default -> java.sql.Time.valueOf(String.valueOf(defaultValue));
+                };
+                yield "TIME '" + t + "'";
+            }
+        };
+    }
+
     public static TableColumnDto fromSqlData(String colName, String colType, int colTypeSize, Set<Constraint> constraints, Object defaultValue) {
         TableColumnDto dto = new TableColumnDto();
         dto.setColName(colName);
@@ -236,7 +279,7 @@ public class TableColumnDto {
         }
 
         return switch (type) {
-            case FIXED_STRING_N, VAR_STRING_N -> s;
+            case FIXED_STRING_N, VAR_STRING_N -> s.replace("''", "'"); // unescape SQL string
 
             case BOOLEAN -> {
                 if (s.equalsIgnoreCase("TRUE")) yield true;
@@ -252,8 +295,7 @@ public class TableColumnDto {
             case INT -> Integer.parseInt(s);
             case BIGINT -> Long.parseLong(s);
 
-            case NUMERIC_N, FLOAT, DOUBLE -> {
-                if (type == TableColumnDto.Type.NUMERIC_N) yield new java.math.BigDecimal(s);
+            case FLOAT, DOUBLE -> {
                 if (type == TableColumnDto.Type.FLOAT) yield Float.parseFloat(s);
                 yield Double.parseDouble(s);
             }
@@ -265,10 +307,10 @@ public class TableColumnDto {
                     if (inside.startsWith("'") && inside.endsWith("'")) {
                         inside = inside.substring(1, inside.length() - 1);
                     }
-                    yield java.sql.Date.valueOf(inside);
+                    yield java.sql.Date.valueOf(inside).toString();
                 }
                 // otherwise assume YYYY-MM-DD
-                yield java.sql.Date.valueOf(s);
+                yield java.sql.Date.valueOf(s).toString();
             }
 
             case TIME -> {
@@ -278,9 +320,9 @@ public class TableColumnDto {
                     if (inside.startsWith("'") && inside.endsWith("'")) {
                         inside = inside.substring(1, inside.length() - 1);
                     }
-                    yield java.sql.Time.valueOf(inside);
+                    yield java.sql.Time.valueOf(inside).toString();
                 }
-                yield java.sql.Time.valueOf(s);
+                yield java.sql.Time.valueOf(s).toString();
             }
         };
     }
