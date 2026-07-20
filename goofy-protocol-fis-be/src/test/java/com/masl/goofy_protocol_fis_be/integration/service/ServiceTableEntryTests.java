@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Tag("integration")
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles({"test", "tests-service-entry"})
+@ActiveProfiles({"test", "tests-service-table-entry"})
 @ContextConfiguration(initializers = IsolatedTestConfig.class)
 class ServiceTableEntryTests {
 	private static final String BASE = "/api/service-table";
