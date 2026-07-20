@@ -35,7 +35,7 @@ public class TableColumnDto {
     public enum Type {
         FIXED_STRING_N, VAR_STRING_N, // (N, 1-MAX_FIELD_SIZE)
         BOOLEAN,
-        TINYINT, SMALLINT, INT, BIGINT,
+        TINYINT, SMALLINT, INT, BIGINT, // NOTE: These are signed!
         FLOAT, DOUBLE,
         DATE, TIME
     }
