@@ -1,10 +1,7 @@
 package com.masl.goofy_protocol_fis_be.dto.both;
 
-import com.masl.goofy_protocol_fis_be.config.CacheDuration;
 import com.masl.goofy_protocol_fis_be.entity.FieldSize;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,23 +11,19 @@ import java.time.Instant;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ServiceBucketEntryDto {
+public class ServiceTableEntryDto {
     @NotBlank
     @Size(max = FieldSize.GENERIC_CODE_LEN)
-    private String fileUuid;
+    private String tableUuid;
 
     @NotBlank
     @Size(max = FieldSize.SHORT_TEXT_LEN)
-    private String contentType;
+    @Pattern(regexp = "^[a-z0-9_]+$", message = "Use only a-z, 0-9, and underscore (_)")
+    private String tableName;
 
-    @NotBlank
-    @Size(max = FieldSize.SHORT_TEXT_LEN)
-    private String filename;
-
-    @NotNull
-    private CacheDuration cacheDuration;
-
-    private Long contentSize;
+    // Schema
+    private Integer schemaVersion;
+    private TableColumnDto[] columns;
 
     private Instant createdAt;
 

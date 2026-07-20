@@ -1,7 +1,6 @@
 package com.masl.goofy_protocol_fis_be.entity;
 
-import com.masl.goofy_protocol_fis_be.service.UserBucketService;
-import com.masl.goofy_protocol_fis_be.service.UserDbService;
+import com.masl.goofy_protocol_fis_be.entity.listeners.ServiceEntryListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,15 +9,12 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Set;
 
 @Entity
+@EntityListeners(ServiceEntryListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @Setter
@@ -57,21 +53,6 @@ public class ServiceEntry {
     @OneToMany(mappedBy="linkedServiceEntry", orphanRemoval = true, cascade = CascadeType.REMOVE)
     private Set<ServiceBucketEntry> serviceBucketEntries;
 
-    // Helper Stuff
-
-    private static final Logger log = LoggerFactory.getLogger(ServiceEntry.class);
-
-    @PrePersist
-    public void initEntryHandler() throws IOException, SQLException {
-        log.info("Creating ServiceEntry: {}", uuid);
-        UserDbService.getSingleton().createEntry(this);
-        UserBucketService.getSingleton().createEntry(this);
-    }
-
-    @PreRemove
-    public void deleteEntryHandler() throws IOException {
-        log.info("Deleting ServiceEntry: {}", uuid);
-        UserDbService.getSingleton().deleteEntry(this);
-        UserBucketService.getSingleton().deleteEntry(this);
-    }
+    @OneToMany(mappedBy="linkedServiceEntry", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    private Set<ServiceTableEntry> serviceTableEntries;
 }

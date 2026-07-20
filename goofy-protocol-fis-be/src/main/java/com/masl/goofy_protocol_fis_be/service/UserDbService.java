@@ -1,55 +1,63 @@
 package com.masl.goofy_protocol_fis_be.service;
 
+import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
+import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
 import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
-import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import java.sql.*;
+import java.util.*;
 
 // TODO: Test
 @Service
 public class UserDbService {
     private static final Logger log = LoggerFactory.getLogger(UserDbService.class);
 
-    @Getter
-    private static UserDbService singleton;
-
     private final FileStorageService fileStorageService;
 
     public UserDbService(FileStorageService fileStorageService) {
         this.fileStorageService = fileStorageService;
-
-        singleton = this;
     }
 
-    public void createEntry(ServiceEntry entry) throws IOException, SQLException {
+    public synchronized void createEntry(ServiceEntry entry) throws IOException, SQLException {
         deleteEntry(entry); // Ensure no existing folder
         fileStorageService.createDbFolder(entry.getUuid());
         initDb(entry);
     }
 
-    public void deleteEntry(ServiceEntry entry) throws IOException {
+    public synchronized void deleteEntry(ServiceEntry entry) throws IOException {
         fileStorageService.deleteDbFolder(entry.getUuid());
+        // TODO: Check DB Connections are closed / Close Server somehow
     }
 
-    private void initDb(ServiceEntry entry) throws SQLException {
-        Connection conn = getConnection(entry.getUuid());
-        if (conn == null)
-            throw new SQLException("Failed to create database connection for entry: " + entry.getUuid());
+    public synchronized void deleteTableEntry(ServiceEntry entry, String tableUuid) {
+        // TODO: Implement
+        // TODO: Check DB Connections are closed / Close Server somehow
+    }
 
-        // Check if everything works
-        List<String> tables = getAllTables(conn);
-        log.info("Initialized database for entry: {}, tables: {}", entry.getUuid(), tables);
+    public Long getDbSize(ServiceEntry entry) throws IOException {
+        Path dbFile = fileStorageService.getDbFolderPath(entry.getUuid()).resolve("userData");
+        File file = dbFile.toFile();
+        if (!file.exists())
+            throw new IOException("Database file does not exist for entry: " + entry.getUuid());
+        return file.length();
+    }
 
-        conn.close();
+    private String getDbTableNameFromTableUuid(String tableUuid) {
+        return "table_" + tableUuid.replace("-", "_");
+    }
+
+    private synchronized void initDb(ServiceEntry entry) throws SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            // Check if everything works
+            List<String> tables = getAllTables(conn);
+            log.info("Initialized database for entry: {}, tables: {}", entry.getUuid(), tables);
+        }
     }
 
     public Connection getConnection(String uuid) throws SQLException {
@@ -60,12 +68,127 @@ public class UserDbService {
         return DriverManager.getConnection(url, "sa", "");
     }
 
-    public List<String> getAllTables(Connection conn) throws SQLException {
+    private List<String> getAllTables(Connection conn) throws SQLException {
         try (ResultSet rs = conn.getMetaData().getTables(null, null, "%", new String[] { "TABLE" })) {
-            List<String> tables = new java.util.ArrayList<>();
+            List<String> tables = new ArrayList<>();
             while (rs.next())
                 tables.add(rs.getString("TABLE_NAME"));
             return tables;
+        }
+    }
+
+    public long getTableRowCount(ServiceEntry entry, String tableUuid) throws SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableUuid);
+            try (Statement statement = conn.createStatement();
+                 ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM " + tableName)) {
+                if (rs.next())
+                    return rs.getLong(1);
+                return 0L;
+            }
+        }
+    }
+
+    public int getTableColumnCount(ServiceEntry entry, String tableUuid) throws SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableUuid);
+            int count = 0;
+            try (ResultSet rs = conn.getMetaData().getColumns(null, null, tableName, null)) {
+                while (rs.next())
+                    count++;
+            }
+            return count;
+        }
+    }
+
+    public List<TableColumnDto> getAllTableColumns(ServiceEntry entry, String tableUuid) throws SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableUuid);
+
+            // Primary Keys
+            Set<String> pkCols = new HashSet<>();
+            try (ResultSet rs = conn.getMetaData().getPrimaryKeys(null, null, tableName)) {
+                while (rs.next())
+                    pkCols.add(rs.getString("COLUMN_NAME").toLowerCase(Locale.ROOT));
+            }
+
+            // Unique Cols
+            Set<String> uniqueCols = new HashSet<>();
+            try (ResultSet rs = conn.getMetaData().getIndexInfo(null, null, tableName, true, false)) {
+                while (rs.next()) {
+                    String colName = rs.getString("COLUMN_NAME");
+                    if (colName != null && !rs.getBoolean("NON_UNIQUE"))
+                        uniqueCols.add(colName.toLowerCase(Locale.ROOT));
+                }
+            }
+
+            // Columns
+            List<TableColumnDto> columns = new ArrayList<>();
+            try (ResultSet rs = conn.getMetaData().getColumns(null, null, tableName, null)) {
+                while (rs.next()) {
+                    String colName = rs.getString("COLUMN_NAME").toLowerCase(Locale.ROOT);
+                    String colType = rs.getString("TYPE_NAME").toUpperCase(Locale.ROOT);
+                    int colSize = rs.getInt("COLUMN_SIZE");
+                    boolean nullable = rs.getInt("NULLABLE") != DatabaseMetaData.columnNoNulls;
+
+                    // Constraint
+                    Set<TableColumnDto.Constraint> constraints = new HashSet<>();
+                    if (pkCols.contains(colName))
+                        constraints.add(TableColumnDto.Constraint.PRIMARY_KEY);
+                    if (uniqueCols.contains(colName))
+                        constraints.add(TableColumnDto.Constraint.UNIQUE);
+                    if (!nullable)
+                        constraints.add(TableColumnDto.Constraint.NOT_NULL);
+
+                    // Default (H2 / JDBC metadata)
+                    Object parsedDefault = null;
+                    String rawDefault = rs.getString("COLUMN_DEF");
+                    if (rawDefault != null) {
+                        TableColumnDto.Type inferredType = TableColumnDto.fromSqlTypeString(colType);
+                        parsedDefault = TableColumnDto.parseDefaultSqlValue(rawDefault, inferredType);
+                    }
+
+                    // Create actual DTO
+                    columns.add(TableColumnDto.fromSqlData(colName, colType, colSize, constraints, parsedDefault));
+                }
+            }
+
+            return columns;
+        }
+    }
+
+    public void createTableEntry(ServiceEntry entry, ServiceTableEntryDto tableEntryDto) throws IOException, SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableEntryDto.getTableUuid());
+
+            // Create Query String
+            StringBuilder createQuery = new StringBuilder();
+            createQuery.append("CREATE TABLE ").append(tableName).append(" (");
+            StringJoiner colDefs = new StringJoiner(", ");
+            for (TableColumnDto colDto : tableEntryDto.getColumns()) {
+                StringJoiner colDef = new StringJoiner(" ");
+                colDef.add(colDto.getColName());
+                colDef.add(colDto.toSqlTypeString());
+                colDef.add(colDto.toSqlConstraintsString());
+                if (colDto.getDefaultValue() != null)
+                    colDef.add("DEFAULT ?");
+
+                colDefs.add(colDef.toString());
+            }
+            createQuery.append(colDefs);
+            createQuery.append(");");
+
+            // Execute
+            try (PreparedStatement statement = conn.prepareStatement(createQuery.toString())) {
+
+                // Default values
+                int pI = 1;
+                for (TableColumnDto colDto : tableEntryDto.getColumns())
+                    if (colDto.getDefaultValue() != null)
+                        colDto.addDefaultValueToPreparedStatement(statement, pI++);
+
+                statement.execute();
+            }
         }
     }
 }

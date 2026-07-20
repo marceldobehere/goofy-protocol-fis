@@ -13,6 +13,7 @@ public interface ServiceEntryRepository extends JpaRepository<ServiceEntry, Stri
     long countAllByLinkedIdentity_Handle(String linkedIdentityHandle);
     List<ServiceEntry> findAllByLinkedIdentity_Handle(String linkedIdentityHandle);
 
+    ServiceEntry findByUuid(String uuid);
     ServiceEntry findByUuid_AndLinkedIdentity_Handle(String uuid, String linkedIdentityHandle);
     void deleteByUuid_AndLinkedIdentity_Handle(String uuid, String linkedIdentityHandle);
 }

@@ -45,7 +45,7 @@ public class ServiceBucketEndpoint {
         this.userBucketService = userBucketService;
     }
 
-    // TODO: Add access log table with the last x access entries, for example 10000, just like handle and serviec-uuid/file-uuid
+    // TODO: Add access log table with the last x access entries, for example 10000, just like handle and service-uuid/file-uuid
 
 
     // --- IDENTITY ONLY ---

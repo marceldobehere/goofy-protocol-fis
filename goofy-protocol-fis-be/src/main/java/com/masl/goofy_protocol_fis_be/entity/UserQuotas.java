@@ -40,7 +40,7 @@ public class UserQuotas {
     @Column
     private Long tableMaxDbSize;
     @Column
-    private Integer tableMaxFieldSize;
+    private Long tableMaxFieldSize;
     @Column
     private Integer tableMaxTables;
     @Column
@@ -54,7 +54,7 @@ public class UserQuotas {
 
     // TableQuery
     @Column
-    private Integer tableQueryMaxQueryLength;
+    private Long tableQueryMaxQueryLength;
     @Column
     private Integer tableQueryMaxConditionCount;
     @Column

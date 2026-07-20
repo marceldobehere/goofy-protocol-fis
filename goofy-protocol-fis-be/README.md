@@ -524,30 +524,10 @@ The `offset` field will contain a number to offset the results returned, useful 
 
 
 An example query could look like this:
+(TODO)
 ```json
 {
-  "select": ["id", "name", "COUNT(*)"],
-  "where": [
-    {
-      "column": "age",
-      "operator": ">",
-      "value": 18
-    },
-    {
-      "column": "country",
-      "operator": "!=",
-      "value": "USA"
-    }
-  ],
-  "groupBy": ["country"],
-  "orderBy": [
-    {
-      "column": "name",
-      "direction": "ASC"
-    }
-  ],
-  "limit": 10,
-  "offset": 0
+
 }
 ```
 

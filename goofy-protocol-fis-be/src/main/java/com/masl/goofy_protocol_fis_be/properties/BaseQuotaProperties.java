@@ -28,7 +28,7 @@ public class BaseQuotaProperties {
     @Data
     public static class Table {
         private Long maxDbSize;
-        private Integer maxFieldSize;
+        private Long maxFieldSize;
         private Integer maxTables;
         private Integer maxCols;
         private Integer maxRows;
@@ -38,7 +38,7 @@ public class BaseQuotaProperties {
 
     @Data
     public static class TableQuery {
-        private Integer maxQueryLength;
+        private Long maxQueryLength;
         private Integer maxConditionCount;
         private Integer maxResultCount;
     }

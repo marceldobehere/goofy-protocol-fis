@@ -1,13 +1,11 @@
 package com.masl.goofy_protocol_fis_be.entity;
 
-import com.masl.goofy_protocol_fis_be.config.CacheDuration;
-import com.masl.goofy_protocol_fis_be.entity.listeners.ServiceBucketEntryListener;
+import com.masl.goofy_protocol_fis_be.entity.listeners.ServiceTableEntryListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -15,23 +13,21 @@ import java.time.Instant;
 import java.util.Set;
 
 @Entity
-@EntityListeners(ServiceBucketEntryListener.class)
+@EntityListeners(ServiceTableEntryListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @Setter
-public class ServiceBucketEntry {
+public class ServiceTableEntry {
     @Id
     @Column(nullable = false, length = FieldSize.GENERIC_CODE_LEN)
-    private String fileUuid;
+    private String tableUuid;
 
     @Column(nullable = false, length = FieldSize.SHORT_TEXT_LEN)
-    private String contentType;
+    private String tableName;
 
-    @Column(nullable = false, length = FieldSize.SHORT_TEXT_LEN)
-    private String filename;
-
+    // Useful for versioning the schema of the table and applying migrations client side
     @Column(nullable = false)
-    private Long contentSize;
+    private Integer schemaVersion;
 
     @ManyToOne(optional = false)
     @JoinColumn(nullable = false)
@@ -43,22 +39,11 @@ public class ServiceBucketEntry {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private ServiceEntry linkedServiceEntry;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    @ColumnDefault("'NORMAL'")
-    private CacheDuration cacheDuration;
-
     // Useful information in case we need to find out who originally uploaded the file and when
     @Column
     private String createdBy;
     @Column(nullable = false)
     private Instant createdAt;
-
-    // Useful information in case we need to find out who last changed the file content and when
-    @Column
-    private String lastUploadedBy;
-    @Column
-    private Instant lastUploadedAt;
 
     // Useful information in case we need to find out who last updated the entry and when
     @Column
@@ -67,7 +52,7 @@ public class ServiceBucketEntry {
     private Instant lastUpdatedAt;
 
 
-    // Bucket Entry Perm Stuff
+    // Table Entry Perm Stuff
     @ElementCollection
     private Set<String> extraReadPerms; // NOTE: These can only be less restrictive! By Default Empty (So Private, only accessible by the Identity), Will have an Entry for each Handle with Read Access or an Entry with "*" to make it public
     @ElementCollection

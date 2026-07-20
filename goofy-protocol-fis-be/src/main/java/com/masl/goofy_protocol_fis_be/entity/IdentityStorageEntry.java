@@ -48,4 +48,7 @@ public class IdentityStorageEntry {
 
     @OneToMany(mappedBy="linkedIdentity", orphanRemoval = true, cascade = CascadeType.REMOVE)
     private Set<ServiceBucketEntry> serviceBucketEntries;
+
+    @OneToMany(mappedBy="linkedIdentity", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    private Set<ServiceTableEntry> serviceTableEntries;
 }

@@ -32,4 +32,14 @@ public class AllClientErrorCodes {
     public static final int SERVICE_BUCKET_NOT_FOUND = 1_007_002;
     public static final int SERVICE_BUCKET_FILE_ERROR = 1_007_003;
     public static final int SERVICE_BUCKET_QUOTA_EXCEEDED = 1_007_004;
+
+    public static final int SERVICE_TABLE_NOT_FOUND = 1_008_001;
+    public static final int SERVICE_TABLE_SQL_ERROR = 1_008_002;
+    public static final int SERVICE_TABLE_QUOTA_EXCEEDED = 1_008_003;
+    public static final int SERVICE_TABLE_LOCK_INVALID = 1_008_004;
+    public static final int SERVICE_TABLE_LOCK_REQUEST_INVALID = 1_008_005;
+    public static final int SERVICE_TABLE_INVALID_MIGRATION = 1_008_006;
+    public static final int SERVICE_TABLE_ENTRY_INVALID = 1_008_007;
+
+
 }
