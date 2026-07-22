@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TableSelect {
+public class TableSelectDto {
     @NotNull
     private String[] colNames;
 
-    private TableBasicQuery basicQuery;
+    private TableBasicQueryDto basicQuery;
 }

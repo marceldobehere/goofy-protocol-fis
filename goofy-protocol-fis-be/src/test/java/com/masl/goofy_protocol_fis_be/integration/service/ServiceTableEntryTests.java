@@ -10,6 +10,10 @@ import com.masl.goofy_protocol_fis_be.dto.both.IdentityStorageEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableBasicQueryDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableSelectDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableWhereConditionPart;
+import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQueryResultDto;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQuotasDto;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
@@ -453,6 +457,124 @@ class ServiceTableEntryTests {
 		}
 
 		// TODO: Query and check actual values?
+	}
+
+	@Test
+	void testAnyQuery() throws Exception {
+		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+		ServiceTableEntryDto entry = createTestTable("table_1_" + identityHandle, identity, serviceUuid, true);
+		assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(0);
+
+		{
+			// Insert Statement
+			Map<String, Object> insertObj = new HashMap<>();
+			insertObj.put(COL_ID, 10);
+			insertObj.put(COL_STR_1_NULLABLE, null);
+			insertObj.put(COL_STR_2, "hello, world!");
+			insertObj.put(COL_INT_UNIQUE, 123);
+			insertObj.put(COL_BOOL, true);
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(1);
+		}
+
+		{
+			// Insert Statement
+			Map<String, Object> insertObj = new HashMap<>();
+			insertObj.put(COL_ID, 20);
+			insertObj.put(COL_STR_1_NULLABLE, "bruh");
+			insertObj.put(COL_STR_2, "hello, world!");
+			insertObj.put(COL_INT_UNIQUE, 124);
+			insertObj.put(COL_BOOL, true);
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(2);
+		}
+
+		TableSelectDto query = new TableSelectDto();
+		query.setColNames(new String[0]);
+
+		String queryResStr = performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/query", objectMapper.writeValueAsString(query), identity, mvc, handleCrypto)
+				.andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+		ServiceTableQueryResultDto queryRes = objectMapper.readValue(queryResStr, ServiceTableQueryResultDto.class);
+		assertThat(queryRes).isNotNull();
+		System.out.println("Query result: " + objectMapper.writeValueAsString(queryRes));
+	}
+
+	@Test
+	void testWhereQuery() throws Exception {
+		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+		ServiceTableEntryDto entry = createTestTable("table_1_" + identityHandle, identity, serviceUuid, true);
+		assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(0);
+
+		{
+			// Insert Statement
+			Map<String, Object> insertObj = new HashMap<>();
+			insertObj.put(COL_ID, 10);
+			insertObj.put(COL_STR_1_NULLABLE, null);
+			insertObj.put(COL_STR_2, "hello, world!");
+			insertObj.put(COL_INT_UNIQUE, 123);
+			insertObj.put(COL_BOOL, true);
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(1);
+		}
+
+		for (int i = 0; i < 20; i++)
+		{
+			// Insert Statement
+			Map<String, Object> insertObj = new HashMap<>();
+			insertObj.put(COL_ID, 20 + i);
+			insertObj.put(COL_STR_1_NULLABLE, "bruh: " + i);
+			insertObj.put(COL_STR_2, "hello, world! " + i);
+			insertObj.put(COL_INT_UNIQUE, 124 + i * 10);
+			insertObj.put(COL_BOOL, (i % 2) == 1);
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+		}
+
+		TableSelectDto query = new TableSelectDto();
+		query.setColNames(new String[] { COL_ID, COL_INT_UNIQUE, COL_STR_1_NULLABLE });
+		TableBasicQueryDto basicQuery = new TableBasicQueryDto();
+		basicQuery.setOffset(1);
+		basicQuery.setLimit(9);
+		query.setBasicQuery(basicQuery);
+		{
+			TableWhereConditionPart where = new TableWhereConditionPart();
+			basicQuery.setWhere(where);
+			where.setType(TableWhereConditionPart.Type.C_GE);
+			where.setConditionParts(new TableWhereConditionPart[]{
+					new TableWhereConditionPart(TableWhereConditionPart.Type.COL, null, null, COL_INT_UNIQUE, null),
+					new TableWhereConditionPart(TableWhereConditionPart.Type.VAL, 164, TableColumnDto.Type.INT, null, null)
+			});
+		}
+
+		System.out.println("Query: " + objectMapper.writeValueAsString(query));
+		String queryResStr = performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/query", objectMapper.writeValueAsString(query), identity, mvc, handleCrypto)
+				.andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+		ServiceTableQueryResultDto queryRes = objectMapper.readValue(queryResStr, ServiceTableQueryResultDto.class);
+		assertThat(queryRes).isNotNull();
+
+		System.out.println("Query result: " + objectMapper.writeValueAsString(queryRes));
+		System.out.printf("Cols: %s\n", Arrays.toString(queryRes.getColNames()));
+		for (var res : queryRes.getRows())
+			System.out.printf("Row: %s\n", Arrays.toString(res));
+
+		assertThat(queryRes.getRows().length).isEqualTo(9);
 	}
 
 	// TODO: More Tests

@@ -268,7 +268,7 @@ public class TableColumnDto {
         return dto;
     }
 
-    public static Object parseDefaultSqlValue(String rawDefault, Type type) {
+    public static Object parseRawStringSqlValue(String rawDefault, Type type) {
         if (rawDefault == null) return null;
 
         String s = rawDefault.trim();

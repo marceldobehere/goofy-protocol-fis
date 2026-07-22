@@ -3,9 +3,9 @@ package com.masl.goofy_protocol_fis_be.rest.service;
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableBasicQuery;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableSelect;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableUpdate;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableBasicQueryDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableSelectDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableUpdateDto;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceDbQuotasDto;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQueryResultDto;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQuotasDto;
@@ -405,7 +405,7 @@ public class ServiceTableEndpoint {
     @DeleteMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Deletes Rows from a Table Entry based on a Query")
-    public Integer deleteQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableBasicQuery entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound {
+    public Integer deleteQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableBasicQueryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, true, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -418,7 +418,7 @@ public class ServiceTableEndpoint {
     @PutMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Updates Rows from a Table Entry based on a Query")
-    public Integer updateQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableUpdate entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound {
+    public Integer updateQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableUpdateDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, true, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -431,20 +431,33 @@ public class ServiceTableEndpoint {
 
     @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/query")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Selects data from a Table using a Select Query")
-    public ServiceTableQueryResultDto updateQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableSelect entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound {
+    @FisEndpoint(summary = "Selects data from a Table using a Select Query. <br> If you set the `colNames` Array to be empty, it will select all Columns.")
+    public ServiceTableQueryResultDto queryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableSelectDto selectDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableQueryInvalid, ServiceTableSqlError {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, true, false);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
-        checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        checkServiceTableEntryReadPermissions(entry, tableEntry, auth);
+        BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
-        // TODO: Implement
-        return null;
+        // Check Query Result Cols
+        if (selectDto.getColNames().length > userQuotas.getTable().getMaxCols())
+            throw new ServiceTableQueryInvalid("Too many columns in insert object");
+        for (var insertEntry : selectDto.getColNames()) {
+            if (insertEntry.length() > userQuotas.getGeneral().getMaxNameSize())
+                throw new ServiceTableQuotaExceeded("generalMaxNameSize");
+            if (!insertEntry.matches("^[a-z0-9_]+$"))
+                throw new ServiceTableQueryInvalid("Invalid Column Name: " + insertEntry);
+        }
+
+        try {
+            return userDbService.queryTable(entry, tableUuid, selectDto);
+        } catch (SQLException | IOException e) {
+            throw new ServiceTableSqlError(tableUuid, e.getMessage());
+        }
     }
 
 
     // --- Helper Methods ---
-
 
     private ServiceTableEntryDto fromServiceTableEntry(ServiceTableEntry entry, boolean includePerms) throws ServiceTableSqlError {
         // Columns

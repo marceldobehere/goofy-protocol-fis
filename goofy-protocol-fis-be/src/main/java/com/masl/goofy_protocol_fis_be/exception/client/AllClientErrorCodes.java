@@ -41,5 +41,6 @@ public class AllClientErrorCodes {
     public static final int SERVICE_TABLE_INVALID_MIGRATION = 1_008_006;
     public static final int SERVICE_TABLE_ENTRY_INVALID = 1_008_007;
     public static final int SERVICE_TABLE_INSERT_ENTRY_INVALID = 1_008_008;
+    public static final int SERVICE_TABLE_QUERY_INVALID = 1_008_009;
 
 }

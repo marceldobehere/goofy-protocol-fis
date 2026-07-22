@@ -2,6 +2,10 @@ package com.masl.goofy_protocol_fis_be.service;
 
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableBasicQueryDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableSelectDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableWhereConditionPart;
+import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQueryResultDto;
 import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,7 +151,7 @@ public class UserDbService {
                     String rawDefault = rs.getString("COLUMN_DEF");
                     if (rawDefault != null) {
                         TableColumnDto.Type inferredType = TableColumnDto.fromSqlTypeString(colType);
-                        parsedDefault = TableColumnDto.parseDefaultSqlValue(rawDefault, inferredType);
+                        parsedDefault = TableColumnDto.parseRawStringSqlValue(rawDefault, inferredType);
                     }
 
                     // Create actual DTO
@@ -203,7 +207,7 @@ public class UserDbService {
                 String colName = insertEntry.getKey();
                 TableColumnDto colDto = cols.get(colName);
                 if (colDto == null)
-                    throw new SQLException("Column " + colName + " does not exist in table " + tableName);
+                    throw new SQLException("Column " + colName + " does not exist in table " + tableUuid);
 
                 colDefs.add("\"" + colName + "\"");
                 valDefs.add("?");
@@ -225,6 +229,188 @@ public class UserDbService {
                 }
 
                 statement.executeUpdate();
+            }
+        }
+    }
+
+    private record PrepStatementColValue(TableColumnDto.Type type, Object value) {}
+
+    private static String createWherePart(TableWhereConditionPart wherePart, Map<String, TableColumnDto> cols, List<PrepStatementColValue> newValues) throws SQLException {
+        switch (wherePart.getType()) {
+            case VAL -> {
+                newValues.add(new PrepStatementColValue(wherePart.getValueType(), wherePart.getValue()));
+                return "?";
+            }
+            case COL -> {
+                String colName = wherePart.getColName();
+                if (!cols.containsKey(colName))
+                    throw new SQLException("Column " + colName + " does not exist in the table");
+                return "\"" + colName + "\"";
+            }
+            case L_AND, L_OR -> {
+                String keyword = wherePart.getType() == TableWhereConditionPart.Type.L_AND ? " AND " : " OR ";
+                StringJoiner joiner = new StringJoiner(keyword);
+                for (var part : wherePart.getConditionParts())
+                    joiner.add(createWherePart(part, cols, newValues));
+                return "(" + joiner + ")";
+            }
+            case L_NOT -> {
+                if (wherePart.getConditionParts().length != 1)
+                    throw new SQLException("NOT condition must have exactly one sub-condition");
+                return "(NOT " + createWherePart(wherePart.getConditionParts()[0], cols, newValues) + ")";
+            }
+            case M_ADD, M_SUB, M_MUL, M_DIV, M_MOD -> {
+                if (wherePart.getConditionParts().length != 2)
+                    throw new SQLException(wherePart.getType() + " condition must have exactly two sub-conditions");
+                String op = switch (wherePart.getType()) {
+                    case M_ADD -> "+";
+                    case M_SUB -> "-";
+                    case M_MUL -> "*";
+                    case M_DIV -> "/";
+                    case M_MOD -> "%";
+                    default -> throw new SQLException("Unknown math operation: " + wherePart.getType());
+                };
+                return "(" + createWherePart(wherePart.getConditionParts()[0], cols, newValues) + " " + op + " " + createWherePart(wherePart.getConditionParts()[1], cols, newValues) + ")";
+            }
+            case C_EQ, C_NEQ, C_GT, C_GE, C_LT, C_LE, LIKE -> {
+                if (wherePart.getConditionParts().length != 2)
+                    throw new SQLException(wherePart.getType() + " condition must have exactly two sub-conditions");
+                String op = switch (wherePart.getType()) {
+                    case C_EQ -> "=";
+                    case C_NEQ -> "<>";
+                    case C_GT -> ">";
+                    case C_GE -> ">=";
+                    case C_LT -> "<";
+                    case C_LE -> "<=";
+                    case LIKE -> "LIKE";
+                    default -> throw new SQLException("Unknown comparison operation: " + wherePart.getType());
+                };
+                return "(" + createWherePart(wherePart.getConditionParts()[0], cols, newValues) + " " + op + " " + createWherePart(wherePart.getConditionParts()[1], cols, newValues) + ")";
+            }
+            case COALESCE -> {
+                if (wherePart.getConditionParts().length != 2)
+                    throw new SQLException("COALESCE condition must have exactly two sub-conditions");
+                return "COALESCE(" + createWherePart(wherePart.getConditionParts()[0], cols, newValues) + ", " + createWherePart(wherePart.getConditionParts()[1], cols, newValues) + ")";
+            }
+            case M_FLOOR, M_CEIL, M_ABS -> {
+                if (wherePart.getConditionParts().length != 1)
+                    throw new SQLException(wherePart.getType() + " condition must have exactly one sub-condition");
+                String func = switch (wherePart.getType()) {
+                    case M_FLOOR -> "FLOOR";
+                    case M_CEIL -> "CEIL";
+                    case M_ABS -> "ABS";
+                    default -> throw new SQLException("Unknown math function: " + wherePart.getType());
+                };
+                return func + "(" + createWherePart(wherePart.getConditionParts()[0], cols, newValues) + ")";
+            }
+            default -> throw new SQLException("Unknown where condition type: " + wherePart.getType());
+        }
+    }
+
+    private static PreparedStatement createWhereStatement(Connection conn, String firstPart, List<PrepStatementColValue> prevValues, Map<String, TableColumnDto> cols, TableBasicQueryDto basicQuery) throws SQLException {
+        StringBuilder fullQueryBuilder = new StringBuilder();
+        fullQueryBuilder.append(firstPart);
+
+        // TODO: Check against Query Quotas
+        List<PrepStatementColValue> newValues = new ArrayList<>();
+        if (basicQuery != null) {
+            // Where
+            if (basicQuery.getWhere() != null) {
+                fullQueryBuilder.append(" WHERE ");
+                fullQueryBuilder.append(createWherePart(basicQuery.getWhere(), cols, newValues));
+            }
+
+            // Sort By
+            if (basicQuery.getSortByCols() != null && basicQuery.getSortByCols().length > 0) {
+                // TODO: Check for cols and order being identical
+                // TODO: Check for col existence
+                fullQueryBuilder.append(" ORDER BY ");
+                StringJoiner sortJoiner = new StringJoiner(", ");
+                for (int i = 0; i < basicQuery.getSortByCols().length; i++) {
+                    String colName = basicQuery.getSortByCols()[i];
+                    TableBasicQueryDto.SortOrder order =  basicQuery.getSortOrders()[i];
+                    sortJoiner.add("\"" + colName + "\" " + order.name());
+                }
+                fullQueryBuilder.append(sortJoiner);
+            }
+
+            // Limit
+            if (basicQuery.getLimit() != null) {
+                // TODO: Bounds Check
+                fullQueryBuilder.append(" LIMIT ?");
+                newValues.add(new PrepStatementColValue(TableColumnDto.Type.INT, basicQuery.getLimit()));
+            }
+
+            // Offset
+            if (basicQuery.getOffset() != null) {
+                // TODO: Bounds Check
+                fullQueryBuilder.append(" OFFSET ?");
+                newValues.add(new PrepStatementColValue(TableColumnDto.Type.INT, basicQuery.getOffset()));
+            }
+        }
+        fullQueryBuilder.append(";");
+
+        // Create. Populate and return statement
+        PreparedStatement statement = conn.prepareStatement(fullQueryBuilder.toString());
+        int pIndex = 1;
+        for (var val : prevValues)
+            TableColumnDto.addValueToPreparedStatement(statement, pIndex++, val.value, val.type);
+        for (var val : newValues)
+            TableColumnDto.addValueToPreparedStatement(statement, pIndex++, val.value, val.type);
+        return statement;
+    }
+
+    private static ServiceTableQueryResultDto fromResultSet(ResultSet rs, List<TableColumnDto> resultCols) throws SQLException {
+        ServiceTableQueryResultDto res = new ServiceTableQueryResultDto();
+        res.setColNames(resultCols.stream().map(TableColumnDto::getColName).toArray(String[]::new));
+        res.setColTypes(resultCols.stream().map(TableColumnDto::getType).toArray(TableColumnDto.Type[]::new));
+
+        // Read Results
+        List<List<Object>> rows = new ArrayList<>();
+        while (rs.next()) {
+            List<Object> row = new ArrayList<>();
+            for (int i = 0; i < resultCols.size(); i++) {
+                TableColumnDto colDto = resultCols.get(i);
+                // TODO: potentially update to use the correct datatype from the start?
+                String rawVal = rs.getString(i + 1);
+                Object value = TableColumnDto.parseRawStringSqlValue(rawVal, colDto.getType());
+                row.add(value);
+            }
+            rows.add(row);
+        }
+        res.setRows(rows.stream().map(List::toArray).toArray(Object[][]::new));
+        return res;
+    }
+
+    public ServiceTableQueryResultDto queryTable(ServiceEntry entry, String tableUuid, TableSelectDto select) throws IOException, SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableUuid);
+
+            // TODO: Optimize the Col retrieval in the future
+            Map<String, TableColumnDto> cols = getAllTableColumns(entry, tableUuid).stream().collect(Collectors.toMap(TableColumnDto::getColName, col -> col));
+            List<TableColumnDto> resultCols = new ArrayList<>();
+
+            // If cols empty, use all cols
+            if (select.getColNames().length == 0) {
+                select.setColNames(cols.keySet().toArray(new String[0]));
+            }
+
+            // Columns
+            StringJoiner colDefs = new StringJoiner(", ");
+            for (var colName : select.getColNames()) {
+                TableColumnDto colDto = cols.get(colName);
+                if (colDto == null)
+                    throw new SQLException("Column " + colName + " does not exist in table " + tableUuid);
+                resultCols.add(colDto);
+                colDefs.add("\"" + colName + "\"");
+            }
+
+            // Create Query String
+            String selectQuery = "SELECT " + colDefs + " FROM \"" + tableName + "\"";
+
+            try (PreparedStatement statement = createWhereStatement(conn, selectQuery, List.of(), cols, select.getBasicQuery())) {
+                ResultSet rs = statement.executeQuery();
+                return fromResultSet(rs, resultCols);
             }
         }
     }

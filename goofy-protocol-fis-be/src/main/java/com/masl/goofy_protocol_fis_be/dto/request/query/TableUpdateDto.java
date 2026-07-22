@@ -8,11 +8,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TableUpdate {
+public class TableUpdateDto {
     @NotNull
     private String[] colNames;
     @NotNull
     private Object[] colValues;
 
-    private TableBasicQuery basicQuery;
+    private TableBasicQueryDto basicQuery;
 }

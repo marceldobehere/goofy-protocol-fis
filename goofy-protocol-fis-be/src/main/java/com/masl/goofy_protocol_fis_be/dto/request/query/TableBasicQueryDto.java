@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TableBasicQuery {
+public class TableBasicQueryDto {
     // Where Statement
     private TableWhereConditionPart where;
 
