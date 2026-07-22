@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 // TODO: Test
 @Service
@@ -49,7 +50,7 @@ public class UserDbService {
     }
 
     private String getDbTableNameFromTableUuid(String tableUuid) {
-        return "table_" + tableUuid.replace("-", "_");
+        return "table_" + tableUuid.replace("-", "_").toLowerCase(Locale.ROOT);
     }
 
     private synchronized void initDb(ServiceEntry entry) throws SQLException {
@@ -81,7 +82,7 @@ public class UserDbService {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
             try (Statement statement = conn.createStatement();
-                 ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM " + tableName)) {
+                 ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM \"" + tableName + "\"")) {
                 if (rs.next())
                     return rs.getLong(1);
                 return 0L;
@@ -101,6 +102,7 @@ public class UserDbService {
         }
     }
 
+    // TODO: Cache this probably, and have the cache be invalidated if the table gets modified
     public List<TableColumnDto> getAllTableColumns(ServiceEntry entry, String tableUuid) throws SQLException {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
@@ -181,6 +183,48 @@ public class UserDbService {
             // Execute
             try (Statement statement = conn.createStatement()) {
                 statement.execute(createQuery.toString());
+            }
+        }
+    }
+
+    public void insertIntoTable(ServiceEntry entry, String tableUuid, Map<String, Object> values) throws IOException, SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableUuid);
+
+            // TODO: Optimize the Col retrieval in the future
+            // Get Table Columns and Insert Entries
+            Map<String, TableColumnDto> cols = getAllTableColumns(entry, tableUuid).stream().collect(Collectors.toMap(TableColumnDto::getColName, col -> col));
+            var entries = values.entrySet().stream().toList();
+
+            // Columns and Values
+            StringJoiner colDefs = new StringJoiner(", ");
+            StringJoiner valDefs = new StringJoiner(", ");
+            for (var insertEntry : entries) {
+                String colName = insertEntry.getKey();
+                TableColumnDto colDto = cols.get(colName);
+                if (colDto == null)
+                    throw new SQLException("Column " + colName + " does not exist in table " + tableName);
+
+                colDefs.add("\"" + colName + "\"");
+                valDefs.add("?");
+            }
+
+            // Create Query String
+            String insertQuery = "INSERT INTO \"" + tableName + "\" (" + colDefs + ") VALUES (" + valDefs + ");";
+
+            // Execute
+            try (PreparedStatement statement = conn.prepareStatement(insertQuery)) {
+                // Fill out Prepared Statement
+                int pIndex = 1;
+                for (var insertEntry : entries) {
+                    String colName = insertEntry.getKey();
+                    Object value = insertEntry.getValue();
+                    TableColumnDto colDto = cols.get(colName);
+
+                    TableColumnDto.addValueToPreparedStatement(statement, pIndex++, value, colDto.getType());
+                }
+
+                statement.executeUpdate();
             }
         }
     }

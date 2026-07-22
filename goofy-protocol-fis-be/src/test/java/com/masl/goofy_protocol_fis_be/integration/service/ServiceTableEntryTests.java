@@ -10,6 +10,7 @@ import com.masl.goofy_protocol_fis_be.dto.both.IdentityStorageEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
+import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQuotasDto;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
 import com.masl.goofy_protocol_fis_be.repository.ServiceEntryRepository;
@@ -27,9 +28,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.masl.goofy_protocol_fis_be.integration.signed_request.SignedRequestUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -114,59 +113,73 @@ class ServiceTableEntryTests {
 				.andReturn().getResponse().getContentAsString();
 	}
 
-	@Test
-	void testCreateTable() throws Exception {
-		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
-		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
-		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+	final static String COL_ID = "id";
+	final static String COL_STR_1_NULLABLE = "stringus";
+	final static String COL_STR_2 = "dingus_123";
+	final static String COL_INT_UNIQUE = "intus";
+	final static String COL_BOOL = "boolus_maximus";
 
-		// Prepare
+
+
+	ServiceTableEntryDto createTestTable(String tableName, AsymmCrypto.AsymmFullKeyPair identity, String serviceUuid, boolean create) throws Exception {
 		ServiceTableEntryDto entry = new ServiceTableEntryDto();
-		entry.setTableName("table_1_" + identityHandle);
+		entry.setTableName(tableName);
 		entry.setSchemaVersion(1);
 		entry.setHandlesWithReadPerms(new String[]{});
 		entry.setHandlesWithWritePerms(new String[]{});
 		List<TableColumnDto> cols = new ArrayList<>();
 		cols.add(new TableColumnDto(
-				"id",
+				COL_ID,
 				TableColumnDto.Type.INT,
 				0,
 				Set.of(TableColumnDto.Constraint.PRIMARY_KEY, TableColumnDto.Constraint.NOT_NULL),
 				null));
 		cols.add(new TableColumnDto(
-				"stringus",
+				COL_STR_1_NULLABLE,
 				TableColumnDto.Type.VAR_STRING_N,
 				100,
 				Set.of(),
 				null));
 		cols.add(new TableColumnDto(
-				"dingus_123",
+				COL_STR_2,
 				TableColumnDto.Type.VAR_STRING_N,
 				200,
 				Set.of(TableColumnDto.Constraint.NOT_NULL),
 				"Hello \"you\", this is a 'test' /* comment ;-- inject"));
+		cols.add(new TableColumnDto(
+				COL_INT_UNIQUE,
+				TableColumnDto.Type.INT,
+				0,
+				Set.of(TableColumnDto.Constraint.UNIQUE),
+				null));
+		cols.add(new TableColumnDto(
+				COL_BOOL,
+				TableColumnDto.Type.BOOLEAN,
+				0,
+				Set.of(),
+				true));
 		entry.setColumns(cols.toArray(new TableColumnDto[0]));
+
 		System.out.printf("Creating table entry: %s\n", objectMapper.writeValueAsString(entry));
 
-		// Create
-		String postResultStr = performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry", objectMapper.writeValueAsString(entry), identity, mvc, handleCrypto)
-				.andExpect(status().isOk())
-				.andReturn().getResponse().getContentAsString();
-		ServiceTableEntryDto postResultDto = objectMapper.readValue(postResultStr, ServiceTableEntryDto.class);
-		assertThat(postResultDto).isNotNull();
-		String tableUuid = postResultDto.getTableUuid();
-		System.out.println("Created table entry with UUID: " + tableUuid);
+		if (create) {
+			String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
 
-		// Check Lookup
-		String resultStr = performSignedRequest(HttpMethod.GET, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + tableUuid, identity, mvc, handleCrypto)
-				.andExpect(status().isOk())
-				.andReturn().getResponse().getContentAsString();
+			// Create
+			String postResultStr = performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry", objectMapper.writeValueAsString(entry), identity, mvc, handleCrypto)
+					.andExpect(status().isOk())
+					.andReturn().getResponse().getContentAsString();
+			ServiceTableEntryDto postResultDto = objectMapper.readValue(postResultStr, ServiceTableEntryDto.class);
+			assertThat(postResultDto).isNotNull();
+			String tableUuid = postResultDto.getTableUuid();
+			entry.setTableUuid(tableUuid);
+			System.out.println("Created table entry with UUID: " + tableUuid);
+		}
 
-		ServiceTableEntryDto resultDto = objectMapper.readValue(resultStr, ServiceTableEntryDto.class);
-		assertThat(resultDto).isNotNull();
-		System.out.printf("Retrieved table entry: %s\n", objectMapper.writeValueAsString(resultDto));
+		return entry;
+	}
 
-		// Check
+	void checkResponseDto(ServiceTableEntryDto resultDto, ServiceTableEntryDto entry) {
 		assertThat(resultDto.getTableName()).isEqualTo(entry.getTableName());
 		assertThat(resultDto.getSchemaVersion()).isEqualTo(entry.getSchemaVersion());
 		assertThat(resultDto.getHandlesWithReadPerms()).isEqualTo(entry.getHandlesWithReadPerms());
@@ -189,6 +202,49 @@ class ServiceTableEntryTests {
 		}
 	}
 
+	int getTableRowCount(AsymmCrypto.AsymmFullKeyPair identity, String serviceUuid, String tableUuid) throws Exception {
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+
+		String postResultStr = performSignedRequest(HttpMethod.GET, BASE + "/" + identityHandle + "/" + serviceUuid + "/quotas/" + tableUuid, identity, mvc, handleCrypto)
+				.andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+		ServiceTableQuotasDto postResultDto = objectMapper.readValue(postResultStr, ServiceTableQuotasDto.class);
+		assertThat(postResultDto).isNotNull();
+		System.out.println("Table quotas: " + objectMapper.writeValueAsString(postResultDto));
+		return postResultDto.getCurrRowCount();
+	}
+
+	@Test
+	void testCreateTable() throws Exception {
+		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+
+		// Prepare
+		ServiceTableEntryDto entry = createTestTable("table_1_" + identityHandle, identity, serviceUuid, false);
+
+		// Create
+		String postResultStr = performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry", objectMapper.writeValueAsString(entry), identity, mvc, handleCrypto)
+				.andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+		ServiceTableEntryDto postResultDto = objectMapper.readValue(postResultStr, ServiceTableEntryDto.class);
+		assertThat(postResultDto).isNotNull();
+		String tableUuid = postResultDto.getTableUuid();
+		System.out.println("Created table entry with UUID: " + tableUuid);
+
+		// Check Lookup
+		String resultStr = performSignedRequest(HttpMethod.GET, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + tableUuid, identity, mvc, handleCrypto)
+				.andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+
+		ServiceTableEntryDto resultDto = objectMapper.readValue(resultStr, ServiceTableEntryDto.class);
+		assertThat(resultDto).isNotNull();
+		System.out.printf("Retrieved table entry: %s\n", objectMapper.writeValueAsString(resultDto));
+
+		// Check
+		checkResponseDto(resultDto, entry);
+	}
+
 	@Test
 	void testCreateTableAllColumns() throws Exception {
 		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
@@ -196,33 +252,8 @@ class ServiceTableEntryTests {
 		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
 
 		// Prepare
-		ServiceTableEntryDto entry = new ServiceTableEntryDto();
-		entry.setTableName("table_1_" + identityHandle);
-		entry.setSchemaVersion(1);
-		entry.setHandlesWithReadPerms(new String[]{});
-		entry.setHandlesWithWritePerms(new String[]{});
-		List<TableColumnDto> cols = new ArrayList<>();
-
-		cols.add(new TableColumnDto(
-				"id",
-				TableColumnDto.Type.INT,
-				0,
-				Set.of(TableColumnDto.Constraint.PRIMARY_KEY, TableColumnDto.Constraint.NOT_NULL),
-				null));
-		cols.add(new TableColumnDto(
-				"stringus",
-				TableColumnDto.Type.FIXED_STRING_N,
-				100,
-				Set.of(),
-				null));
-		cols.add(new TableColumnDto(
-				"dingus_123",
-				TableColumnDto.Type.VAR_STRING_N,
-				200,
-				Set.of(TableColumnDto.Constraint.UNIQUE),
-				null));
-
-
+		ServiceTableEntryDto entry = createTestTable("table_2_" + identityHandle, identity, serviceUuid, false);
+		List<TableColumnDto> cols = new ArrayList<>(Arrays.asList(entry.getColumns()));
 
 		cols.add(new TableColumnDto(
 				"string1",
@@ -305,30 +336,124 @@ class ServiceTableEntryTests {
 		System.out.printf("Created table entry: %s\n", objectMapper.writeValueAsString(resultDto));
 
 		// Check
-		assertThat(resultDto.getTableName()).isEqualTo(entry.getTableName());
-		assertThat(resultDto.getSchemaVersion()).isEqualTo(entry.getSchemaVersion());
-		assertThat(resultDto.getHandlesWithReadPerms()).isEqualTo(entry.getHandlesWithReadPerms());
-		assertThat(resultDto.getHandlesWithWritePerms()).isEqualTo(entry.getHandlesWithWritePerms());
-		assertThat(resultDto.getColumns().length).isEqualTo(entry.getColumns().length);
+		checkResponseDto(resultDto, entry);
+	}
 
-		// Check Columns
-		for (TableColumnDto ogCol : entry.getColumns()) {
-			TableColumnDto rCol = null;
-			for (TableColumnDto c : resultDto.getColumns())
-				if (c.getColName().equals(ogCol.getColName())) {
-					rCol = c;
-					break;
-				}
-			assertThat(rCol).isNotNull();
-			assertThat(ogCol.getType()).isEqualTo(rCol.getType());
-			if (ogCol.getTypeSize() != 0)
-				assertThat(ogCol.getTypeSize()).isEqualTo(rCol.getTypeSize());
-			assertThat(ogCol.getConstraints().size()).isLessThanOrEqualTo(rCol.getConstraints().size()); // might add unique constraint to just primary key constraint
-			assertThat(ogCol.getDefaultValue()).isEqualTo(rCol.getDefaultValue());
+	@Test
+	void testInsert() throws Exception {
+		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+		ServiceTableEntryDto entry = createTestTable("table_1_" + identityHandle, identity, serviceUuid, true);
+		assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(0);
+
+		// Insert Statement
+		Map<String, Object> insertObj = new HashMap<>();
+		insertObj.put(COL_ID, 10);
+		insertObj.put(COL_STR_1_NULLABLE, null);
+		insertObj.put(COL_STR_2, "hello, world!");
+		insertObj.put(COL_INT_UNIQUE, 123);
+		insertObj.put(COL_BOOL, true);
+
+		// Send
+		performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+				.andExpect(status().isOk());
+
+		assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(1);
+	}
+
+	@Test
+	void testInsertWithNullValues() throws Exception {
+		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+		ServiceTableEntryDto entry = createTestTable("table_1_" + identityHandle, identity, serviceUuid, true);
+
+		// Insert Statement
+		Map<String, Object> insertObj = new HashMap<>();
+		insertObj.put(COL_ID, 10);
+		insertObj.put(COL_STR_2, "hello, world!");
+		insertObj.put(COL_INT_UNIQUE, 123);
+
+		// Send
+		performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	void testInsertWithNullValuesInRequiredCols() throws Exception {
+		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+		ServiceTableEntryDto entry = createTestTable("table_1_" + identityHandle, identity, serviceUuid, true);
+
+		// Insert Statement
+		Map<String, Object> insertObj = new HashMap<>();
+		insertObj.put(COL_ID, 10);
+		insertObj.put(COL_STR_2, null);
+		insertObj.put(COL_INT_UNIQUE, 123);
+
+		// Send
+		performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+				.andExpect(status().is4xxClientError());
+	}
+
+	@Test
+	void testMultipleInsert() throws Exception {
+		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+		ServiceTableEntryDto entry = createTestTable("table_1_" + identityHandle, identity, serviceUuid, true);
+		assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(0);
+
+		{
+			// Insert Statement
+			Map<String, Object> insertObj = new HashMap<>();
+			insertObj.put(COL_ID, 10);
+			insertObj.put(COL_STR_1_NULLABLE, null);
+			insertObj.put(COL_STR_2, "hello, world!");
+			insertObj.put(COL_INT_UNIQUE, 123);
+			insertObj.put(COL_BOOL, true);
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(1);
 		}
+
+		{
+			// Insert Statement
+			Map<String, Object> insertObj = new HashMap<>();
+			insertObj.put(COL_ID, 20);
+			insertObj.put(COL_STR_1_NULLABLE, "bruh");
+			insertObj.put(COL_STR_2, "hello, world!");
+			insertObj.put(COL_INT_UNIQUE, 124);
+			insertObj.put(COL_BOOL, true);
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(2);
+		}
+
+		// Should fail
+		{
+			// Insert Statement
+			Map<String, Object> insertObj = new HashMap<>();
+			insertObj.put(COL_ID, 30);
+			insertObj.put(COL_STR_1_NULLABLE, "bruhus");
+			insertObj.put(COL_STR_2, "hello, worldus!");
+			insertObj.put(COL_INT_UNIQUE, 124); // constraint validation
+			insertObj.put(COL_BOOL, false);
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+					.andExpect(status().is4xxClientError());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(2);
+		}
+
+		// TODO: Query and check actual values?
 	}
 
 	// TODO: More Tests
-
-	// TODO: Check multi col primary key behaviour and document!
 }

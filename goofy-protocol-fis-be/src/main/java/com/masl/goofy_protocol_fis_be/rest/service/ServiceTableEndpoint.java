@@ -4,7 +4,6 @@ import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableBasicQuery;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableInsert;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableSelect;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableUpdate;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceDbQuotasDto;
@@ -292,7 +291,7 @@ public class ServiceTableEndpoint {
     // Create Table Entry (Default, no UUID) (will be private by default)
     @PostMapping("/{idHandle}/{serviceUuid}/entry")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Create a Table Entry", description = "Creates a Table Entry (Default, no UUID) (will be private by default). ")
+    @FisEndpoint(summary = "Create a Table Entry", description = "Creates a Table Entry (Default, no UUID) (will be private by default). <br> Tables may only have one primary key currently.")
     public ServiceTableEntryDto createTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @Valid @RequestBody ServiceTableEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableQuotaExceeded, ServiceTableEntryInvalid, ServiceTableSqlError {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         checkServiceEntryAccessPermissions(entry, auth);
@@ -370,14 +369,37 @@ public class ServiceTableEndpoint {
 
     @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Inserts a Row into a Table Entry")
-    public void insertQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableInsert entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound {
+    @FisEndpoint(summary = "Inserts a Row into a Table Entry", description = "Inserts a Row into a Table Entry based on the provided data. <br> The data must match the table's schema and constraints. <br> The format is just a json object with the keys being the column names and values being the values")
+    public void insertQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody Map<String, Object> insertFields, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableInsertEntryInvalid, ServiceTableSqlError {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
-        // TODO: Implement
+        // Check insert Object
+        if (insertFields.size() > userQuotas.getTable().getMaxCols())
+            throw new ServiceTableInsertEntryInvalid("Too many columns in insert object");
+        for (var insertEntry : insertFields.entrySet()) {
+            if (insertEntry.getKey().length() > userQuotas.getGeneral().getMaxNameSize())
+                throw new ServiceTableQuotaExceeded("generalMaxNameSize");
+            if (!insertEntry.getKey().matches("^[a-z0-9_]+$"))
+                throw new ServiceTableInsertEntryInvalid("Invalid Column Name: " + insertEntry.getKey());
+            if (insertEntry.getValue() != null && (insertEntry.getValue() instanceof Map || insertEntry.getValue() instanceof List || insertEntry.getValue().getClass().isArray()))
+                throw new ServiceTableInsertEntryInvalid("Invalid Column Value Type: " + insertEntry.getKey());
+        }
+
+        try {
+            // TODO: Optimize by storing the row count in the service table entry db and refreshing when needed
+            // Check Max Rows
+            if (userDbService.getTableRowCount(entry, tableUuid) >= userQuotas.getTable().getMaxRows())
+                throw new ServiceTableQuotaExceeded("tableMaxRows");
+
+            // Insert
+            userDbService.insertIntoTable(entry, tableUuid, insertFields);
+        } catch (SQLException | IOException e) {
+            throw new ServiceTableSqlError(tableUuid, e.getMessage());
+        }
     }
 
     @DeleteMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
