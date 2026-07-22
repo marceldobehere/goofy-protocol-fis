@@ -17,18 +17,19 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Work on more Implementation Stuff
   * Implement User Restriction
   * Implement User Account Deactivation
-  * Implement User Account Deletion -> Should safely delete everything and not cause DB issues (Cache too)
+  * Implement User Account Deletion → Should safely delete everything and not cause DB issues (Cache too)
     * Also potentially enforce having done an account-export within 7 days of trying to delete the account to avoid unwanted data loss
   * Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS / Maybe using Bucket4j
   * Implement Data Export (How to treat Buckets and Tables?) (Probably export everything as a ZIP and assume the download should be ok)
   * Implement Data Import? (How to treat Buckets and Tables?)
 * Implement Exceptions for unsupported Crypto Requests
 * Add Home / Explanation Page to FIS Frontend
-* Add Config for HandleCrypto Cache/Maps (size, expiration, etc)
+* Add Config for HandleCrypto Cache/Maps (size, expiration, etc.)
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests
 * Prepare Docker Stuff for hosting it and test#
-* Create 2 FIS Instances (one main instance and one demo for others to try out, which is very limited but ppl can switch over or self host later)
+* Create 2 FIS Instances (one main instance and one demo for others to try out, which is very limited but ppl can switch over or selfhost later)
+* Create Dockerfile and example docker-compose.yml for hosting + put the normal compose in the gitignore
 * Create extra DB Table for known FIS Domains ?
 * Look into ML-KEM using Seed for Private key and compatibility with JS (Potentially using Rust ML-KEM compiled to WASM) (Will have to see)
 
@@ -41,26 +42,28 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Add Exporting User Keypair with a password + Importing a password encrypted Keypair (For safety reasons)
 * Allow Securing your Fis Frontend Client with a password too, (Encrypted Local Storage)
 * Maybe Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
-* Create automated API Spec genertion in PDF/MD format
+* Create automated API Spec generation in PDF/MD format
+* Add Swagger examples for DTOs
 * Implement silly Rate Limiting (only for prod/develop), Base: https://www.baeldung.com/spring-bucket4j
   * Requests without a special cookies token will have to wait some time before their request is processed / get extra low prio / strong rate limiting, then they will get the special cookie
-  * Ideally Requests without the special cookie dont even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks
+  * Ideally Requests without the special cookie don't even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks
   * Requests with the cookie will get individual rate limiting based on their unique cookie (if valid) / maybe also based on the handle
   * Add to all relevant endpoints
-* Move the Crypto Core Lib into a seperate package with tests, known values and pom.xml
+* Move the Crypto Core Lib into a separate package with tests, known values and pom.xml
 * Look into Canonical Builds
 * Improve CORS?
 * Potentially overhaul the simplistic quota system and let users set quotas for specific entries too.
 * Optimize Quota & Storage Calculations in Bucket and probably Table Service
 * Add a simple "Notification" / Warning System that alerts Users when their storage quotas are about to be exceeded or if they have some content deleted or are restricted
 * Look into how to handle a whole FIS instance moving to a different domain
+* Potentially look into having custom JWTs or something to avoid signed request overhead when accessing tables?
 
 ## Short Rundown of Goofy Protocol
 (TODO, This will probably be moved to the main Goofy Protocol Repo later)
 
 
 ### (Personal) Issues with current stuff
-Currently there are already Federated Services for different things (Social Media like Mastodon, Chats like Matrix, etc.) but there are a few issues:
+Currently, there are already Federated Services for different things (Social Media like Mastodon, Chats like Matrix, etc.) but there are a few issues:
 * The Services work very differently and are not really compatible with each other
 * Cryptographic algorithms, parameters, practices and standards and usage vary a lot between different services
 * Users cannot necessarily have the same identity (or even handle/username/tag format) across different services
@@ -75,12 +78,12 @@ Currently there are already Federated Services for different things (Social Medi
 
 E2EE Encryption is already well done by applications like Signal and Matrix, though things like Matrix can be lacking in UI/UX and not intuitive.
 There are also projects related to Federated Storage, like Solid Pods or IPFS.
-But those all solve one part of the problem, while not being being directly compatible and still have problems related to global identities.
+But those all solve one part of the problem, while not being directly compatible and still have problems related to global identities.
 
 
 ### What does Goofy Protocol offer
-Goofy Protocol defines identities/handles to be globally unique (but human readable with hopefully enough bits to avoid collission) and directly bound to a cryptographic identity (public keys).
-This means that a user can have the same identity across different services without issues. A
+Goofy Protocol defines identities/handles to be globally unique (but human-readable with hopefully enough bits to avoid collision) and directly bound to a cryptographic identity (public keys).
+This means that a user can have the same identity across different services without issues. 
 Additionally, it means that an identity is no longer tied to a domain or service, which allows portability and freedom for the user to move between different domains.
 
 The identities as well as cryptographic algorithms and parameters are defined in a standard way, which is compatible across services and platforms. 
@@ -148,7 +151,7 @@ The dev and prod Profiles use different databases and the test Profile uses an i
 (TODO)
 
 ### File Storage
-File Storage will also depend on the Profile used, for now its not implemented. 
+File Storage will also depend on the Profile used, for now it's not implemented. 
 To set the path I will probably use something like this:
 ```java
 public FileStorageService(@Value("${app.storage.dir}") String dir) {
@@ -162,12 +165,12 @@ The Test Data Path should also be fully reset on launch of the Test Profile, so 
 (TODO)
 
 ## API Docs
-The actual specs will can be found by starting the application in the `dev` Profile and checking http://localhost:8080/swagger-ui/index.html.
+The actual specs can be found by starting the application in the `dev` Profile and checking http://localhost:8080/swagger-ui/index.html.
 
 All Non-Admin Endpoints should be accessible and behave the same way on all FIS implementations, so that clients can be implemented in a generic way and work with any FIS implementation.
 The Admin Endpoints don't necessarily have to be implemented in the same way, but it would make sense to have them implemented in a similar way, so that a generic client can be used for all FIS implementations.
 
-I will at some point make the source include a PDF or Markdown file with the current API Specs but currently I've had issues with automatically generating those :(
+I will at some point make the source include a PDF or Markdown file with the current API Specs, but currently I've had issues with automatically generating those :(
 
 Later on the version will be copied to the base goofy-protocol repository.
 
@@ -264,7 +267,7 @@ Supported types can be seen in the `AsymmCryptoType` Enum, currently they are:
 ##### Important Notes
 Currently, the support for `ML-KEM` & `ML-DSA` on Browsers is lacking, so for now it should be avoided until the support is better and I have implemented it in the JS Lib.
 
-Additionally, `EC_P256` and `EC_P384` are currently not supported in the JS Lib either, and instead `EC_C25519` should be used, as thats the default anyway.
+Additionally, `EC_P256` and `EC_P384` are currently not supported in the JS Lib either, and instead `EC_C25519` should be used, as that's the default anyway.
 
 
 #### Public Split Key Format
@@ -280,7 +283,7 @@ In more Detail:
 [ENC SIG] - The Signature of the Public Key used for encryption, Format: Signature Bytes as Base64 URLEncoded String
 ```
 Note: Some algorithms (RSA, EC) do not need a separate encryption key, so the `[ENC KEY]` and `[ENC SIG]` fields are both replaced with `` in those cases.
-Technically, you can add them anyway but it wastes space and is not needed.
+Technically, you can add them anyway, but it wastes space and is not needed.
 
 The Encoding Signature is used to verify that the Public Key used for encryption is valid 
 and was generated by the same entity that generated the Public Key used for signing.
@@ -369,7 +372,7 @@ A username with an attached domain has the following format:
 
 Example: `beray_drubs_pant57107@fis.rocc.systems`
 
-NOTE: When sending a signed request with only your handle, it is advised to attach the domain, if theres a chance the Server doesn't know it yet.
+NOTE: When sending a signed request with only your handle, it is advised to attach the domain, if there's a chance the Server doesn't know it yet.
 If the server cannot resolve your handle, it will throw an error and ideally your client would send the handle with the domain attached.
 
 NOTE: The domain technically allows to have the port defined too, useful for testing with localhost.
@@ -406,10 +409,10 @@ The following headers are needed for Signed Requests:
 * `X-Goofy-Public-Key`: The Public Split Key of the Sender (format defined above)
 * `X-Goofy-Handle`: The Handle of the Sender (format defined above, can have a domain attached)
 * `X-Goofy-Signature`: The Signature of the Request (format defined above)
-* `X-Goofy-Id`: A random Id in the form of a Long (64bit) Integer, used to prevent replay attacks (The server wont store them forever usually)
+* `X-Goofy-Id`: A random Id in the form of a Long (64bit) Integer, used to prevent replay attacks (The server won't store them forever usually)
 * `X-Goofy-Valid-Until`: A timestamp in the form of a Long (64bit) Integer representing the time in milliseconds since epoch, used to enforce a time limit on the validity of the request
 
-The default validity of a Signed Request should be 60 seconds. This is because surprisingly a lot of devices arent closely synchronized with the actual time and can be off by some time. (Sometimes even multiple minutes)
+The default validity of a Signed Request should be 60 seconds. This is because surprisingly a lot of devices aren't closely synchronized with the actual time and can be off by some time. (Sometimes even multiple minutes)
 
 #### Signature
 (TODO)
@@ -510,7 +513,7 @@ The `select` field will contain a list of either pure columns or aggregate funct
 
 
 The `where` field will contain a list of conditions applied to the columns but also can have nested conditions (for example with `AND` `OR` `NOT`).
-The conditions will be have a limit to prevent abuse.
+The conditions will have a limit to prevent abuse.
 
 The `having` field will contain a list of conditions applied to the aggregate functions but also can have nested conditions (for example with `AND` `OR` `NOT`).
 

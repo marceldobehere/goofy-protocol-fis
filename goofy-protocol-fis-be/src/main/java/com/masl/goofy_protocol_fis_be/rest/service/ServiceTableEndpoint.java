@@ -102,6 +102,11 @@ public class ServiceTableEndpoint {
     // --- OUTSIDE ENTITIES ---
 
 
+    // TODO: Get all Table Names / Get all Tables for a name for a service uuid & table uuid
+    // TODO: Make Table names unique?
+
+    // TODO: Look into indexing columns for performance
+
     @GetMapping("/{idHandle}/{serviceUuid}/quotas/{tableUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Gets the Table Quotas and Stats", description = "Gets the Table Quotas and Stats (Count & Size).")

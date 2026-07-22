@@ -64,7 +64,7 @@ public class UserDbService {
         Path dbFile = fileStorageService.getDbFolderPath(uuid).resolve("userData");
         String dbBase = dbFile.toAbsolutePath().toString();
 
-        String url = "jdbc:h2:file:" + dbBase + ";AUTO_SERVER=TRUE";
+        String url = "jdbc:h2:file:" + dbBase; // + ";AUTO_SERVER=TRUE";
         return DriverManager.getConnection(url, "sa", "");
     }
 
