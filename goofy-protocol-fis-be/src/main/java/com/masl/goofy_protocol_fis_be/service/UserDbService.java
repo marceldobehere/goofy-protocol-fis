@@ -334,12 +334,14 @@ public class UserDbService {
                 fullQueryBuilder.append(sortJoiner);
             }
 
+            // TODO: Add Default Limit if it doesnt exist and if it does exist the use min of limit and quota limit
             // Limit
             if (basicQuery.getLimit() != null) {
                 // TODO: Bounds Check
                 fullQueryBuilder.append(" LIMIT ?");
                 newValues.add(new PrepStatementColValue(TableColumnDto.Type.INT, basicQuery.getLimit()));
             }
+
 
             // Offset
             if (basicQuery.getOffset() != null) {
