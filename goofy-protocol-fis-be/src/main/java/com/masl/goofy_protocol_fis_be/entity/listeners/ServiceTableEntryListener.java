@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.sql.SQLException;
+
 @Component
 public class ServiceTableEntryListener {
     private static final Logger log = LoggerFactory.getLogger(ServiceTableEntryListener.class);
@@ -19,7 +21,7 @@ public class ServiceTableEntryListener {
     }
 
     @PreRemove
-    public void deleteEntryHandler(ServiceTableEntry entry) {
+    public void deleteEntryHandler(ServiceTableEntry entry) throws SQLException {
         log.info("Deleting ServiceTableEntry with UUID: {} and Name: {}", entry.getTableUuid(), entry.getTableName());
         userDbService.deleteTableEntry(entry.getLinkedServiceEntry(), entry.getTableUuid());
     }

@@ -3,8 +3,8 @@ package com.masl.goofy_protocol_fis_be.entity.listeners;
 import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
 import com.masl.goofy_protocol_fis_be.service.UserBucketService;
 import com.masl.goofy_protocol_fis_be.service.UserDbService;
+import jakarta.persistence.PostRemove;
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreRemove;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -32,7 +32,7 @@ public class ServiceEntryListener {
         userBucketService.createEntry(entry);
     }
 
-    @PreRemove
+    @PostRemove
     public void deleteEntryHandler(ServiceEntry entry) throws IOException {
         log.info("Deleting ServiceEntry: {}", entry.getUuid());
         userDbService.deleteEntry(entry);

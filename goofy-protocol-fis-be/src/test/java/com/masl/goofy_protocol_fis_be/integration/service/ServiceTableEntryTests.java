@@ -12,6 +12,7 @@ import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableBasicQueryDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableSelectDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableUpdateDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableWhereConditionPart;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQueryResultDto;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQuotasDto;
@@ -575,6 +576,137 @@ class ServiceTableEntryTests {
 			System.out.printf("Row: %s\n", Arrays.toString(res));
 
 		assertThat(queryRes.getRows().length).isEqualTo(9);
+	}
+
+	@Test
+	void testUpdate() throws Exception {
+		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+		ServiceTableEntryDto entry = createTestTable("table_1_" + identityHandle, identity, serviceUuid, true);
+		assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(0);
+
+		// Insert
+		{
+			// Insert Statement
+			Map<String, Object> insertObj = new HashMap<>();
+			insertObj.put(COL_ID, 10);
+			insertObj.put(COL_STR_1_NULLABLE, null);
+			insertObj.put(COL_STR_2, "hello, world!");
+			insertObj.put(COL_INT_UNIQUE, 123);
+			insertObj.put(COL_BOOL, true);
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(1);
+		}
+
+		// Update
+		{
+			TableUpdateDto updateDto = new TableUpdateDto();
+			updateDto.setColNames(new String[]{COL_STR_1_NULLABLE, COL_INT_UNIQUE});
+			updateDto.setColValues(new Object[]{"updated value", 999});
+			TableBasicQueryDto basicQuery = new TableBasicQueryDto();
+			updateDto.setBasicQuery(basicQuery);
+			TableWhereConditionPart where = new TableWhereConditionPart();
+			basicQuery.setWhere(where);
+			where.setType(TableWhereConditionPart.Type.C_EQ);
+			where.setConditionParts(new TableWhereConditionPart[]{
+					new TableWhereConditionPart(TableWhereConditionPart.Type.COL, null, null, COL_ID, null),
+					new TableWhereConditionPart(TableWhereConditionPart.Type.VAL, 10, TableColumnDto.Type.INT, null, null)
+			});
+
+			// Send
+			performSignedRequestStr(HttpMethod.PUT, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(updateDto), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(1);
+		}
+
+		// Query
+		{
+			TableSelectDto query = new TableSelectDto();
+			query.setColNames(new String[]{COL_STR_1_NULLABLE, COL_INT_UNIQUE});
+
+			String queryResStr = performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/query", objectMapper.writeValueAsString(query), identity, mvc, handleCrypto)
+					.andExpect(status().isOk())
+					.andReturn().getResponse().getContentAsString();
+			ServiceTableQueryResultDto queryRes = objectMapper.readValue(queryResStr, ServiceTableQueryResultDto.class);
+			assertThat(queryRes).isNotNull();
+			System.out.println("Query result: " + objectMapper.writeValueAsString(queryRes));
+
+			// Check the new values
+			assertThat(queryRes.getRows().length).isEqualTo(1);
+			Object[] row = queryRes.getRows()[0];
+			assertThat(row[0]).isEqualTo("updated value");
+			assertThat(row[1]).isEqualTo(999);
+		}
+	}
+
+	@Test
+	void testDelete() throws Exception {
+		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+		ServiceTableEntryDto entry = createTestTable("table_1_" + identityHandle, identity, serviceUuid, true);
+		assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(0);
+
+		{
+			// Insert Statement
+			Map<String, Object> insertObj = new HashMap<>();
+			insertObj.put(COL_ID, 10);
+			insertObj.put(COL_STR_1_NULLABLE, null);
+			insertObj.put(COL_STR_2, "hello, world!");
+			insertObj.put(COL_INT_UNIQUE, 123);
+			insertObj.put(COL_BOOL, true);
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(1);
+		}
+
+		{
+			// Insert Statement
+			Map<String, Object> insertObj = new HashMap<>();
+			insertObj.put(COL_ID, 20);
+			insertObj.put(COL_STR_1_NULLABLE, "bruh");
+			insertObj.put(COL_STR_2, "hello, world!");
+			insertObj.put(COL_INT_UNIQUE, 124);
+			insertObj.put(COL_BOOL, true);
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(2);
+		}
+
+		// Delete
+		{
+			TableBasicQueryDto deleteQuery = new TableBasicQueryDto();
+			TableWhereConditionPart where = new TableWhereConditionPart();
+			deleteQuery.setWhere(where);
+			where.setType(TableWhereConditionPart.Type.C_EQ);
+			where.setConditionParts(new TableWhereConditionPart[]{
+					new TableWhereConditionPart(TableWhereConditionPart.Type.COL, null, null, COL_ID, null),
+					new TableWhereConditionPart(TableWhereConditionPart.Type.VAL, 10, TableColumnDto.Type.INT, null, null)
+			});
+
+			// Send
+			performSignedRequestStr(HttpMethod.DELETE, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(deleteQuery), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(1);
+		}
+
+		// Delete All
+		{
+			TableBasicQueryDto deleteQuery = new TableBasicQueryDto();
+
+			// Send
+			performSignedRequestStr(HttpMethod.DELETE, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(deleteQuery), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(0);
+		}
 	}
 
 	// TODO: More Tests

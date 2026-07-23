@@ -359,7 +359,7 @@ public class ServiceTableEndpoint {
         // Create Table in DB
         try {
             userDbService.createTableEntry(entry, entryDto);
-        } catch (IOException | SQLException e) {
+        } catch (SQLException e) {
             throw new ServiceTableSqlError(tableEntry.getTableUuid(), e.getMessage());
         }
 
@@ -397,7 +397,7 @@ public class ServiceTableEndpoint {
 
             // Insert
             userDbService.insertIntoTable(entry, tableUuid, insertFields);
-        } catch (SQLException | IOException e) {
+        } catch (SQLException e) {
             throw new ServiceTableSqlError(tableUuid, e.getMessage());
         }
     }
@@ -405,27 +405,52 @@ public class ServiceTableEndpoint {
     @DeleteMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Deletes Rows from a Table Entry based on a Query")
-    public Integer deleteQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableBasicQueryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound {
+    public Integer deleteQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableBasicQueryDto deleteQuery, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableSqlError {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, true, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
-        // TODO: Implement
-        return 0;
+        try {
+            // Delete
+            return userDbService.deleteQueryTable(entry, tableUuid, deleteQuery, userQuotas);
+        } catch (SQLException e) {
+            throw new ServiceTableSqlError(tableUuid, e.getMessage());
+        }
     }
 
     @PutMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Updates Rows from a Table Entry based on a Query")
-    public Integer updateQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableUpdateDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound {
-        tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, true, true);
+    public Integer updateQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableUpdateDto updateDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableSqlError, ServiceTableQueryInvalid, ServiceTableQuotaExceeded {
+        tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
-        // TODO: Implement
-        return 0;
+        // Check Update Object
+        if (updateDto.getColNames().length > userQuotas.getTable().getMaxCols())
+            throw new ServiceTableQueryInvalid("Too many columns in insert object");
+        if (updateDto.getColNames().length != updateDto.getColValues().length)
+            throw new ServiceTableQueryInvalid("Column Names and Values must have the same length");
+        for (var updateEntry : updateDto.getColNames()) {
+            if (updateEntry.length() > userQuotas.getGeneral().getMaxNameSize())
+                throw new ServiceTableQuotaExceeded("generalMaxNameSize");
+            if (!updateEntry.matches("^[a-z0-9_]+$"))
+                throw new ServiceTableQueryInvalid("Invalid Column Name: " + updateEntry);
+        }
+        for (var updateValEntry : updateDto.getColValues())
+            if (updateValEntry != null && (updateValEntry instanceof Map || updateValEntry instanceof List || updateValEntry.getClass().isArray()))
+                throw new ServiceTableQueryInvalid("Invalid Column Value Type: " + updateValEntry);
+
+        try {
+            // Update
+            return userDbService.updateQueryTable(entry, tableUuid, updateDto, userQuotas);
+        } catch (SQLException e) {
+            throw new ServiceTableSqlError(tableUuid, e.getMessage());
+        }
     }
 
 
@@ -450,8 +475,8 @@ public class ServiceTableEndpoint {
         }
 
         try {
-            return userDbService.queryTable(entry, tableUuid, selectDto);
-        } catch (SQLException | IOException e) {
+            return userDbService.queryTable(entry, tableUuid, selectDto, userQuotas);
+        } catch (SQLException e) {
             throw new ServiceTableSqlError(tableUuid, e.getMessage());
         }
     }

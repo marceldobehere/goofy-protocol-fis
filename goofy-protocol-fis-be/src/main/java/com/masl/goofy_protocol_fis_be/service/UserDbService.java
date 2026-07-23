@@ -4,9 +4,11 @@ import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableBasicQueryDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableSelectDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableUpdateDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableWhereConditionPart;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQueryResultDto;
 import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
+import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -36,13 +38,22 @@ public class UserDbService {
     }
 
     public synchronized void deleteEntry(ServiceEntry entry) throws IOException {
+        log.info("Deleting DB folder for entry: {}", entry.getUuid());
         fileStorageService.deleteDbFolder(entry.getUuid());
         // TODO: Check DB Connections are closed / Close Server somehow
     }
 
-    public synchronized void deleteTableEntry(ServiceEntry entry, String tableUuid) {
-        // TODO: Implement
-        // TODO: Check DB Connections are closed / Close Server somehow
+    // TODO: Test
+    public synchronized void deleteTableEntry(ServiceEntry entry, String tableUuid) throws SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableUuid);
+
+            // Execute
+            try (Statement statement = conn.createStatement()) {
+                log.info("Deleting DB Table {} for entry {}", tableName, entry.getUuid());
+                statement.execute("DROP TABLE \"" + tableName + "\"");
+            }
+        }
     }
 
     public Long getDbSize(ServiceEntry entry) throws IOException {
@@ -163,7 +174,7 @@ public class UserDbService {
         }
     }
 
-    public void createTableEntry(ServiceEntry entry, ServiceTableEntryDto tableEntryDto) throws IOException, SQLException {
+    public void createTableEntry(ServiceEntry entry, ServiceTableEntryDto tableEntryDto) throws SQLException {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableEntryDto.getTableUuid());
 
@@ -191,7 +202,7 @@ public class UserDbService {
         }
     }
 
-    public void insertIntoTable(ServiceEntry entry, String tableUuid, Map<String, Object> values) throws IOException, SQLException {
+    public void insertIntoTable(ServiceEntry entry, String tableUuid, Map<String, Object> values) throws SQLException {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
 
@@ -307,7 +318,7 @@ public class UserDbService {
         }
     }
 
-    private static PreparedStatement createWhereStatement(Connection conn, String firstPart, List<PrepStatementColValue> prevValues, Map<String, TableColumnDto> cols, TableBasicQueryDto basicQuery) throws SQLException {
+    private static PreparedStatement createWhereStatement(Connection conn, String firstPart, List<PrepStatementColValue> prevValues, Map<String, TableColumnDto> cols, TableBasicQueryDto basicQuery, BaseQuotaProperties userQuota) throws SQLException {
         StringBuilder fullQueryBuilder = new StringBuilder();
         fullQueryBuilder.append(firstPart);
 
@@ -384,7 +395,7 @@ public class UserDbService {
         return res;
     }
 
-    public ServiceTableQueryResultDto queryTable(ServiceEntry entry, String tableUuid, TableSelectDto select) throws IOException, SQLException {
+    public ServiceTableQueryResultDto queryTable(ServiceEntry entry, String tableUuid, TableSelectDto select, BaseQuotaProperties userQuotas) throws SQLException {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
 
@@ -410,9 +421,55 @@ public class UserDbService {
             // Create Query String
             String selectQuery = "SELECT " + colDefs + " FROM \"" + tableName + "\"";
 
-            try (PreparedStatement statement = createWhereStatement(conn, selectQuery, List.of(), cols, select.getBasicQuery())) {
+            try (PreparedStatement statement = createWhereStatement(conn, selectQuery, List.of(), cols, select.getBasicQuery(), userQuotas)) {
                 ResultSet rs = statement.executeQuery();
                 return fromResultSet(rs, resultCols);
+            }
+        }
+    }
+
+    public int updateQueryTable(ServiceEntry entry, String tableUuid, TableUpdateDto updateDto, BaseQuotaProperties userQuotas) throws SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableUuid);
+
+            // TODO: Optimize the Col retrieval in the future
+            Map<String, TableColumnDto> cols = getAllTableColumns(entry, tableUuid).stream().collect(Collectors.toMap(TableColumnDto::getColName, col -> col));
+
+            if (updateDto.getColNames().length == 0)
+                throw new SQLException("No columns specified for update");
+
+            // Columns
+            StringJoiner updateDefs = new StringJoiner(", ");
+            List<PrepStatementColValue> updateVals = new ArrayList<>();
+            for (int i = 0; i < updateDto.getColNames().length; i++) {
+                TableColumnDto colDto = cols.get(updateDto.getColNames()[i]);
+                if (colDto == null)
+                    throw new SQLException("Column " + updateDto.getColNames()[i] + " does not exist in table " + tableUuid);
+                updateVals.add(new PrepStatementColValue(colDto.getType(), updateDto.getColValues()[i]));
+                updateDefs.add("\"" + updateDto.getColNames()[i] + "\" = ?");
+            }
+
+            // Create Query String
+            String updateQuery = "UPDATE \"" + tableName + "\" SET " + updateDefs;
+
+            try (PreparedStatement statement = createWhereStatement(conn, updateQuery, updateVals, cols, updateDto.getBasicQuery(), userQuotas)) {
+                return statement.executeUpdate();
+            }
+        }
+    }
+
+    public int deleteQueryTable(ServiceEntry entry, String tableUuid, TableBasicQueryDto queryDto, BaseQuotaProperties userQuotas) throws SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableUuid);
+
+            // TODO: Optimize the Col retrieval in the future
+            Map<String, TableColumnDto> cols = getAllTableColumns(entry, tableUuid).stream().collect(Collectors.toMap(TableColumnDto::getColName, col -> col));
+
+            // Create Delete Query String
+            String deleteQuery = "DELETE FROM \"" + tableName + "\"";
+
+            try (PreparedStatement statement = createWhereStatement(conn, deleteQuery, List.of(), cols, queryDto,userQuotas)) {
+                return statement.executeUpdate();
             }
         }
     }
