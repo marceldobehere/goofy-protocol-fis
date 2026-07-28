@@ -14,11 +14,18 @@ Anyone can host their own FIS instance and have their own users and identities, 
 A rough explanation on the Goofy Protocol and its pros/cons can be found [here](explanation.md).
 
 ## Notes
-This is still very WIP and I'm only now currently reaching the stage where i will be able to host a test instance and start working on test services.
+This is still very WIP, and I'm only now starting to reach the stage where i will be able to host a test instance and start working on test services.
 
 
 ## Features
-(TODO)
+* User Registration & Login
+* Identity Management
+* Service Entry Management
+* Bucket & Table Management with Quotas
+* Admin Management
+* Cryptography Support (Symmetric & Asymmetric)
+* Strongly Documented API Specs (Swagger UI)
+* Compatible with the Goofy Protocol
 
 
 ## Basic Layout
