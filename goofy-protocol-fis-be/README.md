@@ -1,14 +1,20 @@
 # Goofy Protocol FIS (Federated Identity Server) Backend
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
 
-
 ## General Infos
-(TODO)
+The FIS plays a central role in the Goofy Protocol, as it is the main point for storing and managing all data related to a user and their identities.
+
+It also acts as a sort of identity provider, allowing services to check the validity of a user and their identities, as well as providing access to the user's data.
+
+The concept is kind of similar to a [Matrix Homeserver](https://matrix.org/homeserver/about/) and a [Solid Pod](https://solidproject.org/about), but with a focus on cryptography and security, as well as being compatible with the Goofy Protocol.
+
+Anyone can host their own FIS instance and have their own users and identities, as well as their own services, which should be compatible with all FIS instances.
+
 
 A rough explanation on the Goofy Protocol and its pros/cons can be found [here](explanation.md).
 
 ## Notes
-This is still very WIP!
+This is still very WIP and I'm only now currently reaching the stage where i will be able to host a test instance and start working on test services.
 
 
 ## Features
