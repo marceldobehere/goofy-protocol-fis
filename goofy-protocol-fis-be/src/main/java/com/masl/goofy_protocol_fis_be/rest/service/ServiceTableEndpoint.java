@@ -52,8 +52,6 @@ public class ServiceTableEndpoint {
         this.tableLockService = tableLockService;
     }
 
-    // TODO: Add access log table with the last x access entries, for example 10000, just like handle and serviec-uuid/table-uuid
-
 
     // --- IDENTITY ONLY ---
 
@@ -102,8 +100,6 @@ public class ServiceTableEndpoint {
 
     // TODO: Get all Table Names / Get all Tables for a name for a service uuid & table uuid
     // TODO: Make Table names unique?
-
-    // TODO: Look into indexing columns for performance
 
     @GetMapping("/{idHandle}/{serviceUuid}/quotas/{tableUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
@@ -169,6 +165,7 @@ public class ServiceTableEndpoint {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
         // Update Name
@@ -239,6 +236,7 @@ public class ServiceTableEndpoint {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
 
         // Delete Table Entry
         tableEntryRepository.deleteByTableUuid_AndLinkedIdentity_Handle(tableUuid, idHandle);
@@ -268,6 +266,7 @@ public class ServiceTableEndpoint {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
 
         // Lock Table Entry
         return tableLockService.lockServiceTableEntry(serviceUuid, tableUuid, readLock, writeLock);
@@ -282,6 +281,7 @@ public class ServiceTableEndpoint {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
 
         // Unlock Table Entry
         tableLockService.unlockServiceTableEntry(serviceUuid, tableUuid, lockToken, readLock, writeLock);
@@ -294,6 +294,7 @@ public class ServiceTableEndpoint {
     public ServiceTableEntryDto createTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @Valid @RequestBody ServiceTableEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableQuotaExceeded, ServiceTableEntryInvalid, ServiceTableSqlError {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         checkServiceEntryAccessPermissions(entry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
         // Get DB Size
@@ -374,6 +375,7 @@ public class ServiceTableEndpoint {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
         // Check insert Object
@@ -408,6 +410,7 @@ public class ServiceTableEndpoint {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
         // Check insert Cols
@@ -452,6 +455,7 @@ public class ServiceTableEndpoint {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
         try {
@@ -470,6 +474,7 @@ public class ServiceTableEndpoint {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
         // Check Update Object

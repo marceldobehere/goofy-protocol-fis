@@ -137,4 +137,6 @@ class LoginStorageTests {
 		performUnsignedRequestStr(HttpMethod.POST, BASE + "/" + userHash1, testKeypairData1, mvc)
 				.andExpect(status().is4xxClientError());
 	}
+
+	// TODO: Test Restricted User cannot insert, delete, or update entries
 }

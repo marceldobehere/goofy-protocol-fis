@@ -53,15 +53,21 @@ public class WebSecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
         boolean testOrDev = env.acceptsProfiles(Profiles.of("test", "dev"));
+        boolean testOnly = env.acceptsProfiles(Profiles.of("test"));
 
         http
             .cors(cors -> {}) // enable CORS
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> {
+                // Only for integration tests
+                if (testOnly) {
+                    auth
+                        .requestMatchers("/api/test/**").permitAll();
+                }
+
                 // Only for dev or integration tests
                 if (testOrDev) {
                     auth
-                        .requestMatchers("/api/test/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()

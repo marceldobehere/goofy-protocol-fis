@@ -6,22 +6,20 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 (TODO)
 
 ## TODOs (Currently)
-* When doing exports/imports of a table, don't use raw db files. Also when importing large things look into how to best do it, given the upload limits
 * Backend Add Setting for User to set a custom frontend URL and use that when redirecting stuff.
 * Also have the Backend Root Redirect set the Backend URL inside the Frontend, so that the Frontend contacts the correct backend, lol
 * Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
-* Add Synchronised Block for Post & Put Operations to avoid Race Conditions (Especially for Bucket & Table Stuff and everything quota related!!) 
-  * Ideally have a synchronized block with a lock per relevant Object (User, Service Entry / Bucket / Table, Table Entry, etc.)
-  * Should mark the Endpoints as `@Transactional` and either use a `ReentrantLock` or a general Lock for (e.g) the Service UUID or the `@Lock` annotation.
-* Work on Frontend
 * Work on more Implementation Stuff
-  * Implement User Restriction
   * Implement User Account Deactivation
   * Implement User Account Deletion → Should safely delete everything and not cause DB issues (Cache too)
     * Also potentially enforce having done an account-export within 7 days of trying to delete the account to avoid unwanted data loss
   * Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS / Maybe using Bucket4j
   * Implement Data Export (How to treat Buckets and Tables?) (Probably export everything as a ZIP and assume the download should be ok)
   * Implement Data Import? (How to treat Buckets and Tables?)
+    * When doing exports/imports of a table, don't use raw db files. Also when importing large things look into how to best do it, given the upload limits
+* Add Synchronised Block for Post & Put Operations to avoid Race Conditions (Especially for Bucket & Table Stuff and everything quota related!!)
+  * Ideally have a synchronized block with a lock per relevant Object (User, Service Entry / Bucket / Table, Table Entry, etc.)
+  * Should mark the Endpoints as `@Transactional` and either use a `ReentrantLock` or a general Lock for (e.g) the Service UUID or the `@Lock` annotation.
 * Implement Exceptions for unsupported Crypto Requests
 * Add Home / Explanation Page to FIS Frontend
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc.)
@@ -34,8 +32,11 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 * Look into ML-KEM using Seed for Private key and compatibility with JS (Potentially using Rust ML-KEM compiled to WASM) (Will have to see)
 
 ## TODOs (Later)
+* Add a simple "Notification" / Warning System that alerts Users when their storage quotas are about to be exceeded or if they have some content deleted or are restricted
+* Potentially look into having custom JWTs or something to avoid signed request overhead when accessing tables?
 * Change some FIS Exceptions to use more detailed HTTP Error Codes (404 for not found, etc.)
 * Add Caching to relevant Endpoints with relevant durations (Handle Lookup, General Info, Maybe redirects, etc.)
+* Look into indexing columns for performance in user DBs
 * Add Quota Overviews for Users, showing all Storage related stuff for an entire user/identity (+ Useful for Admins having an overview)
 * Create a sample Endpoint / document the potential runtime errors (Mostly in Signed Request filtering / Forbidden)
 * Potentially add examples to the DTOs using annotations or so for swagger
@@ -49,14 +50,13 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
   * Ideally Requests without the special cookie don't even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks
   * Requests with the cookie will get individual rate limiting based on their unique cookie (if valid) / maybe also based on the handle
   * Add to all relevant endpoints
+  * Check if that works well if the clients use fetch requests, then idk if the cookies will be set for the request
 * Move the Crypto Core Lib into a separate package with tests, known values and pom.xml
 * Look into Canonical Builds
-* Improve CORS?
 * Potentially overhaul the simplistic quota system and let users set quotas for specific entries too.
 * Optimize Quota & Storage Calculations in Bucket and probably Table Service
-* Add a simple "Notification" / Warning System that alerts Users when their storage quotas are about to be exceeded or if they have some content deleted or are restricted
 * Look into how to handle a whole FIS instance moving to a different domain
-* Potentially look into having custom JWTs or something to avoid signed request overhead when accessing tables?
+* Maybe add Access Logs to Bucket and Table entries (like last 10000 access or so) for reporting purposes
 
 ## Short Rundown of Goofy Protocol
 (TODO, This will probably be moved to the main Goofy Protocol Repo later)
@@ -148,21 +148,17 @@ There are currently 3 Profiles:
 
 The dev and prod Profiles use different databases and the test Profile uses an in-memory database for testing purposes.
 
-(TODO)
-
 ### File Storage
-File Storage will also depend on the Profile used, for now it's not implemented. 
-To set the path I will probably use something like this:
-```java
-public FileStorageService(@Value("${app.storage.dir}") String dir) {
-    this.baseDir = Path.of(dir);
-}
-```
-
-The Test Data Path should also be fully reset on launch of the Test Profile, so that tests can be executed without any side effects from previous test runs.
+(TODO)
 
 ## ROLES
-(TODO)
+There are currently 5 Roles defined in the system: (They are not mutually exclusive)
+* `OUTSIDE_ENTITY` - Any Outside Entity, which has a valid signed request 
+* `REGISTERED_USER` - A registered User
+* `REGISTERED_IDENTITY` - An Identity of a registered User
+* `ADMIN` - An Administrator
+* `RESTRICTED` - A User which has been restricted by an Admin, the user is basically set into a read-only mode
+
 
 ## API Docs
 The actual specs can be found by starting the application in the `dev` Profile and checking http://localhost:8080/swagger-ui/index.html.
@@ -191,7 +187,6 @@ For now, Errors are split into ClientErrors and ServerErrors, which all use uniq
 The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be/exception) in the `client` and `server` directories.
 
 
-
 ## Implementation Details
 (TODO)
 * Firstly work on the Crypto Core Lib, either porting it or creating it and then testing it properly (Known Value Tests are quite useful)
@@ -213,9 +208,6 @@ The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be
   * Redirects
   * Admin Endpoints
 * Keep testing and use the reference implementation for the client and backend as help.
-
-
-
 
 
 
@@ -390,12 +382,10 @@ See [Example Implementation](src/main/java/com/masl/goofy_protocol_core/crypto/c
 (TODO)
 ```
 // Strength of handles
-// c = 2 -> ~44 bit (15000^2 * 10^5 = 2.3e13)
-// c = 3 -> ~58 bit (15000^3 * 10^5 = 3.4e17)
-// c = 4 -> ~72 bit (15000^4 * 10^5 = 5.1e21)
+// c = 2 -> ~44 bit (15000^2 * 10^5 = 2.3e13 combinations)
+// c = 3 -> ~58 bit (15000^3 * 10^5 = 3.4e17 combinations)
+// c = 4 -> ~72 bit (15000^4 * 10^5 = 5.1e21 combinations)
 ```
-
-
 
 
 ### Signed Requests
@@ -471,6 +461,21 @@ The username is hashed with sha256 and encoded using Base64URL.
 #### Table Structure
 (TODO)
 
+##### Table Datatypes
+These are the following supported datatypes for table columns:
+* `FIXED_STRING_N` - Fixed length string, where N is the length of the string 
+* `VAR_STRING_N` - Variable length string, where N is the maximum length of the string
+* `BOOLEAN` - Boolean value (true/false)
+* `TINYINT` - 8-bit signed integer
+* `SMALLINT` - 16-bit signed integer
+* `INT` - 32-bit signed integer
+* `BIGINT` - 64-bit signed integer
+* `FLOAT` - 32-bit floating point number (approx. ±3.40282347E+38F)
+* `DOUBLE` - 64-bit floating point number (approx. ±1.79769313486231570E+308)
+* `DATE` - Date value (YYYY-MM-DD)
+* `TIME` - Time value (HH:MM:SS)
+
+
 #### Table Access
 (TODO)
 
@@ -487,52 +492,204 @@ Important: Supported Datatypes, limits for columns, column names, primary key, f
 #### Table Size
 
 
-#### Table Query Idea
-(TODO)
+#### Table Query
+To query a table, users send a structured JSON payload matching the supported DTOs. The query is limited to a subset of SQL (selection + filtering + pagination + sorting, plus aggregate-like expressions supported by the condition tree
 
-to query a table, users can send queries as a JSON object:
+* Data Selection using the `TableSelectDto`. Contains Selected Columns and Basic Query
+* Insert using a raw JSON Object with the Column Names as Keys and the Values as Values
+* Bulk insert using the `TableMultiRowInsertDto`. Contains Columns and a List of Values
+* Update using the `TableUpdateDto`. Contains Columns, Update Values and Basic Query
+* Delete using the `BasicQueryDto`.
+
+You can find the DTOs [here](src/main/java/com/masl/goofy_protocol_fis_be/dto/request/query).
+
+The DTOs are designed to be as simple as possible, while still being able to express the needed queries.
+In general the queries are limited to a subset of SQL, which should be enough for most use cases.
+
+##### Basic Query DTO
+This DTO supports:
+* filtering via` where` (including nested boolean logic)
+* sorting via `sortByCols` (with per-column direction in `sortOrders`)
+* pagination via `limit` and `offset`
+
 ```json
 {
-  "select": [],
-  "where": [],
-  "having": [],
-  "groupBy": [],
-  "orderBy": [],
+  "where": {...},
+  "sortByCols": [],
+  "sortOrders": [],
   "limit": 0,
   "offset": 0
 }
 ```
+All of the fields are optional
 
-Keep in mind this will still be quite limited and only support a small subset of SQL queries, but it should be enough for most use cases.
+##### Where Condition Part
+This represents either:
+* A boolean expression node (L_AND, L_OR, L_NOT)
+* A comparison node (C_EQ, C_NEQ, C_GT, C_GE, C_LT, C_LE)
+* Simple value/column references (VAL, COL)
+* Additional expression nodes (M_ADD, M_SUB, M_MUL, M_DIV, M_MOD, M_FLOOR, M_CEIL, M_ABS, COALESCE, LIKE)
 
-The datatypes of the tables will also be limited.
-
-All fields except for the `select` field are optional and can be omitted if not needed.
-
-The `select` field will contain a list of either pure columns or aggregate functions like `COUNT`.
-
-
-The `where` field will contain a list of conditions applied to the columns but also can have nested conditions (for example with `AND` `OR` `NOT`).
-The conditions will have a limit to prevent abuse.
-
-The `having` field will contain a list of conditions applied to the aggregate functions but also can have nested conditions (for example with `AND` `OR` `NOT`).
-
-The `groupBy` field will contain a list of columns to group the results by.
-
-The `orderBy` field will contain a list of columns to order the results by, with an optional direction (ASC/DESC).
-
-The `limit` field will contain a number to limit the number of results returned.
-
-The `offset` field will contain a number to offset the results returned, useful for pagination.
-
-
-An example query could look like this:
-(TODO)
+This is the mechanism for nested conditions (AND/OR/NOT, and also expression composition like math/comparisons).
 ```json
 {
-
+  "type": "...",
+  "conditionParts": [...],
+}
+OR
+{
+  "type": "...",
+  "colName": "...",
+}
+OR
+{
+  "type": "...",
+  "value": "...",
+  "valueType": "..."
 }
 ```
 
-This is for querying, for inserts/updates/deletes, the system might be different.
+##### Result DTO
+The result of a query is returned as a JSON object with the following structure:
+```json
+{
+    "colNames": ["col1", "col2", ...],
+    "colTypes": ["type1", "type2", ...],
+    "rows": [
+        [val1, val2, ...],
+        [val1, val2, ...],
+        ...
+    ],
+    "resultTruncated": false
+}
+```
+
+Note: The `resultTruncated` field indicates whether the result was truncated due to a limit (either user-defined or by the quota).
+
+
+##### Examples
+Insert a row into a table
+`INSERT INTO users (id, name, age) VALUES (10, 'Ada', 18);`
+```json
+{
+  "id": 10,
+  "name": "Ada",
+  "age": 18
+}
+```
+
+Insert multiple rows into a table. Is not limited to 1000 entries!
+`INSERT INTO users (id, name, age) VALUES (10, 'Ada', 18), (11, 'Bob', 21);`
+```json
+{
+  "colNames": ["id", "name", "age"], 
+  "rows": [
+    [10, "Ada", 18],
+    [11, "Bob", 21]
+  ]
+}
+```
+
+Select rows from a table
+`SELECT id, name WHERE age >= 18 ORDER BY name ASC LIMIT 50`
+```json
+{
+  "colNames": ["id", "name"],
+  "basicQuery": {
+    "where": {
+      "type": "C_GE",
+      "conditionParts": [
+        { "type": "COL", "colName": "age" },
+        { "type": "VAL", "value": 18, "valueType": "INT" }
+      ]
+    },
+    "sortByCols": ["name"],
+    "sortOrders": ["ASC"],
+    "limit": 50
+  }
+}
+```
+
+Update rows in a table
+`UPDATE users SET status = 'active' WHERE name = 'Bob';`
+```json
+{
+  "colNames": ["status"],
+  "colValues": ["active"],
+  "basicQuery": {
+    "where": {
+      "type": "C_EQ",
+      "conditionParts": [
+        { "type": "COL", "colName": "name" },
+        { "type": "VAL", "value": "Bob", "valueType": "VAR_STRING_N" }
+      ]
+    }
+  }
+}
+```
+Note, the `VAR_STRING_N` can also be `FIXED_STRING_N`, as it doesn't matter inside of queries.
+
+Delete rows from a table
+`DELETE FROM users WHERE age < 18;`
+```json
+{
+  "basicQuery": {
+    "where": {
+      "type": "C_LT",
+      "conditionParts": [
+        { "type": "COL", "colName": "age" },
+        { "type": "VAL", "value": 18, "valueType": "INT" }
+      ]
+    }
+  }
+}
+```
+
+Select rows from a table (complicated)
+```SQL
+SELECT id, name
+FROM users
+WHERE (age >= 18 AND status LIKE 'active%')
+  AND COALESCE(last_login, DATE '1970-01-01') > DATE '2020-01-01';
+```
+
+```json
+{
+  "colNames": ["id", "name"],
+  "basicQuery": {
+    "where": {
+      "type": "L_AND",
+      "conditionParts": [
+        {
+          "type": "C_GE",
+          "conditionParts": [
+            { "type": "COL", "colName": "age" },
+            { "type": "VAL", "value": 18, "valueType": "INT" }
+          ]
+        },
+        {
+          "type": "LIKE",
+          "conditionParts": [
+            { "type": "COL", "colName": "status" },
+            { "type": "VAL", "value": "active%", "valueType": "FIXED_STRING_N" }
+          ]
+        },
+        {
+          "type": "C_GT",
+          "conditionParts": [
+            {
+              "type": "COALESCE",
+              "conditionParts": [
+                { "type": "COL", "colName": "last_login" },
+                { "type": "VAL", "value": "1970-01-01", "valueType": "DATE" }
+              ]
+            },
+            { "type": "VAL", "value": "2020-01-01", "valueType": "DATE" }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
 

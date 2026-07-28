@@ -280,4 +280,6 @@ class ServiceEntryTests {
 					assertThat(returnedQuota.getCurrentServiceEntryCount()).isEqualTo(quota);
 				});
 	}
+
+	// TODO: Test Restricted User cannot insert, delete, or update entries
 }

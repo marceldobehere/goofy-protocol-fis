@@ -453,8 +453,6 @@ class ServiceTableEntryTests {
 					.andExpect(status().is4xxClientError());
 			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(2);
 		}
-
-		// TODO: Query and check actual values?
 	}
 
 	@Test
@@ -573,6 +571,7 @@ class ServiceTableEntryTests {
 			System.out.printf("Row: %s\n", Arrays.toString(res));
 
 		assertThat(queryRes.getRows().length).isEqualTo(9);
+		assertThat(queryRes.getResultTruncated()).isTrue();
 	}
 
 	@Test
@@ -610,8 +609,8 @@ class ServiceTableEntryTests {
 			basicQuery.setWhere(where);
 			where.setType(TableWhereConditionPart.Type.C_EQ);
 			where.setConditionParts(new TableWhereConditionPart[]{
-					new TableWhereConditionPart(TableWhereConditionPart.Type.COL, null, null, COL_ID, null),
-					new TableWhereConditionPart(TableWhereConditionPart.Type.VAL, 10, TableColumnDto.Type.INT, null, null)
+					new TableWhereConditionPart(TableWhereConditionPart.Type.COL, null, null, COL_STR_2, null),
+					new TableWhereConditionPart(TableWhereConditionPart.Type.VAL, "hello, world!", TableColumnDto.Type.VAR_STRING_N, null, null)
 			});
 
 			// Send
@@ -634,6 +633,7 @@ class ServiceTableEntryTests {
 
 			// Check the new values
 			assertThat(queryRes.getRows().length).isEqualTo(1);
+			assertThat(queryRes.getResultTruncated()).isFalse();
 			Object[] row = queryRes.getRows()[0];
 			assertThat(row[0]).isEqualTo("updated value");
 			assertThat(row[1]).isEqualTo(999);
@@ -730,5 +730,23 @@ class ServiceTableEntryTests {
 		}
 	}
 
-	// TODO: More Tests
+	// TODO: Test Select With Sort By
+
+	// TODO: Test Quota
+
+	// TODO: Test Delete Table Entry
+
+	// TODO: Test Lock Table
+
+	// TODO: Test Unlock Table
+
+	// TODO: Test Get Table Entry
+
+	// TODO: Test Set Table Entry
+
+	// TODO: Test for Update Table Entry Schema
+
+	// TODO: Access / Permission Tests
+
+	// TODO: Test Restricted User cannot insert, delete, or update entries
 }

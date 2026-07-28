@@ -1,4 +1,4 @@
-package com.masl.goofy_protocol_fis_be.rest;
+package com.masl.goofy_protocol_fis_be.integration.signed_request;
 
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-// TODO: Move back to test and make Profile test only
+// Only accessible during test execution
 @RestController
-@Profile({"dev","test"})
+@Profile({"test"})
 @RequestMapping("/api/test")
 @Hidden
 public class TestEndpoint {

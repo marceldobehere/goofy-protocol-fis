@@ -63,6 +63,7 @@ public class ServiceEntryEndpoint {
     public String createEntry(@Valid @RequestBody ServiceEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryQuotaExceeded, ServiceEntryInvalid {
         // Get Identity
         IdentityStorageEntry identity = identityRepository.findByHandle(auth.getHandle());
+        ServiceEntry.checkForRestrictedAccess(identity.getCreatedBy());
 
         // Get Quotas
         UserQuotas quotas = userQuotasRepository.findByUserHandle(identity.getCreatedBy().getHandle());
@@ -109,6 +110,7 @@ public class ServiceEntryEndpoint {
         ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(uuid, auth.getHandle());
         if (entry == null)
             throw new ServiceEntryNotFound(uuid);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
 
         try {
             entry.setName(entryDto.getName());
@@ -119,11 +121,17 @@ public class ServiceEntryEndpoint {
         }
     }
 
-    // TODO: Don't make it a two step process but enforce that the data has been exported atleast 72h before attempting to delete the entry (IF IT IS NOT EMPTY -> then it doesnt matter)
+    // TODO: Don't make it a two step process but enforce that the data has been exported at least 72h before attempting to delete the entry (IF IT IS NOT EMPTY -> then it doesnt matter)
     @DeleteMapping("/{uuid}")
     @PreAuthorize("hasRole('ROLE_REGISTERED_IDENTITY') and not hasRole('ROLE_REGISTERED_USER')")
     @FisEndpoint(summary = "Deletes the Service Entry of the Identity if it exists")
-    public void deleteEntry(@PathVariable String uuid, @AuthenticationPrincipal GoofyAuthUser auth) {
+    public void deleteEntry(@PathVariable String uuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound {
+        ServiceEntry entry = serviceEntryRepository.findByUuid_AndLinkedIdentity_Handle(uuid, auth.getHandle());
+        if (entry != null)
+            ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
+        else
+            throw new ServiceEntryNotFound(uuid);
+
         serviceEntryRepository.deleteByUuid_AndLinkedIdentity_Handle(uuid, auth.getHandle());
     }
 

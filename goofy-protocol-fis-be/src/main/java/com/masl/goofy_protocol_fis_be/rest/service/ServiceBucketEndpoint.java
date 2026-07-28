@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
-// TODO: Write Tests
 @RestController
 @RequestMapping("/api/service-bucket")
 @Tag(name = "Service Bucket Access", description = "Endpoints related to accessing Buckets and their contents. <br>Important Note: These Endpoints need to be signed/access using the Identity Keypair, not the User.")
@@ -45,13 +44,9 @@ public class ServiceBucketEndpoint {
         this.userBucketService = userBucketService;
     }
 
-    // TODO: Add access log table with the last x access entries, for example 10000, just like handle and service-uuid/file-uuid
-
 
     // --- IDENTITY ONLY ---
 
-
-    // TODO: Do Admins realistically need access to these endpoints too?
 
     // Get Full Bucket Permissions (Read Access, Write Access, ...)
     @GetMapping("/{serviceUuid}/perms")
@@ -74,6 +69,7 @@ public class ServiceBucketEndpoint {
     public void setBucketPermissions(@PathVariable String serviceUuid, @Valid @RequestBody ServiceBucketPermissionDto permDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketPermsInvalid {
         ServiceEntry entry = findServiceEntry(auth.getHandle(), serviceUuid);
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
         // No extra Permission Checks needed
 
         // Check the Entry Counts against the Quotas
@@ -118,6 +114,7 @@ public class ServiceBucketEndpoint {
     public ServiceBucketEntryDto uploadBucketEntry(String idHandle, String serviceUuid, String uuid, String filename, CacheDuration cacheDuration, GoofyAuthUser auth, byte[] body, String contentType) throws ServiceEntryNotFound, ServiceBucketFileError, ServiceBucketQuotaExceeded {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         checkServiceEntryWritePermissions(entry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
         // Check Max Item Size against Quota
@@ -215,6 +212,7 @@ public class ServiceBucketEndpoint {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceBucketEntry bucketEntry = findServiceBucketEntry(idHandle, fileUuid);
         checkServiceBucketEntryWritePermissions(entry, bucketEntry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
 
         // Update Bucket Entry
         bucketEntry.setContentType(entryDto.getContentType());
@@ -240,6 +238,7 @@ public class ServiceBucketEndpoint {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceBucketEntry bucketEntry = findServiceBucketEntry(idHandle, fileUuid);
         checkServiceBucketEntryWritePermissions(entry, bucketEntry, auth);
+        ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
 
         // Delete Bucket Entry
         bucketEntryRepository.deleteByFileUuid_AndLinkedIdentity_Handle(fileUuid, idHandle);
@@ -266,9 +265,9 @@ public class ServiceBucketEndpoint {
         checkServiceBucketEntryReadPermissions(entry, bucketEntry, auth);
 
         try {
-            // TODO: Look into if i should add Content-Disposition Header with Filename
             return ResponseEntity.ok()
                     .header("Content-Type", bucketEntry.getContentType())
+                    .header("X-Filename", bucketEntry.getFilename())
                     .cacheControl(bucketEntry.getCacheDuration().getCacheControl())
                     .body(userBucketService.getBucketEntry(entry, fileUuid));
         } catch (IOException e) {

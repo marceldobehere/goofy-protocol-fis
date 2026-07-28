@@ -90,6 +90,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
             boolean isIdentity = user != null; // Could have the Role be exclusive but i'd rather explicitly check against it in the respective Endpoints to avoid misunderstandings
             boolean isUser = user != null;
             boolean isAdmin = user != null && user.isAdmin();
+            boolean isRestricted = user != null && !user.isAdmin() && user.isRestricted();
 
             // Check if it's a Registered Identity
             if (!isUser) {
@@ -97,7 +98,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
                 isIdentity = identity != null;
             }
 
-            SecurityContextHolder.getContext().setAuthentication(new GoofyAuth(req, isIdentity, isUser, isAdmin));
+            SecurityContextHolder.getContext().setAuthentication(new GoofyAuth(req, isIdentity, isUser, isAdmin, isRestricted));
 
             // Fix Body for Filter
             RequestBodyContentWrapper wrapped = new RequestBodyContentWrapper(_wrapped, maxRequestSizeBytes);

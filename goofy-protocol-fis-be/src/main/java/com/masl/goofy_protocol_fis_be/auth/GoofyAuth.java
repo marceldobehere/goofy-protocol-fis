@@ -17,6 +17,7 @@ public class GoofyAuth implements Authentication {
     private final boolean isIdentity;
     private final boolean isAdmin;
     private final boolean isUser;
+    private final boolean isRestricted;
     private boolean isAuthenticated;
 
     public GoofyAuth() {
@@ -24,17 +25,19 @@ public class GoofyAuth implements Authentication {
         isIdentity = false;
         isAdmin = false;
         isUser = false;
+        isRestricted = false;
         authorities = new ArrayList<>();
         isAuthenticated = false;
     }
 
-    public GoofyAuth(SignedRequest signedRequest, boolean isIdentity, boolean isUser, boolean isAdmin) {
+    public GoofyAuth(SignedRequest signedRequest, boolean isIdentity, boolean isUser, boolean isAdmin, boolean isRestricted) {
         if (signedRequest == null)
             throw new IllegalArgumentException("SignedRequest cannot be null for authenticated GoofyAuth");
 
         this.signedRequest = signedRequest;
         this.isAdmin = isAdmin;
         this.isUser = isUser;
+        this.isRestricted = isRestricted;
         this.isIdentity = isIdentity;
         isAuthenticated = true;
         authorities = new ArrayList<>();
@@ -46,6 +49,8 @@ public class GoofyAuth implements Authentication {
             authorities.add(new SimpleGrantedAuthority("ROLE_" + ROLES.REGISTERED_USER));
         if (isAdmin)
             authorities.add(new SimpleGrantedAuthority("ROLE_" + ROLES.ADMIN));
+        if (isRestricted)
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + ROLES.RESTRICTED));
     }
 
     @Override
@@ -68,7 +73,7 @@ public class GoofyAuth implements Authentication {
         if (signedRequest == null)
             return null;
 
-        return new GoofyAuthUser(signedRequest.handle(), isIdentity, isUser, isAdmin, signedRequest);
+        return new GoofyAuthUser(signedRequest.handle(), isIdentity, isUser, isAdmin, isRestricted, signedRequest);
     }
 
     @Override

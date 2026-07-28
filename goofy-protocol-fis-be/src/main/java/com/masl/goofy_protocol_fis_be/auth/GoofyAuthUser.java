@@ -20,6 +20,8 @@ public class GoofyAuthUser implements Principal {
 
     private Boolean admin;
 
+    private Boolean restricted;
+
     private SignedRequest signedRequest;
 
     @Override

@@ -58,7 +58,7 @@ public class IdentityStorageEndpoint {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
+    @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
     @FisEndpoint(summary = "Sets an Identity Entry for a Handle", description = "If the handle isn't used in any other entry it will be saved in the users identity storage. <br>The entry request needs to have the encKeypair Data signed with the public key of the identity to be added to make sure it belongs to the user. <br>If the handle has an entry by the user, it will simply get updated")
     public void setEntry(@Valid @RequestBody IdentityStorageEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws InvalidPublicKey, InvalidSignedObject, NotMatchingPublicKey, IdentityEntryAlreadyExists, IdentityEntryInvalid, IdentityEntryQuotaExceeded {
         // Check Handle
@@ -116,7 +116,7 @@ public class IdentityStorageEndpoint {
 
     // TODO: Don't make it a two step process but enforce that the data has been exported atleast 72h before attempting to delete the entry (IF IT IS NOT EMPTY -> then it doesnt matter)
     @DeleteMapping("/{handle}")
-    @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
+    @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
     @FisEndpoint(summary = "Deletes the Identity Entry of the Users Storage if it exists")
     public void deleteEntry(@PathVariable String handle, @AuthenticationPrincipal GoofyAuthUser auth) {
         identityRepository.deleteByCreatedByHandle_AndHandle(auth.getHandle(), handle);

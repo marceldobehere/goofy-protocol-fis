@@ -273,4 +273,6 @@ class IdentityStorageTests {
 					});
 		}
 	}
+
+	// TODO: Test Restricted User cannot insert, delete, or update entries
 }

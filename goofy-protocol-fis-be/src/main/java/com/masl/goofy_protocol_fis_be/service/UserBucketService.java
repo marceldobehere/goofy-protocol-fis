@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
-// TODO: Test
 @Service
 public class UserBucketService {
     private static final Logger log = LoggerFactory.getLogger(UserBucketService.class);

@@ -30,7 +30,7 @@ public class LoginStorageEndpoint {
     }
 
     @PostMapping("/{usernameHash}")
-    @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
+    @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
     @FisEndpoint(summary = "Sets a Login Entry for a Username Hash", description = "If the Username is available, it deletes all previous Entries by the User/Handle and sets the Login Entry for the Username Hash.<br>The Data will be stored in Plaintext so the User needs to encrypt it!")
     public void setEntry(@PathVariable String usernameHash, @Valid @RequestBody String encKeypair, @AuthenticationPrincipal GoofyAuthUser auth) throws LoginEntryAlreadyExists, LoginEntryInvalid {
         LoginStorageEntry oldEntry = entryRepository.findByUsernameHash(usernameHash);
@@ -54,7 +54,7 @@ public class LoginStorageEndpoint {
     }
 
     @DeleteMapping
-    @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
+    @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
     @FisEndpoint(summary = "Deletes all Login Entries for the current User/Handle")
     public void deleteEntry(@AuthenticationPrincipal GoofyAuthUser auth) {
         entryRepository.deleteAllByCreatedByHandle(auth.getHandle());

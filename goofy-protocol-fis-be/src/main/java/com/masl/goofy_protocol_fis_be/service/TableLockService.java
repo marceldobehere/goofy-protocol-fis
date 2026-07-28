@@ -16,7 +16,6 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-// TODO: Test
 @Service
 public class TableLockService {
     private static final Logger log = LoggerFactory.getLogger(TableLockService.class);

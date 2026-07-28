@@ -103,4 +103,6 @@ class RegistrationTests {
 		User user = userRepository.findById(handleCrypto.deriveHandle(keypair.pub().serialize())).orElse(null);
 		assertThat(user).isNull();
 	}
+
+	// TODO: Test isRegistrationCodeValid
 }

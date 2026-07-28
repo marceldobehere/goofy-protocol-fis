@@ -16,7 +16,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-// TODO: Test
 @Service
 public class FileStorageService {
     private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);

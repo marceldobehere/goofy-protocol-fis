@@ -16,4 +16,6 @@ public class ServiceTableQueryResultDto {
     private TableColumnDto.Type[] colTypes;
     @NotNull
     private Object[][] rows;
+    @NotNull
+    private Boolean resultTruncated; // Was the result truncated by any sort of limit (user defined or by the quota)
 }

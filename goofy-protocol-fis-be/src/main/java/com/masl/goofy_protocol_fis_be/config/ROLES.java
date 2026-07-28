@@ -13,10 +13,14 @@ public class ROLES {
     // Administrator
     public static final String ADMIN = "ADMIN";
 
+    // Restricted User
+    public static final String RESTRICTED = "RESTRICTED";
+
     public enum AuthRoleEnumDto {
         OUTSIDE_ENTITY,
         REGISTERED_IDENTITY,
         REGISTERED_USER,
-        ADMIN
+        ADMIN,
+        RESTRICTED
     }
 }

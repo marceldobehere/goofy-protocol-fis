@@ -308,6 +308,14 @@ public class UserDbService {
 
     private record PrepStatementColValue(TableColumnDto.Type type, Object value) {}
 
+    private static int countWhereParts(TableWhereConditionPart wherePart) {
+        return switch (wherePart.getType()) {
+            case VAL, COL -> 1;
+            case L_AND, L_OR, M_ADD, M_SUB, M_MUL, M_DIV, M_MOD, C_EQ, C_NEQ, C_GT, C_GE, C_LT, C_LE, LIKE, COALESCE -> Arrays.stream(wherePart.getConditionParts()).mapToInt(UserDbService::countWhereParts).sum();
+            case L_NOT, M_FLOOR, M_CEIL, M_ABS -> countWhereParts(wherePart.getConditionParts()[0]);
+        };
+    }
+
     private static String createWherePart(TableWhereConditionPart wherePart, Map<String, TableColumnDto> cols, List<PrepStatementColValue> newValues) throws SQLException {
         switch (wherePart.getType()) {
             case VAL -> {
@@ -380,23 +388,53 @@ public class UserDbService {
         }
     }
 
-    private static PreparedStatement createWhereStatement(Connection conn, String firstPart, List<PrepStatementColValue> prevValues, Map<String, TableColumnDto> cols, TableBasicQueryDto basicQuery, BaseQuotaProperties userQuota) throws SQLException {
+    private static Integer getWhereLimit(boolean isQuery, BaseQuotaProperties userQuota, TableBasicQueryDto basicQuery, boolean addExtra) {
+        Integer basicQueryLimit = basicQuery == null ? null : basicQuery.getLimit();
+        if (isQuery) {
+            int maxLimit = userQuota.getTableQuery().getMaxResultCount();
+            int wantedLimit = basicQueryLimit == null ? maxLimit : basicQueryLimit;
+            return Math.clamp(wantedLimit, 0, maxLimit) + (addExtra ? 1 : 0); // +1 will be used for truncation checks
+        }
+        return basicQueryLimit == null ? null : Math.max(basicQueryLimit, 0);
+    }
+
+    private static PreparedStatement createWhereStatement(Connection conn, String firstPart, List<PrepStatementColValue> prevValues, Map<String, TableColumnDto> cols, TableBasicQueryDto basicQuery, boolean isQuery, BaseQuotaProperties userQuota) throws SQLException {
         StringBuilder fullQueryBuilder = new StringBuilder();
         fullQueryBuilder.append(firstPart);
 
-        // TODO: Check against Query Quotas
         List<PrepStatementColValue> newValues = new ArrayList<>();
         if (basicQuery != null) {
             // Where
             if (basicQuery.getWhere() != null) {
+                // Check Where parts
+                if (countWhereParts(basicQuery.getWhere()) > userQuota.getTableQuery().getMaxConditionCount())
+                    throw new SQLException("Where query has too many conditions, max count: " + userQuota.getTableQuery().getMaxConditionCount());
+
                 fullQueryBuilder.append(" WHERE ");
                 fullQueryBuilder.append(createWherePart(basicQuery.getWhere(), cols, newValues));
             }
 
             // Sort By
             if (basicQuery.getSortByCols() != null && basicQuery.getSortByCols().length > 0) {
-                // TODO: Check for cols and order being identical
-                // TODO: Check for col existence
+                // Check Cols
+                if (basicQuery.getSortByCols().length != basicQuery.getSortOrders().length)
+                    throw new SQLException("Sort by query has mismatched columns and orders, count: " + basicQuery.getSortByCols().length + " vs " + basicQuery.getSortOrders().length);
+                if (basicQuery.getSortByCols().length > cols.size())
+                    throw new SQLException("Sort by query has too many columns, max count: " + cols.size());
+
+                // Check Col Names
+                for (var colName : basicQuery.getSortByCols()) {
+                    if (colName == null)
+                        throw new SQLException("Sort by query has null column name");
+                    if (!cols.containsKey(colName))
+                        throw new SQLException("Sort by column " + colName + " does not exist in the table");
+                }
+
+                // Check for Null Orders
+                for (var colOrder : basicQuery.getSortOrders())
+                    if (colOrder == null)
+                        throw new SQLException("Sort by query has null sort order");
+
                 fullQueryBuilder.append(" ORDER BY ");
                 StringJoiner sortJoiner = new StringJoiner(", ");
                 for (int i = 0; i < basicQuery.getSortByCols().length; i++) {
@@ -407,23 +445,23 @@ public class UserDbService {
                 fullQueryBuilder.append(sortJoiner);
             }
 
-            // TODO: Add Default Limit if it doesnt exist and if it does exist the use min of limit and quota limit
             // Limit
-            if (basicQuery.getLimit() != null) {
-                // TODO: Bounds Check
+            Integer limit = getWhereLimit(isQuery, userQuota, basicQuery, true);
+            if (limit != null) {
                 fullQueryBuilder.append(" LIMIT ?");
-                newValues.add(new PrepStatementColValue(TableColumnDto.Type.INT, basicQuery.getLimit()));
+                newValues.add(new PrepStatementColValue(TableColumnDto.Type.INT, limit));
             }
-
 
             // Offset
             if (basicQuery.getOffset() != null) {
-                // TODO: Bounds Check
                 fullQueryBuilder.append(" OFFSET ?");
-                newValues.add(new PrepStatementColValue(TableColumnDto.Type.INT, basicQuery.getOffset()));
+                newValues.add(new PrepStatementColValue(TableColumnDto.Type.INT, Math.max(0, basicQuery.getOffset())));
             }
         }
         fullQueryBuilder.append(";");
+
+        if (fullQueryBuilder.toString().length() > userQuota.getTableQuery().getMaxQueryLength())
+            throw new SQLException("Where query is too long, max length: " + userQuota.getTableQuery().getMaxQueryLength());
 
         // Create. Populate and return statement
         PreparedStatement statement = conn.prepareStatement(fullQueryBuilder.toString());
@@ -435,18 +473,24 @@ public class UserDbService {
         return statement;
     }
 
-    private static ServiceTableQueryResultDto fromResultSet(ResultSet rs, List<TableColumnDto> resultCols) throws SQLException {
+    private static ServiceTableQueryResultDto fromResultSet(ResultSet rs, List<TableColumnDto> resultCols, int truncLimit) throws SQLException {
         ServiceTableQueryResultDto res = new ServiceTableQueryResultDto();
         res.setColNames(resultCols.stream().map(TableColumnDto::getColName).toArray(String[]::new));
         res.setColTypes(resultCols.stream().map(TableColumnDto::getType).toArray(TableColumnDto.Type[]::new));
+        boolean needTruncation = false;
 
         // Read Results
         List<List<Object>> rows = new ArrayList<>();
         while (rs.next()) {
+            // Truncate if needed
+            if (rows.size() >= truncLimit) {
+                needTruncation = true;
+                break;
+            }
+
             List<Object> row = new ArrayList<>();
             for (int i = 0; i < resultCols.size(); i++) {
                 TableColumnDto colDto = resultCols.get(i);
-                // TODO: potentially update to use the correct datatype from the start?
                 String rawVal = rs.getString(i + 1);
                 Object value = TableColumnDto.parseRawStringSqlValue(rawVal, colDto.getType());
                 row.add(value);
@@ -454,6 +498,7 @@ public class UserDbService {
             rows.add(row);
         }
         res.setRows(rows.stream().map(List::toArray).toArray(Object[][]::new));
+        res.setResultTruncated(needTruncation);
         return res;
     }
 
@@ -482,9 +527,10 @@ public class UserDbService {
             // Create Query String
             String selectQuery = "SELECT " + colDefs + " FROM \"" + tableName + "\"";
 
-            try (PreparedStatement statement = createWhereStatement(conn, selectQuery, List.of(), cols, select.getBasicQuery(), userQuotas)) {
+            try (PreparedStatement statement = createWhereStatement(conn, selectQuery, List.of(), cols, select.getBasicQuery(), true, userQuotas)) {
                 ResultSet rs = statement.executeQuery();
-                return fromResultSet(rs, resultCols);
+                Integer limit = getWhereLimit(true, userQuotas, select.getBasicQuery(), false);
+                return fromResultSet(rs, resultCols, limit);
             }
         }
     }
@@ -512,7 +558,7 @@ public class UserDbService {
             // Create Query String
             String updateQuery = "UPDATE \"" + tableName + "\" SET " + updateDefs;
 
-            try (PreparedStatement statement = createWhereStatement(conn, updateQuery, updateVals, cols, updateDto.getBasicQuery(), userQuotas)) {
+            try (PreparedStatement statement = createWhereStatement(conn, updateQuery, updateVals, cols, updateDto.getBasicQuery(), false, userQuotas)) {
                 return statement.executeUpdate();
             }
         }
@@ -527,7 +573,7 @@ public class UserDbService {
             // Create Delete Query String
             String deleteQuery = "DELETE FROM \"" + tableName + "\"";
 
-            try (PreparedStatement statement = createWhereStatement(conn, deleteQuery, List.of(), cols, queryDto,userQuotas)) {
+            try (PreparedStatement statement = createWhereStatement(conn, deleteQuery, List.of(), cols, queryDto, false, userQuotas)) {
                 return statement.executeUpdate();
             }
         }

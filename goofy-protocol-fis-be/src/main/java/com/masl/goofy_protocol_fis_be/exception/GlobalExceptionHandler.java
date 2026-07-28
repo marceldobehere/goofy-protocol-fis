@@ -3,6 +3,7 @@ package com.masl.goofy_protocol_fis_be.exception;
 import com.masl.goofy_protocol_fis_be.exception.base.BaseClassFisException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -64,7 +65,16 @@ public class GlobalExceptionHandler {
                 .body("An unexpected Error occurred!");
     }
 
-    // TODO: Add Handler for DataIntegrityViolationException (and maybe other related ones)
+    // Handle DataIntegrityViolation
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        log.error("DataIntegrityViolationException: ", ex);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.TEXT_PLAIN)
+                .body("Data integrity violation occurred: " + ex.getMessage());
+    }
 
     // Validation Exceptions
 

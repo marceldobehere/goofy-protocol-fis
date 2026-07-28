@@ -27,9 +27,7 @@ public class User {
     @ColumnDefault("false")
     private boolean admin;
 
-    // Future thing to temporarily block users from doing stuff (if the user is reported, or otherwise temporarily restricted
-    // Should ideally put the user in a basically read-only mode
-    // TODO: Implement role or auth checks for that and add to required endpoints
+    // Puts the user in a read only mode temporarily, for example if the user is being reported or investigated
     @Column(nullable = false)
     @ColumnDefault("false")
     private boolean restricted;

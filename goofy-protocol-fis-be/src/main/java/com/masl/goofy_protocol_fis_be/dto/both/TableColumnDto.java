@@ -208,7 +208,6 @@ public class TableColumnDto {
     }
 
     private static String escapeSqlString(String s) {
-        // TODO: Check if the code is secure from injection attacks, for now it looks ok
         String escaped = s.replace("'", "''");
         return "'" + escaped + "'";
     }

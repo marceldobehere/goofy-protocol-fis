@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
 import java.util.Set;
@@ -55,4 +56,10 @@ public class ServiceEntry {
 
     @OneToMany(mappedBy="linkedServiceEntry", orphanRemoval = true, cascade = CascadeType.REMOVE)
     private Set<ServiceTableEntry> serviceTableEntries;
+
+    // Use this when trying to write to a service / table / bucket entry, to check if the user behind it is restricted
+    public static void checkForRestrictedAccess(User createdBy) {
+        if (createdBy.isRestricted())
+            throw new AccessDeniedException("The User is currently restricted and cannot access this Service Entry");
+    }
 }
