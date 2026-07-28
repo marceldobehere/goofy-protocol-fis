@@ -1,130 +1,28 @@
 # Goofy Protocol FIS (Federated Identity Server) Backend
-
 WIP "Reference" Implementation of a FIS for Goofy Protocol.
+
 
 ## General Infos
 (TODO)
 
-## TODOs (Currently)
-* Backend Add Setting for User to set a custom frontend URL and use that when redirecting stuff.
-* Also have the Backend Root Redirect set the Backend URL inside the Frontend, so that the Frontend contacts the correct backend, lol
-* Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
-* Work on more Implementation Stuff
-  * Implement User Account Deactivation
-  * Implement User Account Deletion → Should safely delete everything and not cause DB issues (Cache too)
-    * Also potentially enforce having done an account-export within 7 days of trying to delete the account to avoid unwanted data loss
-  * Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS / Maybe using Bucket4j
-  * Implement Data Export (How to treat Buckets and Tables?) (Probably export everything as a ZIP and assume the download should be ok)
-  * Implement Data Import? (How to treat Buckets and Tables?)
-    * When doing exports/imports of a table, don't use raw db files. Also when importing large things look into how to best do it, given the upload limits
-* Add Synchronised Block for Post & Put Operations to avoid Race Conditions (Especially for Bucket & Table Stuff and everything quota related!!)
-  * Ideally have a synchronized block with a lock per relevant Object (User, Service Entry / Bucket / Table, Table Entry, etc.)
-  * Should mark the Endpoints as `@Transactional` and either use a `ReentrantLock` or a general Lock for (e.g) the Service UUID or the `@Lock` annotation.
-* Implement Exceptions for unsupported Crypto Requests
-* Add Home / Explanation Page to FIS Frontend
-* Add Config for HandleCrypto Cache/Maps (size, expiration, etc.)
-* Add Max Unresolved Registration Requests and Reports Config + Error Codes
-* Add Config for regular pruning of old unresolved Registration Requests
-* Prepare Docker Stuff for hosting it and test#
-* Create 2 FIS Instances (one main instance and one demo for others to try out, which is very limited but ppl can switch over or selfhost later)
-* Create Dockerfile and example docker-compose.yml for hosting + put the normal compose in the gitignore
-* Create extra DB Table for known FIS Domains ?
-* Look into ML-KEM using Seed for Private key and compatibility with JS (Potentially using Rust ML-KEM compiled to WASM) (Will have to see)
+A rough explanation on the Goofy Protocol and its pros/cons can be found [here](explanation.md).
 
-## TODOs (Later)
-* Add a simple "Notification" / Warning System that alerts Users when their storage quotas are about to be exceeded or if they have some content deleted or are restricted
-* Potentially look into having custom JWTs or something to avoid signed request overhead when accessing tables?
-* Change some FIS Exceptions to use more detailed HTTP Error Codes (404 for not found, etc.)
-* Add Caching to relevant Endpoints with relevant durations (Handle Lookup, General Info, Maybe redirects, etc.)
-* Look into indexing columns for performance in user DBs
-* Add Quota Overviews for Users, showing all Storage related stuff for an entire user/identity (+ Useful for Admins having an overview)
-* Create a sample Endpoint / document the potential runtime errors (Mostly in Signed Request filtering / Forbidden)
-* Potentially add examples to the DTOs using annotations or so for swagger
-* Add Exporting User Keypair with a password + Importing a password encrypted Keypair (For safety reasons)
-* Allow Securing your Fis Frontend Client with a password too, (Encrypted Local Storage)
-* Maybe Add Config Parameter to disable Request Signatures (only for dev/test profiles) and create Bruno Workspace
-* Create automated API Spec generation in PDF/MD format
-* Add Swagger examples for DTOs
-* Implement silly Rate Limiting (only for prod/develop), Base: https://www.baeldung.com/spring-bucket4j
-  * Requests without a special cookies token will have to wait some time before their request is processed / get extra low prio / strong rate limiting, then they will get the special cookie
-  * Ideally Requests without the special cookie don't even get their handle derived/checked and get put on a queue with max size (random elimination) or so to prevent DoS attacks
-  * Requests with the cookie will get individual rate limiting based on their unique cookie (if valid) / maybe also based on the handle
-  * Add to all relevant endpoints
-  * Check if that works well if the clients use fetch requests, then idk if the cookies will be set for the request
-* Move the Crypto Core Lib into a separate package with tests, known values and pom.xml
-* Look into Canonical Builds
-* Potentially overhaul the simplistic quota system and let users set quotas for specific entries too.
-* Optimize Quota & Storage Calculations in Bucket and probably Table Service
-* Look into how to handle a whole FIS instance moving to a different domain
-* Maybe add Access Logs to Bucket and Table entries (like last 10000 access or so) for reporting purposes
+## Notes
+This is still very WIP!
 
-## Short Rundown of Goofy Protocol
-(TODO, This will probably be moved to the main Goofy Protocol Repo later)
-
-
-### (Personal) Issues with current stuff
-Currently, there are already Federated Services for different things (Social Media like Mastodon, Chats like Matrix, etc.) but there are a few issues:
-* The Services work very differently and are not really compatible with each other
-* Cryptographic algorithms, parameters, practices and standards and usage vary a lot between different services
-* Users cannot necessarily have the same identity (or even handle/username/tag format) across different services
-* Most of the identities are bound to a specific Domain and do not directly have anything (Crypto Keys, etc.) linked to them
-* The identities are not really portable, so if a user wants to switch to another service, they have to create a new identity and start over, losing all their data and connections
-  * Additionally, you often need to provide your email or something to every single service, which is not ideal for privacy and security
-* User Data for Services is also not usually portable, which makes moving/importing/exporting all data painful
-* User Data for Services is stored in different formats in different locations, usually at the Service itself, which makes managing all of your data more difficult
-  * Additionally, if for a service you store all data client side, synchronization across devices can get complicated and have issues
-* The hosting of some of the services can be complicated and cumbersome, even more if you have performance in mind
-  * As well as needing to set up and provision plenty of storage for every single service and managing everything separately
-
-E2EE Encryption is already well done by applications like Signal and Matrix, though things like Matrix can be lacking in UI/UX and not intuitive.
-There are also projects related to Federated Storage, like Solid Pods or IPFS.
-But those all solve one part of the problem, while not being directly compatible and still have problems related to global identities.
-
-
-### What does Goofy Protocol offer
-Goofy Protocol defines identities/handles to be globally unique (but human-readable with hopefully enough bits to avoid collision) and directly bound to a cryptographic identity (public keys).
-This means that a user can have the same identity across different services without issues. 
-Additionally, it means that an identity is no longer tied to a domain or service, which allows portability and freedom for the user to move between different domains.
-
-The identities as well as cryptographic algorithms and parameters are defined in a standard way, which is compatible across services and platforms. 
-Also having (wip) support for Post Quantum Cryptography out of the box.
-
-As for data storage, Goofy Protocol defines the FIS (Federated Identity Server) to be a central point for storing and managing all data related to a user.
-The FIS stores all data for a user (Full Identity Keypairs (encrypted at rest), Public Data, Tables for structured data and Buckets for files) and allows the user to access/manage that data as well as share access with other users and services.
-This means that different services should be built to let users decide where their data is stored and how it is shared, while still being compatible with other services.
-The FIS also allows for several identities to be managed by a user, to allow for privacy/isolation to the services themselves. (Or can use different FIS instances too)
-
-If a person wants to host several services for a group of people, they can host their own FIS and have the services check the identities against the FIS.
-This means that for example only users who registered on the group FIS can use the services and also don't need to have different credentials across the services.
-
-
-### Downside of Goofy Protocol
-There are some downsides / tradeoffs that need to be considered:
-* The identity is not bound to a domain/service but to a keypair, similar to a cryptowallet
-  * If you completely lose your keypair, you lose your identity. You cannot do anything with it. (You can of course talk to the FIS owner and at least try to get an export your data)
-  * If your keypair is compromised, then your identity is compromised and the only thing you can do is deactivate/delete your account
-  * Since your keypair is mapped to a cryptographic keypair, it is fixed to that
-    * This means that the Algorithm used for your identity cannot be changed without changing your identity.
-    * This is relevant for the choice of algorithm as well as post quantum security
-* The FIS of your choice will be the central store of your data
-  * If the FIS stops working, your data could be lost. (Should have exports/backups)
-  * If the FIS is compromised or malicious, then data could be deleted, manipulated or shared.
-    * Private data should be encrypted with your own keypair
-    * Important public data should be signed with your own keypair
-    * If you handle your data safely, the only problem could be data loss. Only use FIS instances you trust 
-  * Some FIS Instances can and realistically will impose limits (Data Storage, Quotas, etc.) which could be too limiting for you.
-  * Keep in mind, you should always be able to move to a different instance if you want to
-* Your identity keypairs get used a lot for all sorts of activities and could potentially be accessible during the runtime of clients
-  * You should trust your device and make sure it is not compromised
-  * You should only use Service & FIS clients that you trust and can check the code of. Ideally statically hosting them yourself
-  * If you don't fully trust a Service / Client, you should use a separate/isolated identity for it
-
-
-There has been some thought put into having a Root Identity Keypair, which is only used to sign a temporary keypair for use in cryptographic stuff, which would shift the issues about keypair algos being tied to one single identity and the issue with compromising to the Root Identity, which could be a large PQC Keypair for maximum security.
-Though this introduces a lot of extra complexity and overhead so it is not implemented in this system for now. Maybe at some future point it will.
 
 ## Features
 (TODO)
+
+
+## Basic Layout
+The main components of the FIS are:
+* Crypto Core Lib (Crypto Core Library)
+  * Internally using BouncyCastle
+* Backend (Spring Boot Application)
+* Main DB (H2 + JPA)
+* Storage System (File Storage + User DBs) (Currently using the local FS)
+  * User DBs (H2)
 
 ## Setup
 (TODO)
@@ -137,8 +35,10 @@ Though this introduces a lot of extra complexity and overhead so it is not imple
 * Get the Admin Register Code from the Logs and Register your Admin Account
 * Profit?
 
-## Notes
-(TODO)
+
+## TODOs
+The TODOs can be found [here](todos.md).
+
 
 ## Profiles
 There are currently 3 Profiles:
@@ -148,8 +48,6 @@ There are currently 3 Profiles:
 
 The dev and prod Profiles use different databases and the test Profile uses an in-memory database for testing purposes.
 
-### File Storage
-(TODO)
 
 ## ROLES
 There are currently 5 Roles defined in the system: (They are not mutually exclusive)
@@ -170,8 +68,6 @@ I will at some point make the source include a PDF or Markdown file with the cur
 
 Later on the version will be copied to the base goofy-protocol repository.
 
-### Table/Bucket Access
-(TODO)
 
 ### Error Codes
 For now, Errors are split into ClientErrors and ServerErrors, which all use unique Error Codes and have the following structure:
@@ -188,7 +84,7 @@ The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be
 
 
 ## Implementation Details
-(TODO)
+If you plan to write your own implementation of a FIS, you can use this as a reference implementation and look into the code to see how things are implemented.
 * Firstly work on the Crypto Core Lib, either porting it or creating it and then testing it properly (Known Value Tests are quite useful)
 * Implement the Exception Handling System so that the Error Codes and Structures match
 * Implement the Signed Request filtering and Role System
@@ -209,238 +105,29 @@ The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be
   * Admin Endpoints
 * Keep testing and use the reference implementation for the client and backend as help.
 
+### Cryptography
+The FIS supports the main crypto algos outlined in the Goofy Protocol, which currently are:
+* Symmetric
+  * AES-128-GCM
+  * AES-196-GCM
+  * AES-256-GCM (**Recommended**)
+  * ChaCha20 (**Recommended**)
+* Asymmetric 
+  * RSA 2048
+  * RSA 3072 (**Recommended**)
+  * RSA 4096 (**Recommended**)
+  * EC_P256
+  * EC_P384
+  * EC_C25519 (**Recommended**)
+  * ML-KEM (512) + ML-DSA (44)
+  * ML-KEM (768) + ML-DSA (65)
+  * ML-KEM (1024) + ML-DSA (87)
 
-
-### Symmetric Cryptography
-(TODO)
-
-#### Supported Algorithms
-Supported types can be seen in the `SymmCryptoType` Enum, currently they are:
-* AES-128-GCM
-* AES-196-GCM
-* AES-256-GCM (**Recommended**)
-* ChaCha20 (**Recommended**)
-
-#### Symmetrically Encrypted Data Format
-(TODO)
-
-#### Algorithm Implementations
-(TODO)
-
-Supported Types:
-* AES-128-GCM
-* AES-196-GCM
-* AES-256-GCM
-* ChaCha20
-
-For now, you can look into the [Implementations](src/main/java/com/masl/goofy_protocol_core/crypto/isolated/symm).
-
-
-
-
-
-
-
-### Asymmetric (/Hybrid) Cryptography
-(TODO)
-
-#### Supported Algorithms
-Supported types can be seen in the `AsymmCryptoType` Enum, currently they are:
-* RSA 2048
-* RSA 3072 (**Recommended**)
-* RSA 4096 (**Recommended**)
-* EC_P256
-* EC_P384
-* EC_C25519 (**Recommended**)
-* ML-KEM (512) + ML-DSA (44)
-* ML-KEM (768) + ML-DSA (65)
-* ML-KEM (1024) + ML-DSA (87)
-
-##### Important Notes
-Currently, the support for `ML-KEM` & `ML-DSA` on Browsers is lacking, so for now it should be avoided until the support is better and I have implemented it in the JS Lib.
-
-Additionally, `EC_P256` and `EC_P384` are currently not supported in the JS Lib either, and instead `EC_C25519` should be used, as that's the default anyway.
-
-
-#### Public Split Key Format
-(TODO)
-
-`PUB.[TYPE].[SIG KEY].[ENC KEY].[ENC SIG]` / `PUB.[TYPE].[SIG KEY].X.X`
-
-In more Detail:
-```
-[TYPE] - The Type of Algorithm(s) used for the Split Keypair
-[SIG KEY] - The Public Key used for signing, Format: X509EncodedKeySpec as Base64 URLEncoded String
-[ENC KEY] - The Public Key used for encryption, Format: X509EncodedKeySpec as Base64 URLEncoded String
-[ENC SIG] - The Signature of the Public Key used for encryption, Format: Signature Bytes as Base64 URLEncoded String
-```
-Note: Some algorithms (RSA, EC) do not need a separate encryption key, so the `[ENC KEY]` and `[ENC SIG]` fields are both replaced with `` in those cases.
-Technically, you can add them anyway, but it wastes space and is not needed.
-
-The Encoding Signature is used to verify that the Public Key used for encryption is valid 
-and was generated by the same entity that generated the Public Key used for signing.
-
-
-Examples:
-```
-RSA 2048 (~410 bytes)
-PUB.RSA_2048.MIIBIjAt<...>IDAQAB.X.X
-
-EC 256 (~140 bytes)
-PUB.EC_256.MFkwEwYHK<...>fhckKxUUDcQ==.X.X
-
-ML-KEM/DSA 512/44 (~6126 bytes)
-PUB.MLKEMDSA_512_44.MIIFMjA<...>8EML0hY=.MIIDM<...>PJnu_MKWR.8dC<...>A0gMEA=
-```
-
-#### Private Split Key Format
-(TODO)
-
-
-#### Signature Format
-Normally a Base64 URLEncoded String of the resulting Signature Bytes. 
-The underlying Format depends on the Signature Algorithm used, which is defined in the Public Split Key.
-
-
-#### Asymmetrically Encrypted Data Format
-(TODO)
-
-
-#### Algorithm Implementations
-(TODO)
-
-Supported Types:
-* RSA 2048
-* RSA 3072
-* RSA 4096
-* EC_P256
-* EC_P384
-* EC_C25519
-* ML-KEM (512) + ML-DSA (44)
-* ML-KEM (768) + ML-DSA (65)
-* ML-KEM (1024) + ML-DSA (87)
-
-Asymmetric Cryptography is usually used in a hybrid way, where the actual data is symmetrically encrypted and the symmetric key is asymmetrically encrypted with the public key of the recipient.
-The Implementations rely on the Symmetric Cryptography Implementations for the actual data encryption and decryption.
-Currently, by default `AES_GCM_256` is used for the symmetric encryption of the data.
-One outlier for the statement above is the Asymmetric Encryption using P-256/384, as it uses `ECIESwithAES-CBC` directly.
-
-
-For now, you can look into the [Implementations](src/main/java/com/masl/goofy_protocol_core/crypto/isolated/asymm).
-
-
-
-
-
-
+The details of the implementation alongside other parts can be found [here](crypto.md).
 
 
 ### User Handle
-The User Handle is a unique identifier for a user (or rather a keypair) in the Goofy Protocol. 
-It is used to identify a user and their associated public split key and is globally unique across all domains.
-
-The handle is tightly coupled to the public key by being derived from it, so it is not possible to change the handle without changing the public key and vice versa.
-This also means that the handle can always be verified to be correct by deriving it from the public key and comparing it to the handle.
-
-The specific derivation is specified below in more detail.
-
-Format: `[word]_[word]NNNNN` / `[word]_[word]_[word]NNNNN` / `[word]_[word]_[word]_[word]NNNNN`
-
-In more Detail:
-```
-[word] - A Word chosen from the List in `handle_words.json (there can be 2-4 words in a handle)`
-NNNNN - A Number from 0 to 99999
-```
-
-Example: `beray_drubs_pant57107`
-
-#### Domain Parts
-Usually, handles do not have the domain attached and shouldn't be stored as one string with the domain attached.
-This is because the handle should be portable and not tied to a specific domain.
-Of course the current domain for a handle should be stored, just separately and only used when needed. (For example looking up the public split key)
-
-A username with an attached domain has the following format:
-`[handle]@[domain]`
-
-Example: `beray_drubs_pant57107@fis.rocc.systems`
-
-NOTE: When sending a signed request with only your handle, it is advised to attach the domain, if there's a chance the Server doesn't know it yet.
-If the server cannot resolve your handle, it will throw an error and ideally your client would send the handle with the domain attached.
-
-NOTE: The domain technically allows to have the port defined too, useful for testing with localhost.
-
-
-#### Cryptographic Handle Derivation
-(TODO)
-
-
-See [Example Implementation](src/main/java/com/masl/goofy_protocol_core/crypto/connected/HandleCrypto.java) for a working example of the Handle Derivation.
-
-
-
-#### Strength
-(TODO)
-```
-// Strength of handles
-// c = 2 -> ~44 bit (15000^2 * 10^5 = 2.3e13 combinations)
-// c = 3 -> ~58 bit (15000^3 * 10^5 = 3.4e17 combinations)
-// c = 4 -> ~72 bit (15000^4 * 10^5 = 5.1e21 combinations)
-```
-
-
-### Signed Requests
-(TODO)
-
-#### Parts
-(TODO)
-
-#### Headers
-The following headers are needed for Signed Requests:
-* `X-Goofy-Public-Key`: The Public Split Key of the Sender (format defined above)
-* `X-Goofy-Handle`: The Handle of the Sender (format defined above, can have a domain attached)
-* `X-Goofy-Signature`: The Signature of the Request (format defined above)
-* `X-Goofy-Id`: A random Id in the form of a Long (64bit) Integer, used to prevent replay attacks (The server won't store them forever usually)
-* `X-Goofy-Valid-Until`: A timestamp in the form of a Long (64bit) Integer representing the time in milliseconds since epoch, used to enforce a time limit on the validity of the request
-
-The default validity of a Signed Request should be 60 seconds. This is because surprisingly a lot of devices aren't closely synchronized with the actual time and can be off by some time. (Sometimes even multiple minutes)
-
-#### Signature
-(TODO)
-
-Servers should reject requests with a valid until timestamp, which has already passed or is too far in the future (for example >1h).
-
-#### Validity
-(TODO)
-
-
-#### Signature Sizes
-Below are some rough measurements of the average added size of the total headers using Signed Requests.
-
-Using the Public Split Key (usually larger)
-```
-RSA 2048:                       ~900 bytes
-RSA 3072:                     ~1,200 bytes
-RSA 4096:                     ~1,500 bytes
-EC_P256:                        ~350 bytes
-EC_P384:                        ~400 bytes
-EC_C25519:                      ~400 bytes
-ML-KEM (512)  + ML-DSA (44):  ~9,500 bytes
-ML-KEM (768)  + ML-DSA (65): ~13,200 bytes
-ML-KEM (1024) + ML-DSA (87): ~18,100 bytes
-```
-
-Using Handles only (in general smaller)
-```
-RSA 2048:                       ~500 bytes
-RSA 3072:                       ~600 bytes
-RSA 4096:                       ~800 bytes
-EC_P256:                        ~200 bytes
-EC_P384:                        ~250 bytes
-EC_C25519:                      ~200 bytes
-ML-KEM (512)  + ML-DSA (44):  ~3,350 bytes
-ML-KEM (768)  + ML-DSA (65):  ~4,500 bytes
-ML-KEM (1024) + ML-DSA (87):  ~6,300 bytes
-```
+The details can be found [here](handle.md).
 
 ### Login Storage
 (TODO)
@@ -452,244 +139,7 @@ The username is hashed with sha256 and encoded using Base64URL.
 ### Service Entry
 (TODO)
 
+### User/Service Storage Details (Tables & Buckets)
+The details can be found [here](storage.md).
 
-
-
-### User Tables
-(TODO)
-
-#### Table Structure
-(TODO)
-
-##### Table Datatypes
-These are the following supported datatypes for table columns:
-* `FIXED_STRING_N` - Fixed length string, where N is the length of the string 
-* `VAR_STRING_N` - Variable length string, where N is the maximum length of the string
-* `BOOLEAN` - Boolean value (true/false)
-* `TINYINT` - 8-bit signed integer
-* `SMALLINT` - 16-bit signed integer
-* `INT` - 32-bit signed integer
-* `BIGINT` - 64-bit signed integer
-* `FLOAT` - 32-bit floating point number (approx. ±3.40282347E+38F)
-* `DOUBLE` - 64-bit floating point number (approx. ±1.79769313486231570E+308)
-* `DATE` - Date value (YYYY-MM-DD)
-* `TIME` - Time value (HH:MM:SS)
-
-
-#### Table Access
-(TODO)
-
-#### Table Permissions
-(TODO)
-
-#### Table Creation
-(TODO)
-Important: Supported Datatypes, limits for columns, column names, primary key, foreign keys? (on update/delete?) (interop with different tables?), custom field indexing?  
-
-#### Table Deletion
-(TODO)
-
-#### Table Size
-
-
-#### Table Query
-To query a table, users send a structured JSON payload matching the supported DTOs. The query is limited to a subset of SQL (selection + filtering + pagination + sorting, plus aggregate-like expressions supported by the condition tree
-
-* Data Selection using the `TableSelectDto`. Contains Selected Columns and Basic Query
-* Insert using a raw JSON Object with the Column Names as Keys and the Values as Values
-* Bulk insert using the `TableMultiRowInsertDto`. Contains Columns and a List of Values
-* Update using the `TableUpdateDto`. Contains Columns, Update Values and Basic Query
-* Delete using the `BasicQueryDto`.
-
-You can find the DTOs [here](src/main/java/com/masl/goofy_protocol_fis_be/dto/request/query).
-
-The DTOs are designed to be as simple as possible, while still being able to express the needed queries.
-In general the queries are limited to a subset of SQL, which should be enough for most use cases.
-
-##### Basic Query DTO
-This DTO supports:
-* filtering via` where` (including nested boolean logic)
-* sorting via `sortByCols` (with per-column direction in `sortOrders`)
-* pagination via `limit` and `offset`
-
-```json
-{
-  "where": {...},
-  "sortByCols": [],
-  "sortOrders": [],
-  "limit": 0,
-  "offset": 0
-}
-```
-All of the fields are optional
-
-##### Where Condition Part
-This represents either:
-* A boolean expression node (L_AND, L_OR, L_NOT)
-* A comparison node (C_EQ, C_NEQ, C_GT, C_GE, C_LT, C_LE)
-* Simple value/column references (VAL, COL)
-* Additional expression nodes (M_ADD, M_SUB, M_MUL, M_DIV, M_MOD, M_FLOOR, M_CEIL, M_ABS, COALESCE, LIKE)
-
-This is the mechanism for nested conditions (AND/OR/NOT, and also expression composition like math/comparisons).
-```json
-{
-  "type": "...",
-  "conditionParts": [...],
-}
-OR
-{
-  "type": "...",
-  "colName": "...",
-}
-OR
-{
-  "type": "...",
-  "value": "...",
-  "valueType": "..."
-}
-```
-
-##### Result DTO
-The result of a query is returned as a JSON object with the following structure:
-```json
-{
-    "colNames": ["col1", "col2", ...],
-    "colTypes": ["type1", "type2", ...],
-    "rows": [
-        [val1, val2, ...],
-        [val1, val2, ...],
-        ...
-    ],
-    "resultTruncated": false
-}
-```
-
-Note: The `resultTruncated` field indicates whether the result was truncated due to a limit (either user-defined or by the quota).
-
-
-##### Examples
-Insert a row into a table
-`INSERT INTO users (id, name, age) VALUES (10, 'Ada', 18);`
-```json
-{
-  "id": 10,
-  "name": "Ada",
-  "age": 18
-}
-```
-
-Insert multiple rows into a table. Is not limited to 1000 entries!
-`INSERT INTO users (id, name, age) VALUES (10, 'Ada', 18), (11, 'Bob', 21);`
-```json
-{
-  "colNames": ["id", "name", "age"], 
-  "rows": [
-    [10, "Ada", 18],
-    [11, "Bob", 21]
-  ]
-}
-```
-
-Select rows from a table
-`SELECT id, name WHERE age >= 18 ORDER BY name ASC LIMIT 50`
-```json
-{
-  "colNames": ["id", "name"],
-  "basicQuery": {
-    "where": {
-      "type": "C_GE",
-      "conditionParts": [
-        { "type": "COL", "colName": "age" },
-        { "type": "VAL", "value": 18, "valueType": "INT" }
-      ]
-    },
-    "sortByCols": ["name"],
-    "sortOrders": ["ASC"],
-    "limit": 50
-  }
-}
-```
-
-Update rows in a table
-`UPDATE users SET status = 'active' WHERE name = 'Bob';`
-```json
-{
-  "colNames": ["status"],
-  "colValues": ["active"],
-  "basicQuery": {
-    "where": {
-      "type": "C_EQ",
-      "conditionParts": [
-        { "type": "COL", "colName": "name" },
-        { "type": "VAL", "value": "Bob", "valueType": "VAR_STRING_N" }
-      ]
-    }
-  }
-}
-```
-Note, the `VAR_STRING_N` can also be `FIXED_STRING_N`, as it doesn't matter inside of queries.
-
-Delete rows from a table
-`DELETE FROM users WHERE age < 18;`
-```json
-{
-  "basicQuery": {
-    "where": {
-      "type": "C_LT",
-      "conditionParts": [
-        { "type": "COL", "colName": "age" },
-        { "type": "VAL", "value": 18, "valueType": "INT" }
-      ]
-    }
-  }
-}
-```
-
-Select rows from a table (complicated)
-```SQL
-SELECT id, name
-FROM users
-WHERE (age >= 18 AND status LIKE 'active%')
-  AND COALESCE(last_login, DATE '1970-01-01') > DATE '2020-01-01';
-```
-
-```json
-{
-  "colNames": ["id", "name"],
-  "basicQuery": {
-    "where": {
-      "type": "L_AND",
-      "conditionParts": [
-        {
-          "type": "C_GE",
-          "conditionParts": [
-            { "type": "COL", "colName": "age" },
-            { "type": "VAL", "value": 18, "valueType": "INT" }
-          ]
-        },
-        {
-          "type": "LIKE",
-          "conditionParts": [
-            { "type": "COL", "colName": "status" },
-            { "type": "VAL", "value": "active%", "valueType": "FIXED_STRING_N" }
-          ]
-        },
-        {
-          "type": "C_GT",
-          "conditionParts": [
-            {
-              "type": "COALESCE",
-              "conditionParts": [
-                { "type": "COL", "colName": "last_login" },
-                { "type": "VAL", "value": "1970-01-01", "valueType": "DATE" }
-              ]
-            },
-            { "type": "VAL", "value": "2020-01-01", "valueType": "DATE" }
-          ]
-        }
-      ]
-    }
-  }
-}
-```
 
