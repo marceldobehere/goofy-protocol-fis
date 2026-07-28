@@ -6,6 +6,7 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
 (TODO)
 
 ## TODOs (Currently)
+* When doing exports/imports of a table, don't use raw db files. Also when importing large things look into how to best do it, given the upload limits
 * Backend Add Setting for User to set a custom frontend URL and use that when redirecting stuff.
 * Also have the Backend Root Redirect set the Backend URL inside the Frontend, so that the Frontend contacts the correct backend, lol
 * Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
@@ -13,7 +14,6 @@ WIP "Reference" Implementation of a FIS for Goofy Protocol.
   * Ideally have a synchronized block with a lock per relevant Object (User, Service Entry / Bucket / Table, Table Entry, etc.)
   * Should mark the Endpoints as `@Transactional` and either use a `ReentrantLock` or a general Lock for (e.g) the Service UUID or the `@Lock` annotation.
 * Work on Frontend
-* Work on Implementing API Endpoints + Services + DB Entities + FileStorage + DB Management + Config
 * Work on more Implementation Stuff
   * Implement User Restriction
   * Implement User Account Deactivation

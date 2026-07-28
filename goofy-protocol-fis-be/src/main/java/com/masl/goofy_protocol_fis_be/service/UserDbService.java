@@ -2,10 +2,7 @@ package com.masl.goofy_protocol_fis_be.service;
 
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableBasicQueryDto;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableSelectDto;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableUpdateDto;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableWhereConditionPart;
+import com.masl.goofy_protocol_fis_be.dto.request.query.*;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQueryResultDto;
 import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
@@ -20,7 +17,6 @@ import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-// TODO: Test
 @Service
 public class UserDbService {
     private static final Logger log = LoggerFactory.getLogger(UserDbService.class);
@@ -43,7 +39,6 @@ public class UserDbService {
         // TODO: Check DB Connections are closed / Close Server somehow
     }
 
-    // TODO: Test
     public synchronized void deleteTableEntry(ServiceEntry entry, String tableUuid) throws SQLException {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
@@ -84,6 +79,7 @@ public class UserDbService {
         return DriverManager.getConnection(url, "sa", "");
     }
 
+    // TODO: Cache this probably, and have the cache be invalidated if the table gets modified
     private List<String> getAllTables(Connection conn) throws SQLException {
         try (ResultSet rs = conn.getMetaData().getTables(null, null, "%", new String[] { "TABLE" })) {
             List<String> tables = new ArrayList<>();
@@ -93,6 +89,7 @@ public class UserDbService {
         }
     }
 
+    // TODO: Cache this probably, and have the cache be invalidated if the table gets modified
     public long getTableRowCount(ServiceEntry entry, String tableUuid) throws SQLException {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
@@ -105,6 +102,7 @@ public class UserDbService {
         }
     }
 
+    // TODO: Cache this probably, and have the cache be invalidated if the table gets modified
     public int getTableColumnCount(ServiceEntry entry, String tableUuid) throws SQLException {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
@@ -174,6 +172,10 @@ public class UserDbService {
         }
     }
 
+    public Map<String, TableColumnDto> getAllTableColumnsAsMap(ServiceEntry entry, String tableUuid) throws SQLException {
+        return getAllTableColumns(entry, tableUuid).stream().collect(Collectors.toMap(TableColumnDto::getColName, col -> col));
+    }
+
     public void createTableEntry(ServiceEntry entry, ServiceTableEntryDto tableEntryDto) throws SQLException {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableEntryDto.getTableUuid());
@@ -206,9 +208,8 @@ public class UserDbService {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
 
-            // TODO: Optimize the Col retrieval in the future
             // Get Table Columns and Insert Entries
-            Map<String, TableColumnDto> cols = getAllTableColumns(entry, tableUuid).stream().collect(Collectors.toMap(TableColumnDto::getColName, col -> col));
+            Map<String, TableColumnDto> cols = getAllTableColumnsAsMap(entry, tableUuid);
             var entries = values.entrySet().stream().toList();
 
             // Columns and Values
@@ -224,7 +225,7 @@ public class UserDbService {
                 valDefs.add("?");
             }
 
-            // Create Query String
+            // Create Insert String
             String insertQuery = "INSERT INTO \"" + tableName + "\" (" + colDefs + ") VALUES (" + valDefs + ");";
 
             // Execute
@@ -238,6 +239,67 @@ public class UserDbService {
 
                     TableColumnDto.addValueToPreparedStatement(statement, pIndex++, value, colDto.getType());
                 }
+
+                statement.executeUpdate();
+            }
+        }
+    }
+
+    public void insertMultipleIntoTable(ServiceEntry entry, String tableUuid, TableMultiRowInsertDto inserts) throws SQLException {
+        if (inserts.getRows().isEmpty())
+            return;
+
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableUuid);
+
+            // Get Table Columns and Insert Entries
+            Map<String, TableColumnDto> cols = getAllTableColumnsAsMap(entry, tableUuid);
+
+            // Column Names
+            StringJoiner colDefs = new StringJoiner(", ");
+            for (var colName : inserts.getColNames()) {
+                TableColumnDto colDto = cols.get(colName);
+                if (colDto == null)
+                    throw new SQLException("Column " + colName + " does not exist in table " + tableUuid);
+                colDefs.add("\"" + colName + "\"");
+            }
+
+            StringJoiner allValues = new StringJoiner(", ");
+            for (var row : inserts.getRows()) {
+                StringJoiner valDefs = new StringJoiner(", ", "(", ")");
+                for (int i = 0; i < row.length; i++) {
+                    String colName = inserts.getColNames()[i];
+                    TableColumnDto colDto = cols.get(colName);
+                    if (colDto == null)
+                        throw new SQLException("Column " + colName + " does not exist in table " + tableUuid);
+
+                    valDefs.add("?");
+                }
+                allValues.add(valDefs.toString());
+            }
+
+            // INSERT INTO dbo.Mytable(ID, Name)
+            // SELECT ID, Name
+            // FROM (
+            //    VALUES (1, 'a'),
+            //           (2, 'b'),
+            //           --...
+            //           -- more than 1000 rows
+            // )sub (ID, Name);
+
+            // Create Insert String
+            String insertQuery = "INSERT INTO \"" + tableName + "\" (" + colDefs + ") SELECT " + colDefs + " FROM (VALUES " + allValues + ") sub (" + colDefs + ");";
+
+            // Execute
+            try (PreparedStatement statement = conn.prepareStatement(insertQuery)) {
+                // Fill out Prepared Statement
+                int pIndex = 1;
+                for (var row : inserts.getRows())
+                    for (int i = 0; i < row.length; i++) {
+                        String colName = inserts.getColNames()[i];
+                        TableColumnDto colDto = cols.get(colName);
+                        TableColumnDto.addValueToPreparedStatement(statement, pIndex++, row[i], colDto.getType());
+                    }
 
                 statement.executeUpdate();
             }
@@ -399,8 +461,7 @@ public class UserDbService {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
 
-            // TODO: Optimize the Col retrieval in the future
-            Map<String, TableColumnDto> cols = getAllTableColumns(entry, tableUuid).stream().collect(Collectors.toMap(TableColumnDto::getColName, col -> col));
+            Map<String, TableColumnDto> cols = getAllTableColumnsAsMap(entry, tableUuid);
             List<TableColumnDto> resultCols = new ArrayList<>();
 
             // If cols empty, use all cols
@@ -432,8 +493,7 @@ public class UserDbService {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
 
-            // TODO: Optimize the Col retrieval in the future
-            Map<String, TableColumnDto> cols = getAllTableColumns(entry, tableUuid).stream().collect(Collectors.toMap(TableColumnDto::getColName, col -> col));
+            Map<String, TableColumnDto> cols = getAllTableColumnsAsMap(entry, tableUuid);
 
             if (updateDto.getColNames().length == 0)
                 throw new SQLException("No columns specified for update");
@@ -462,8 +522,7 @@ public class UserDbService {
         try (Connection conn = getConnection(entry.getUuid())) {
             String tableName = getDbTableNameFromTableUuid(tableUuid);
 
-            // TODO: Optimize the Col retrieval in the future
-            Map<String, TableColumnDto> cols = getAllTableColumns(entry, tableUuid).stream().collect(Collectors.toMap(TableColumnDto::getColName, col -> col));
+            Map<String, TableColumnDto> cols = getAllTableColumnsAsMap(entry, tableUuid);
 
             // Create Delete Query String
             String deleteQuery = "DELETE FROM \"" + tableName + "\"";

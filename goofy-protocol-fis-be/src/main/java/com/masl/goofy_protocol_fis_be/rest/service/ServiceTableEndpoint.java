@@ -4,6 +4,7 @@ import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableBasicQueryDto;
+import com.masl.goofy_protocol_fis_be.dto.request.query.TableMultiRowInsertDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableSelectDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.TableUpdateDto;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceDbQuotasDto;
@@ -94,8 +95,6 @@ public class ServiceTableEndpoint {
                 userQuotas.getGeneral().getMaxNameSize()
         );
     }
-
-    // TODO: Reset DB?
 
 
     // --- OUTSIDE ENTITIES ---
@@ -390,13 +389,56 @@ public class ServiceTableEndpoint {
         }
 
         try {
-            // TODO: Optimize by storing the row count in the service table entry db and refreshing when needed
             // Check Max Rows
             if (userDbService.getTableRowCount(entry, tableUuid) >= userQuotas.getTable().getMaxRows())
                 throw new ServiceTableQuotaExceeded("tableMaxRows");
 
             // Insert
             userDbService.insertIntoTable(entry, tableUuid, insertFields);
+        } catch (SQLException e) {
+            throw new ServiceTableSqlError(tableUuid, e.getMessage());
+        }
+    }
+
+    @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows-bulk")
+    @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
+    @FisEndpoint(summary = "Bulk Insert Rows into a Table Entry", description = "Inserts multiple Rows into a Table Entry based on the provided data. <br> The data must match the table's schema and constraints.")
+    public void insertBulkQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableMultiRowInsertDto insertDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableInsertEntryInvalid, ServiceTableSqlError {
+        tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true);
+        ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
+        ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
+        checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
+        BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
+
+        // Check insert Cols
+        if (insertDto.getColNames().length > userQuotas.getTable().getMaxCols())
+            throw new ServiceTableInsertEntryInvalid("Too many columns in insert object");
+        for (var insertColName : insertDto.getColNames()) {
+            if (insertColName.length() > userQuotas.getGeneral().getMaxNameSize())
+                throw new ServiceTableQuotaExceeded("generalMaxNameSize");
+            if (!insertColName.matches("^[a-z0-9_]+$"))
+                throw new ServiceTableInsertEntryInvalid("Invalid Column Name: " + insertColName);
+        }
+
+        // Check insert Rows
+        try {
+            if (insertDto.getRows().size() + userDbService.getTableRowCount(entry, tableUuid) > userQuotas.getTable().getMaxRows())
+                throw new ServiceTableInsertEntryInvalid("Too many rows in insert object");
+            for (var insertRow : insertDto.getRows()) {
+                if (insertRow.length != insertDto.getColNames().length)
+                    throw new ServiceTableInsertEntryInvalid("Row length does not match column length");
+                for (var insertRowVal : insertRow) {
+                    if (insertRowVal != null && (insertRowVal instanceof Map || insertRowVal instanceof List || insertRowVal.getClass().isArray()))
+                        throw new ServiceTableInsertEntryInvalid("Invalid Column Value Type: " + insertRowVal);
+                }
+            }
+        } catch (SQLException e) {
+            throw new ServiceTableSqlError(tableUuid, e.getMessage());
+        }
+
+        try {
+            // Insert Multiple
+            userDbService.insertMultipleIntoTable(entry, tableUuid, insertDto);
         } catch (SQLException e) {
             throw new ServiceTableSqlError(tableUuid, e.getMessage());
         }

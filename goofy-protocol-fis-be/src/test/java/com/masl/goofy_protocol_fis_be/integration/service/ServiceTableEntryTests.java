@@ -10,10 +10,7 @@ import com.masl.goofy_protocol_fis_be.dto.both.IdentityStorageEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableBasicQueryDto;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableSelectDto;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableUpdateDto;
-import com.masl.goofy_protocol_fis_be.dto.request.query.TableWhereConditionPart;
+import com.masl.goofy_protocol_fis_be.dto.request.query.*;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQueryResultDto;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQuotasDto;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
@@ -706,6 +703,30 @@ class ServiceTableEntryTests {
 			performSignedRequestStr(HttpMethod.DELETE, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(deleteQuery), identity, mvc, handleCrypto)
 					.andExpect(status().isOk());
 			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(0);
+		}
+	}
+
+	@Test
+	void testBulkInsert() throws Exception {
+		AsymmCrypto.AsymmFullKeyPair identity = asymmCrypto.generateKeypair();
+		String identityHandle = handleCrypto.deriveHandle(identity.pub().serialize());
+		String serviceUuid  = prepareServiceEntry(identity, testDataUser.testUser);
+		ServiceTableEntryDto entry = createTestTable("table_1_" + identityHandle, identity, serviceUuid, true);
+		assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(0);
+
+		{
+			TableMultiRowInsertDto insertDto = new TableMultiRowInsertDto();
+			insertDto.setColNames(new String[]{COL_ID, COL_STR_1_NULLABLE, COL_STR_2, COL_INT_UNIQUE, COL_BOOL});
+			List<Object[]> rows = new ArrayList<>();
+			insertDto.setRows(rows);
+			for (int i = 0; i < 1200; i++) {
+				rows.add(new Object[]{10 + i, "bruh_" + i, "hello, world! " + i, 123 + i * 10, (i % 2) == 1});
+			}
+
+			// Send
+			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows-bulk", objectMapper.writeValueAsString(insertDto), identity, mvc, handleCrypto)
+					.andExpect(status().isOk());
+			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(rows.size());
 		}
 	}
 
