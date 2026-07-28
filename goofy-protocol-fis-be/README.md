@@ -83,27 +83,8 @@ For now, Errors are split into ClientErrors and ServerErrors, which all use uniq
 The Error Codes can be found [here](src/main/java/com/masl/goofy_protocol_fis_be/exception) in the `client` and `server` directories.
 
 
-## Implementation Details
-If you plan to write your own implementation of a FIS, you can use this as a reference implementation and look into the code to see how things are implemented.
-* Firstly work on the Crypto Core Lib, either porting it or creating it and then testing it properly (Known Value Tests are quite useful)
-* Implement the Exception Handling System so that the Error Codes and Structures match
-* Implement the Signed Request filtering and Role System
-* Start implementing API Endpoints
-* Start working on the Main DB, Entities and general Persistence
-* Start working on the File Storage System & User DB Management
-* Start working on the Config And Quota System
-* Either use/adapt the reference Frontend Client or implement one yourself
-* Work more on the Endpoints & Services
-  * Root & General Endpoints
-  * Registration & User Endpoints
-  * Login Storage
-  * Identity Storage
-  * Service Entry
-  * Service Bucket
-  * Service Table
-  * Redirects
-  * Admin Endpoints
-* Keep testing and use the reference implementation for the client and backend as help.
+## Implementation "Guide"
+If you plan to write your own implementation of a FIS, you can look [here](impl.md) for a rough guide on how to implement it.
 
 ### Cryptography
 The FIS supports the main crypto algos outlined in the Goofy Protocol, which currently are:
