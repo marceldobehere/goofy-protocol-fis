@@ -40,3 +40,6 @@ build/
 application-prod.properties
 
 user_data
+
+hs_err_pid*.log
+replay_pid*.log
