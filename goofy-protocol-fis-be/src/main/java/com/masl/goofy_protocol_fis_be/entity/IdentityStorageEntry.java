@@ -35,6 +35,14 @@ public class IdentityStorageEntry {
     @Column(nullable = false, length = FieldSize.SIGNATURE_LEN)
     private String encKeypairEntrySignature;
 
+    @Column(nullable = false, length = FieldSize.LONG_TEXT_LEN)
+    @ColumnDefault("'{}'")
+    private String publicDataJson;
+
+    @Column(nullable = false, length = FieldSize.LONG_TEXT_LEN)
+    @ColumnDefault("'{}'")
+    private String privateDataJson;
+
     @ManyToOne(optional = false)
     @JoinColumn(nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)

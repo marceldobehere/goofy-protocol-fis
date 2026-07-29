@@ -3,7 +3,7 @@ package com.masl.goofy_protocol_fis_be.rest.storage;
 import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
-import com.masl.goofy_protocol_fis_be.crypto.HandleHelper;
+import com.masl.goofy_protocol_fis_be.crypto.FisHandleCrypto;
 import com.masl.goofy_protocol_fis_be.dto.both.IdentityStorageEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.response.MyIdentityEntryQuotasDto;
 import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
@@ -17,9 +17,12 @@ import com.masl.goofy_protocol_fis_be.repository.UserQuotasRepository;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.util.List;
@@ -32,15 +35,17 @@ public class IdentityStorageEndpoint {
     private final IdentityStorageEntryRepository identityRepository;
     private final UserQuotasRepository userQuotasRepository;
     private final UserRepository userRepository;
-    private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
     private final HandleCrypto handleCrypto;
 
-    public IdentityStorageEndpoint(BaseQuotaProperties baseQuotaProperties, IdentityStorageEntryRepository identityRepository, UserQuotasRepository userQuotasRepository, UserRepository userRepository, HandleHelper handleHelper) {
+    private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    public IdentityStorageEndpoint(BaseQuotaProperties baseQuotaProperties, IdentityStorageEntryRepository identityRepository, UserQuotasRepository userQuotasRepository, UserRepository userRepository, FisHandleCrypto handleCrypto) {
         this.baseQuotaProperties = baseQuotaProperties;
         this.identityRepository = identityRepository;
         this.userQuotasRepository = userQuotasRepository;
         this.userRepository = userRepository;
-        this.handleCrypto = new HandleCrypto(handleHelper);
+        this.handleCrypto = handleCrypto;
     }
 
     @GetMapping("/quotas")
@@ -92,6 +97,8 @@ public class IdentityStorageEndpoint {
             entry.setPubSplitKey(entryDto.getPubSplitKey());
             entry.setEncKeypairEntry(entryDto.getEncKeypairEntry());
             entry.setEncKeypairEntrySignature(entryDto.getEncKeypairEntrySignature());
+            entry.setPublicDataJson("{}"); // Default to empty JSON Object
+            entry.setPrivateDataJson("{}"); // Default to empty JSON Object
             entry.setCreatedBy(user);
             entry.setCreatedAt(Instant.now());
             identityRepository.save(entry);
@@ -110,7 +117,9 @@ public class IdentityStorageEndpoint {
                 entry.getName(),
                 entry.getPubSplitKey(),
                 entry.getEncKeypairEntry(),
-                entry.getEncKeypairEntrySignature()
+                entry.getEncKeypairEntrySignature(),
+                entry.getPublicDataJson(),
+                entry.getPrivateDataJson()
         )).toList();
     }
 
@@ -135,21 +144,83 @@ public class IdentityStorageEndpoint {
                 entry.getName(),
                 entry.getPubSplitKey(),
                 entry.getEncKeypairEntry(),
-                entry.getEncKeypairEntrySignature()
+                entry.getEncKeypairEntrySignature(),
+                entry.getPublicDataJson(),
+                entry.getPrivateDataJson()
         );
     }
 
-    // TODO: Add Export
+    // TODO: Have the Public Entry for the Identity support including paths for the actual entries (e.g: I have a public Goofy Media 2 Account on this identity and this is the service entry UUID + Table UUID / Name so that others can access stuff in a federated way!)
+    // Get Public Data
+    @GetMapping("/public/{handle}")
+    @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
+    @FisEndpoint(summary = "Gets the Public Data of an Identity Entry from a Handle if it exists", description = "This Endpoint returns the Public Data of an Identity Entry from a Handle if it exists. <br>The Public Data is a JSON Object that can contain any information the user wants to share publicly. <br>For example, it can contain a `services` key which has an object with service names and the urls of the service instance the handle is used on.")
+    public ResponseEntity<String> getPublicData(@PathVariable String handle) throws IdentityEntryNotFound {
+        IdentityStorageEntry entry = identityRepository.findByHandle(handle);
+        if (entry == null)
+            throw new IdentityEntryNotFound(handle);
 
-    // TODO: Implement
-    // - For each identity the user has, they can set global public and private data.
-    // - This data is basically just a JSON Object with keys and values.
-    // - Public Data for example should include a `services` key which has an object with service names and the urls of the service instance the handle is used on.
-    // - This can be useful if you use the same handle for several services and want others to find the instances.
-    // Get Public Data for User (Include Handle/Domain if moved)
-    // Set Public Data for User
+        return ResponseEntity
+                .ok()
+                .header("Content-Type", "application/json")
+                .body(entry.getPublicDataJson());
+    }
 
-    // Get my Private Data
-    // Set my Private Data
-    // + Tests
+    // Get Private Data
+    @GetMapping("/private/{handle}")
+    @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
+    @FisEndpoint(summary = "Gets the Private Data of an Identity Entry from a Handle if it exists", description = "This Endpoint returns the Private Data of an Identity Entry from a Handle if it exists.")
+    public ResponseEntity<String> getPrivateData(@PathVariable String handle, @AuthenticationPrincipal GoofyAuthUser auth) throws IdentityEntryNotFound {
+        IdentityStorageEntry entry = identityRepository.findByCreatedByHandle_AndHandle(auth.getHandle(), handle);
+        if (entry == null)
+            throw new IdentityEntryNotFound(handle);
+
+        return ResponseEntity
+                .ok()
+                .header("Content-Type", "application/json")
+                .body(entry.getPrivateDataJson());
+    }
+
+    // Set Public Data
+    @PutMapping("/public/{handle}")
+    @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
+    @FisEndpoint(summary = "Sets the Public Data of an Identity Entry from a Handle if it exists", description = "This Endpoint sets the Public Data of an Identity Entry from a Handle if it exists. <br>The Public Data is a JSON Object that can contain any information the user wants to share publicly. <br>For example, it can contain a `services` key which has an object with service names and the urls of the service instance the handle is used on.")
+    public void setPublicData(@PathVariable String handle, String publicJson, @AuthenticationPrincipal GoofyAuthUser auth) throws IdentityEntryNotFound, InvalidJson {
+        IdentityStorageEntry entry = identityRepository.findByCreatedByHandle_AndHandle(auth.getHandle(), handle);
+        if (entry == null)
+            throw new IdentityEntryNotFound(handle);
+
+        if (!isValid(publicJson))
+            throw new InvalidJson(publicJson);
+
+        entry.setPublicDataJson(publicJson);
+        identityRepository.save(entry);
+    }
+
+    // Set Private Data
+    @PutMapping("/private/{handle}")
+    @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
+    @FisEndpoint(summary = "Sets the Private Data of an Identity Entry from a Handle if it exists", description = "This Endpoint sets the Private Data of an Identity Entry from a Handle if it exists.")
+    public void setPrivateData(@PathVariable String handle, String privateJson, @AuthenticationPrincipal GoofyAuthUser auth) throws IdentityEntryNotFound, InvalidJson {
+        IdentityStorageEntry entry = identityRepository.findByCreatedByHandle_AndHandle(auth.getHandle(), handle);
+        if (entry == null)
+            throw new IdentityEntryNotFound(handle);
+
+        if (!isValid(privateJson))
+            throw new InvalidJson(privateJson);
+
+        entry.setPrivateDataJson(privateJson);
+        identityRepository.save(entry);
+    }
+
+    // TODO: Add Export and Import?
+
+    public boolean isValid(String json) {
+        try {
+            mapper.readTree(json);
+        } catch (JacksonException e) {
+            return false;
+        }
+        return true;
+    }
 }

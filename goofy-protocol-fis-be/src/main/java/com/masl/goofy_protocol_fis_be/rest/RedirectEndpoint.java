@@ -12,6 +12,8 @@ public class RedirectEndpoint {
 
     // TODO: Look into how Services would request a user to create a service entry + tables with access + bucket access?
 
+    // TODO: Implement Backend Override similar to RootEndpoint#index + Use the custom Frontend URL defined by the User
+
     /*
     ### External Service Access
     These Endpoints get used by services.

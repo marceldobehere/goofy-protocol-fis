@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
@@ -20,10 +21,16 @@ public class RootEndpoint {
     }
 
     @GetMapping
-    @FisEndpoint(summary = "Redirects to the Frontend URL (should be static)")
+    @FisEndpoint(summary = "Redirects to the Frontend URL (should be static) <br>Also appends the `overrideBackendUrl` automatically, so the Frontend talks to the correct Backend")
     public ResponseEntity<String> index() {
+        URI redirectUri = UriComponentsBuilder
+                .fromUriString(generalProperties.getFrontendUrl())
+                .queryParam("overrideBackendUrl", generalProperties.getUrl())
+                .build(true)
+                .toUri();
+
         return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
-                .location(URI.create(generalProperties.getFrontendUrl()))
+                .location(redirectUri)
                 .build();
     }
 }

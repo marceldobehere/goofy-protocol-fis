@@ -2,6 +2,7 @@ package com.masl.goofy_protocol_fis_be.service;
 
 import com.masl.goofy_protocol_fis_be.dto.request.GeneralReportDto;
 import com.masl.goofy_protocol_fis_be.entity.GeneralReport;
+import com.masl.goofy_protocol_fis_be.exception.client.GenericNotFound;
 import com.masl.goofy_protocol_fis_be.repository.GeneralReportRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,5 +38,13 @@ public class GeneralReportService {
 
     public List<GeneralReport> getAllUnresolvedReports() {
         return generalReportRepository.findAllByResolvedAtIsNull();
+    }
+
+    public void setResolvedStatus(Long id, boolean resolved) throws GenericNotFound {
+        GeneralReport report = generalReportRepository.findById(id)
+                .orElseThrow(() -> new GenericNotFound(id));
+
+        report.setResolvedAt(resolved ? Instant.now() : null);
+        generalReportRepository.save(report);
     }
 }

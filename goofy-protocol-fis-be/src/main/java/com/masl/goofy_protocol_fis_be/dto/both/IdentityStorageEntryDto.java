@@ -37,6 +37,9 @@ public class IdentityStorageEntryDto {
     @Size(max = FieldSize.SIGNATURE_LEN)
     private String encKeypairEntrySignature;
 
+    private String publicJsonData;
+    private String privateJsonData;
+
     public static void checkValidity(IdentityStorageEntryDto entry, HandleCrypto handleCrypto, GlobAsymmCrypto asymmCrypto) throws InvalidSignedObject, InvalidPublicKey, NotMatchingPublicKey {
         if (!asymmCrypto.checkPublicSplitKey(entry.getPubSplitKey()))
             throw new InvalidPublicKey();

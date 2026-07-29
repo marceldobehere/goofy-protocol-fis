@@ -503,7 +503,7 @@ public class ServiceTableEndpoint {
 
     @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/query")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Selects data from a Table using a Select Query. <br> If you set the `colNames` Array to be empty, it will select all Columns.")
+    @FisEndpoint(summary = "Selects data from a Table using a Select Query.", description = "If you set the `colNames` Array to be empty, it will select all Columns.")
     public ServiceTableQueryResultDto queryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableSelectDto selectDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableQueryInvalid, ServiceTableSqlError {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, true, false);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);

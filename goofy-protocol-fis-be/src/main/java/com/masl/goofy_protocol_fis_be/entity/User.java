@@ -32,6 +32,10 @@ public class User {
     @ColumnDefault("false")
     private boolean restricted;
 
+    // Used in the Redirect Endpoints
+    @Column
+    private String customFrontendUrl;
+
     @Column
     private Instant lastCheck;
 

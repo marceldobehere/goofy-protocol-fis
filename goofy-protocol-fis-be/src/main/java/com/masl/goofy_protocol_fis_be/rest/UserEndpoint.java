@@ -1,33 +1,42 @@
 package com.masl.goofy_protocol_fis_be.rest;
 
+import com.masl.goofy_protocol_core.crypto.connected.GenericHandleCrypto;
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import com.masl.goofy_protocol_fis_be.config.ROLES;
+import com.masl.goofy_protocol_fis_be.crypto.FisHandleCrypto;
+import com.masl.goofy_protocol_fis_be.dto.response.HandleLookupDto;
 import com.masl.goofy_protocol_fis_be.dto.response.MyUserInfoDto;
 import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
 import com.masl.goofy_protocol_fis_be.entity.User;
 import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
+import com.masl.goofy_protocol_fis_be.exception.server.PublicKeyLookupFailed;
 import com.masl.goofy_protocol_fis_be.properties.GeneralProperties;
 import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+// TODO: Write tests
 @RestController
 @RequestMapping("/api/user")
 @Tag(name = "User", description = "Endpoints relating to User Info")
 public class UserEndpoint {
+    private static final Logger log = LoggerFactory.getLogger(UserEndpoint.class);
+
     private final UserRepository userRepository;
     private final IdentityStorageEntryRepository identityRepository;
     private final GeneralProperties generalProperties;
+    private final FisHandleCrypto handleCrypto;
 
-    public UserEndpoint(UserRepository userRepository, IdentityStorageEntryRepository identityRepository, GeneralProperties generalProperties) {
+    public UserEndpoint(UserRepository userRepository, IdentityStorageEntryRepository identityRepository, GeneralProperties generalProperties, FisHandleCrypto handleCrypto) {
         this.userRepository = userRepository;
         this.identityRepository = identityRepository;
         this.generalProperties = generalProperties;
+        this.handleCrypto = handleCrypto;
     }
 
     // Get My User Info (Handle, Public Key, Auth Role, ...)
@@ -46,27 +55,64 @@ public class UserEndpoint {
     }
 
     // Look Up User / Public Key Info based on Handle (Check if moved)
+    @GetMapping("/lookup/{handle}")
+    @FisEndpoint(summary = "Looks up a User or Identity by Handle", description = "This Endpoint allows you to look up a user or identity by their handle")
+    public HandleLookupDto lookupUser(@PathVariable String handle) throws PublicKeyLookupFailed {
+        String strippedHandle = GenericHandleCrypto.stripPotentialDomainFromHandle(handle);
+
+        // TODO: Handle Moving User
+        // Check if its a user
+        User user = userRepository.findByHandle(strippedHandle);
+        if (user != null)
+            return new HandleLookupDto(strippedHandle, generalProperties.getDomain(), user.getPubSplitKey(), true);
+
+        // TODO: Handle Moving Identity
+        // Check if its a registered identity
+        IdentityStorageEntry entry = identityRepository.findByHandle(strippedHandle);
+        if (entry != null)
+            return new HandleLookupDto(strippedHandle, generalProperties.getDomain(), entry.getPubSplitKey(), true);
+
+        // Try getting public key from cache/external lookup
+        String localLookup = handleCrypto.getPublicSplitKeyFromHandle(handle);
+        if (localLookup != null) {
+            String optDomain = GenericHandleCrypto.getPotentialDomainFromHandle(handle);
+            // TODO: Maybe redirect or treat a bit differently, especially if we add extra info then we need some extra method for that
+            // but we'd also need to be careful about the registeredHere boolean
+            return new HandleLookupDto(strippedHandle, optDomain, localLookup, false);
+        }
+
+        // We don't know the handle, fail
+        throw new PublicKeyLookupFailed(handle);
+    }
+
+    // TODO: Don't make it a two step process but enforce that the data has been exported at least 72h before attempting to delete the entry
+    @DeleteMapping("/delete")
+    @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
+    @FisEndpoint(summary = "Deletes the current User Account", description = "This Endpoint allows a user to delete their account. It will remove all associated data and identities. <br>This is a hard delete, do NOT expect to be able to recover your account without a backup afterwards!")
+    public void deleteUser(@AuthenticationPrincipal GoofyAuthUser auth) {
+        log.info("User {} requested account deletion", auth.getHandle());
+        userRepository.deleteAllByHandle(auth.getHandle());
+    }
+
+    // Update generic User Info
+    // - Custom Frontend URL
+
     // Set/Update external Handle Information (for example the domain of the user)
-    // Also check for Identities and maybe have a special role like REGISTERED_IDENTITY or so to differentiate
-    // Would also need to affect all identities of the user
     // Would be good to have an extra table that has every user and identity ever registered (just the handle) + information if they have moved FIS domains
     // Additionally support moving a singular identity handle -> shouldn't be too hard, just have to watch out in the request i guess
     // Additionally add a custom Fis Exception everywhere where its needed to indicate an Identity/Account was moved
+    // Move Account (Would be the same as update external handle information?)
+    // Would also need to affect all identities of the user
 
     // Get Storage Details / Stats
 
     // Get Complete Account Export (What about Tables / Buckets)
     // Import FIS Data
-    // Should maybe be a two step process like delete, because youd replace all your old data
-    // For clients therell be two options of importing an export (backup or when moving FIS), either direct import using the same keypair for registration
+    // Should maybe be a two-step process like delete, because youd replace all your old data
+    // For clients there'll be two options of importing an export (backup or when moving FIS), either direct import using the same keypair for registration
     // - or decrypting and re-encrypting everything before importing it
-
-    // Delete Account
-    // Move Account (Would be the same as update external handle information?)
-    // Would also need to affect all identities of the user
-    // Should be a two step process with a token, ideally also enforce having done an export beforehand
 
     // Deactivate Handle (Highly specific, needs more thought put into it)
 
-    // You should also be able to move identities to a different identity, e. g. if you change your handle (because maybe you changed to a post quantum cryptography algo and now have a new keypair/identity)
+    // You should also be able to move identities to a different identity, e.g. if you change your handle (because maybe you changed to a post quantum cryptography algo and now have a new keypair/identity)
 }

@@ -2,10 +2,8 @@ package com.masl.goofy_protocol_fis_be.service;
 
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import com.masl.goofy_protocol_fis_be.dto.request.RegistrationRequestDto;
-import com.masl.goofy_protocol_fis_be.entity.RegistrationCode;
-import com.masl.goofy_protocol_fis_be.entity.RegistrationRequest;
-import com.masl.goofy_protocol_fis_be.entity.User;
-import com.masl.goofy_protocol_fis_be.entity.UserQuotas;
+import com.masl.goofy_protocol_fis_be.entity.*;
+import com.masl.goofy_protocol_fis_be.exception.client.GenericNotFound;
 import com.masl.goofy_protocol_fis_be.exception.client.HandleAlreadyRegistered;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidRegisterCode;
 import com.masl.goofy_protocol_fis_be.exception.client.RegistrationCodeAlreadyUsed;
@@ -49,6 +47,11 @@ public class RegistrationService {
         code.setCreatedAt(Instant.now());
         log.info("Created new registration code: {} (Admin: {})", code.getCode(), isAdmin);
         return registrationCodeRepository.save(code);
+    }
+
+    public void deleteRegistrationCode(String code) {
+        log.info("Deleting registration code: {}", code);
+        registrationCodeRepository.deleteByCode(code);
     }
 
     public boolean anyCodesExist() {
@@ -130,5 +133,13 @@ public class RegistrationService {
 
     public List<RegistrationRequest> getAllUnresolvedRequests() {
         return registrationRequestRepository.findAllByResolvedAtIsNull();
+    }
+
+    public void setResolvedStatus(Long id, boolean resolved) throws GenericNotFound {
+        RegistrationRequest req = registrationRequestRepository.findById(id)
+                .orElseThrow(() -> new GenericNotFound(id));
+
+        req.setResolvedAt(resolved ? Instant.now() : null);
+        registrationRequestRepository.save(req);
     }
 }

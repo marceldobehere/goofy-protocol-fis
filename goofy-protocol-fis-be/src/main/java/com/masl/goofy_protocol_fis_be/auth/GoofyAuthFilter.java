@@ -5,7 +5,7 @@ import com.masl.goofy_protocol_core.crypto.connected.request.BasicRequestValidat
 import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequest;
 import com.masl.goofy_protocol_core.crypto.connected.request.SignedRequestValidator;
 import com.masl.goofy_protocol_core.crypto.exceptions.PubSplitKeyNotFound;
-import com.masl.goofy_protocol_fis_be.crypto.HandleHelper;
+import com.masl.goofy_protocol_fis_be.crypto.FisHandleCrypto;
 import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
 import com.masl.goofy_protocol_fis_be.entity.User;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidSignature;
@@ -40,10 +40,10 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
     private final boolean disableUniqueIdCheck;
     private final HandlerExceptionResolver resolver;
 
-    public GoofyAuthFilter(HandleHelper handleHelper, UserRepository userRepository, IdentityStorageEntryRepository identityRepository, Environment env,
+    public GoofyAuthFilter(FisHandleCrypto handleCrypto, UserRepository userRepository, IdentityStorageEntryRepository identityRepository, Environment env,
                            @Value("${goofy.auth.max-cache-bytes}") int maxCacheBytes,
                            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
-        this.handleCrypto = new HandleCrypto(handleHelper);
+        this.handleCrypto = handleCrypto;
         this.userRepository = userRepository;
         this.identityRepository = identityRepository;
         this.disableUniqueIdCheck = env.acceptsProfiles(Profiles.of("test")); // Important for Perf Testing
