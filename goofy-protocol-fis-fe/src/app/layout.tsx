@@ -30,9 +30,13 @@ export default function RootLayout({
       <body>
       {children}
 
-      <button id={styles.FloatingSettingsButton} command={"show-modal"} commandfor={styles.FloatingSettings}>&#x2699;</button>
+      <button id={styles.FloatingSettingsButton}
+          // @ts-expect-error custom attributes
+          command={"show-modal"} commandfor={styles.FloatingSettings}>&#x2699;</button>
       <dialog id={styles.FloatingSettings}>
-          <button command={"close"} commandfor={styles.FloatingSettings}>X</button>
+          <button
+              // @ts-expect-error custom attributes
+              command={"close"} commandfor={styles.FloatingSettings}>X</button>
           <SettingsModal></SettingsModal>
       </dialog>
       </body>
