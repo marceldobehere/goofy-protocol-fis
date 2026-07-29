@@ -2,9 +2,6 @@
 This is a list of open TODOs.
 
 ## TODOs (Rn)
-* Prepare Docker Stuff for hosting it and test
-* Create Dockerfile and example docker-compose.yml for hosting + put the normal compose in the gitignore
-* Create 2 FIS Instances (one main instance and one demo for others to try out, which is very limited but ppl can switch over or selfhost later)
 * Try setting up static FIS Frontend using Github Pages
 
 ## TODOs (Currently)
@@ -26,6 +23,7 @@ This is a list of open TODOs.
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc.)
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests
+* Create 2 FIS Instances (one main instance and one demo for others to try out, which is very limited but ppl can switch over or selfhost later)
 * Create extra DB Table for known FIS Domains ?
 * Look into ML-KEM using Seed for Private key and compatibility with JS (Potentially using Rust ML-KEM compiled to WASM) (Will have to see)
 

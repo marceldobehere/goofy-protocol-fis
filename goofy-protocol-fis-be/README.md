@@ -42,6 +42,7 @@ The main components of the FIS are:
 * Clone the Repository
 * Inside the `/src/main/resources` directory:
   * Change `application.properties` to use your wanted profile, probably `prod`
+    * Only if you're not using docker compose / don't want the default dev profile
   * Copy the `application-prod.example.properties` to be `application-prod.properties`
   * Check the `application-prod.properties` and adapt/edit it to your needs
   * Copy the `docker-compose.example.yml` to be `docker-compose.yml` and adapt it to your needs
