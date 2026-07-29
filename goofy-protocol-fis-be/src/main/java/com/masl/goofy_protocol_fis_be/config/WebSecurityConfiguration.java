@@ -44,6 +44,7 @@ public class WebSecurityConfiguration {
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
         config.setAllowCredentials(false);
+        config.setMaxAge(360000L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
@@ -56,7 +57,7 @@ public class WebSecurityConfiguration {
         boolean testOnly = env.acceptsProfiles(Profiles.of("test"));
 
         http
-            .cors(cors -> {}) // enable CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> {
                 // Only for integration tests
