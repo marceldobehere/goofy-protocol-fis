@@ -51,15 +51,6 @@ jobs:
         with:
           static_site_generator: next
 
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            goofy-protocol-fis-fe/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('goofy-protocol-fis-fe/package-lock.json', 'goofy-protocol-fis-fe/yarn.lock') }}-${{ hashFiles('goofy-protocol-fis-fe/**.[jt]s', 'goofy-protocol-fis-fe/**.[jt]sx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('goofy-protocol-fis-fe/package-lock.json', 'goofy-protocol-fis-fe/yarn.lock') }}-
-
       - name: Install dependencies
         working-directory: goofy-protocol-fis-fe
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
