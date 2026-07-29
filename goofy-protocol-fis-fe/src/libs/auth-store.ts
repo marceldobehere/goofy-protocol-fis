@@ -28,7 +28,7 @@ export async function init() {
     currentStorageMode = await _loadStorageMode();
 
     // Load Server Base
-    currServerBase = await _loadServerBase(currentStorageMode, "http://localhost:8080");
+    currServerBase = await _loadServerBase(currentStorageMode, "https://demo.fis.rocc.systems");
 
     // Load Keypair
     currKeypair = await _loadKeypair(currentStorageMode);
