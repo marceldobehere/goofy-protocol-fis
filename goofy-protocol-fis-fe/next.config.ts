@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
     output: "export",
     trailingSlash: true,
-    // TODO: SET // basePath: "/goofy-protocol-fis-fe",
+    basePath: "/goofy-protocol-fis",
     images: {
         unoptimized: true
     }
