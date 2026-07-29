@@ -44,7 +44,9 @@ The main components of the FIS are:
   * Change `application.properties` to use your wanted profile, probably `prod`
   * Copy the `application-prod.example.properties` to be `application-prod.properties`
   * Check the `application-prod.properties` and adapt/edit it to your needs
+  * Copy the `docker-compose.example.yml` to be `docker-compose.yml` and adapt it to your needs
 * Run the Application, it should create the DB and the needed tables automatically
+  * Either via `mvn clean spring-boot:run` or via `docker compose build && docker compose up
 * Get the Admin Register Code from the Logs and Register your Admin Account
 * Profit?
 

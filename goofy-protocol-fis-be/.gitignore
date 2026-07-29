@@ -43,3 +43,9 @@ user_data
 
 hs_err_pid*.log
 replay_pid*.log
+
+user_databases
+user_buckets
+fis_data
+
+docker-compose.yml
