@@ -1,9 +1,6 @@
 # TODOs
 This is a list of open TODOs.
 
-## TODOs (Rn)
-* Try setting up static FIS Frontend using Github Pages
-
 ## TODOs (Currently)
 * Implement Admin Endpoints
   * User Management (List Users, Delete User, Deactivate User, etc.)

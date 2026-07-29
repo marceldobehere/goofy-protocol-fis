@@ -2,6 +2,8 @@
 
 WIP "Reference" Implementation of a FIS for Goofy Protocol using NextJS.
 
+Currently hosted here: https://fe.fis.rocc.systems
+
 **NOTE**: this is mostly for testing currently, do not base anything on this!
 
 **NOTE**: I'm using AI Tools to try and translate my Java Library code, the code wont be perfect and it might contain issues.
