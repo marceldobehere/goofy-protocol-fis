@@ -4,7 +4,7 @@ import styles from "./page.module.css";
 import Link from "next/link";
 import {deriveHandleFromPublicSplitKey, parseFullKeypair} from "@/libs/crypto";
 import {AsymmFullJsonKeypair, AsymmFullKeyPair} from "@/libs/crypto-types";
-import {saveKeypair} from "@/libs/auth-store";
+import {getStorageMode, saveKeypair, setStorageMode} from "@/libs/auth-store";
 import {useEffect, useRef, useState} from "react";
 import {readJsonFile, uploadData} from "@/libs/file-utils";
 import {loadLogin} from "@/libs/register";
@@ -106,6 +106,12 @@ export default function Page() {
             alert("Login failed: Not a user");
             return;
         }
+
+        // Check to store in LocalStorage, because I keep forgetting when I delete my cache / test on diff devices
+        if ((await getStorageMode() == "SESSION_STORAGE"))
+            if (confirm("Do you want to store your keypair in localStorage?"))
+                await setStorageMode("LOCAL_STORAGE");
+
 
         console.log(resKeypair);
 
