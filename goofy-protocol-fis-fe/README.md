@@ -1,14 +1,12 @@
 # Goofy Protocol FIS (Federated Identity Server) TEST Frontend
 
-WIP "Reference" Implementation of a FIS for Goofy Protocol using NextJS.
+WIP "Reference" Implementation of a FIS Frontend for Goofy Protocol using NextJS.
 
 Currently hosted here: https://fe.fis.rocc.systems
 
 **NOTE**: this is mostly for testing currently, do not base anything on this!
 
-**NOTE**: I'm using AI Tools to try and translate my Java Library code, the code wont be perfect and it might contain issues.
-There is a good chance i will fully rewrite it in the future, but for now testing it should hopefully be okay.
-It is also a good showcase if it's even compatible and if there are any Java / JS Compatibility issues i need to address first!
+**NOTE**: I used AI Tools to translate the Java Crypto Core Library to JS, mostly for a rough test if everything works and is compatible. I will probably rewrite that part soon, but currently it at least works!
 
 
 ## Get Started
