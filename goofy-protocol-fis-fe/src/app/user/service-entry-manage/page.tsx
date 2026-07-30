@@ -7,6 +7,7 @@ import {deleteFixedAuth, getFixedAuth, getFixedAuthBytes, postFixedAuth, putFixe
 import {ServiceBucketEntryDto, ServiceBucketPermissionDto, ServiceBucketQuotasDto} from "@/libs/dtos";
 import {readFileBytes, uploadData} from "@/libs/file-utils";
 import {GlobalState, useGlobalState} from "@/libs/global-state";
+import {getBaseServerUrl} from "@/libs/auth-store";
 
 export default function Page() {
     const [perms, setPerms] = useState<ServiceBucketPermissionDto | null>(null);
@@ -93,6 +94,47 @@ export default function Page() {
             alert("Failed to delete Bucket Entry: " + (e as Error).message);
         }
         await refresh();
+    }
+
+    async function setEntryPerms(fileUuid: string, read: boolean) {
+        if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
+            return;
+
+        const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
+
+        if (read) {
+            const newReadAccess = prompt(`Set the new read access as a list of handles separated by a space. (* for everyone)`, details.handlesWithReadPerms.join(" "));
+            if (newReadAccess == null)
+                return;
+
+            details.handlesWithReadPerms = newReadAccess.split(" ");
+        } else {
+            const newWriteAccess = prompt(`Set the new write access as a list of handles separated by a space.`, details.handlesWithWritePerms.join(" "));
+            if (newWriteAccess == null)
+                return;
+
+            details.handlesWithWritePerms = newWriteAccess.split(" ");
+        }
+
+        try {
+            await putFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, details, GlobalState.identityKeypair);
+        } catch (e) {
+            console.log(e);
+            alert("Failed to upload Bucket Entry: " + (e as Error).message);
+        }
+    }
+
+    async function shareEntry(fileUuid: string) {
+        if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
+            return;
+
+        // Base Frontend URL + /guest/view + ?tempBackendUrl= + urlencode(currentBackend) + # + identityHandle + @ + serviceEntryUuid + @ + fileUuid
+        const backend = await getBaseServerUrl();
+        const shareUrl = `${GlobalState.basePath}/guest/view?tempBackendUrl=${encodeURIComponent(backend)}#${GlobalState.identityHandle}@${GlobalState.serviceEntry.uuid}@${fileUuid}`;
+
+        // Copy to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        alert(`Share URL copied to clipboard:\n${shareUrl}`);
     }
 
     async function viewEntry(fileUuid: string) {
@@ -211,7 +253,7 @@ export default function Page() {
                 <br/>
                 <ul>
                     {entries?.map((entry) => (<li key={entry.fileUuid}>
-                        <span>{entry.filename} ({entry.fileUuid?.substring(0, 16)}...) (Type: {entry.contentType}, Size: {((entry.contentSize ?? 0) / (1000*1000)).toFixed(2)}MB, Created At: {entry.createdAtDate!.toLocaleDateString()})</span>
+                        <span>{entry.filename} ({entry.fileUuid?.substring(0, 16)}...) (Type: {entry.contentType}, Size: {((entry.contentSize ?? 0) / (1000*1000)).toFixed(2)}MB, Created At: {entry.createdAtDate!.toLocaleDateString()})</span><br/>
                         <span> </span>
                         <button onClick={() => {getEntryDetails(entry.fileUuid).then()}}>Details</button>
                         <span> </span>
@@ -220,6 +262,11 @@ export default function Page() {
                         <button onClick={() => {uploadEntry(entry.fileUuid).then()}}>Reupload</button>
                         <span> </span>
                         <button onClick={() => {deleteEntry(entry.fileUuid).then()}}>Delete</button>
+                        <span> </span>
+                        <button onClick={() => {shareEntry(entry.fileUuid).then()}}>Share Link</button>
+                        <span> </span>
+                        <button onClick={() => {setEntryPerms(entry.fileUuid, true).then()}}>Set Read Perms</button>
+                        <br/>&nbsp;
                     </li>))}
                 </ul>
 

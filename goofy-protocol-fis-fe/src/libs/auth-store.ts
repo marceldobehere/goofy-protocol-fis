@@ -19,6 +19,7 @@ type StorageMode = "LOCAL_STORAGE" | "SESSION_STORAGE" | "NONE";
 let currentStorageMode: StorageMode;
 let currServerBase: string;
 let currKeypair: AsymmFullKeyPair | null;
+let tempServerOverride: string | null;
 
 // TODO: Import my AsyncLock and make it use that
 let initDone = false;
@@ -32,6 +33,9 @@ export async function init() {
 
     // Load Server Base
     currServerBase = await _loadServerBase(currentStorageMode, window.location.href.includes("localhost") ? "http://localhost:8080" : "https://demo.fis.rocc.systems");
+
+    // Load Temp Override Server Base (Tab only)
+    tempServerOverride = await _getStore("TempServerOverride", "SESSION_STORAGE");
 
     // Load Keypair
     currKeypair = await _loadKeypair(currentStorageMode);
@@ -49,6 +53,20 @@ export async function init() {
         newUrl.searchParams.delete("overrideBackendUrl");
         window.location.search = newUrl.search;
     }
+
+    // Check Temporary BackendURL Query Param
+    const tempBackendUrl = urlParams.get("tempBackendUrl");
+    if (tempBackendUrl) {
+        console.log("Temporary Override backend url: ", tempBackendUrl);
+        tempServerOverride = tempBackendUrl;
+        await _setStore("TempServerOverride", tempBackendUrl, "SESSION_STORAGE");
+
+        // Remove from URL
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete("tempBackendUrl");
+        window.location.search = newUrl.search;
+    }
+    // console.debug("SERVER BASE", await getBaseServerUrl());
 }
 
 // Public Functions
@@ -79,11 +97,12 @@ export async function setStorageMode(mode: StorageMode) {
 export async function setBaseServerUrl(url: string) {
     await init();
     currServerBase = url;
+    tempServerOverride = null; // Reset override
     await _storeServerBase(url, currentStorageMode);
 }
 export async function getBaseServerUrl(): Promise<string> {
     await init();
-    return currServerBase;
+    return tempServerOverride || currServerBase;
 }
 
 export async function hasKeypair(): Promise<boolean> {

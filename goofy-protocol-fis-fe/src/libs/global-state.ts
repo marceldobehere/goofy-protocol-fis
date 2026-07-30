@@ -13,6 +13,7 @@ export const GlobalState: {
     isAdmin: boolean,
     handle: string | null,
     gotBaseData: boolean,
+    basePath: string,
 
     // Identity Fragment
     identityKeypair: AsymmFullKeyPair | null,
@@ -25,6 +26,7 @@ export const GlobalState: {
     isAdmin: false,
     handle: "",
     gotBaseData: false,
+    basePath: "", // Example: http://localhost:3000/goofy-protocol-fis
 
     // Identity Fragment
     identityKeypair: null,
@@ -98,6 +100,17 @@ async function initGlobalState(pathName: string, needLogin: boolean, needAdmin: 
     GlobalState.identityKeypair = null;
     GlobalState.identityHandle = null;
     GlobalState.serviceEntry = null;
+
+    // Get Base Path
+    // console.log("DEBUG", window.origin, window.location.pathname, pathName);
+    // http://localhost:3000
+    // /goofy-protocol-fis/user/service-entry-manage/
+    //                    /user/service-entry-manage/
+    // -> http://localhost:3000/goofy-protocol-fis
+    const pathIdx = window.location.pathname.indexOf(pathName);
+    GlobalState.basePath = window.origin + window.location.pathname.slice(0, pathIdx);
+    // console.debug("DEBUG -> ", GlobalState.basePath);
+
 
     // User Check
     if (needLogin && !GlobalState.loggedIn) {
