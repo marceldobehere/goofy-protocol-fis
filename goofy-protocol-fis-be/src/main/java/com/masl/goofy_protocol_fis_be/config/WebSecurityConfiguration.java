@@ -85,6 +85,7 @@ public class WebSecurityConfiguration {
                 // Default values
                 auth
                     .requestMatchers("/").permitAll() // Redirect to Frontend
+                    .requestMatchers("/short/**").permitAll() // Short Frontend Redirects
                     .requestMatchers("/api/general/**").permitAll() // General Info of FIS Server
                     .requestMatchers("/api/register/**").permitAll() // Registration of Users
                     .requestMatchers("/api/user/**").permitAll() // User Info, Lookup, Export, etc.
