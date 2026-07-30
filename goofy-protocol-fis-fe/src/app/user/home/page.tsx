@@ -23,6 +23,7 @@ export default function Page() {
 
                 <div className={styles.MainButtons}>
                     <Link href="/user/identity-storage">Identity Storage</Link>
+                    {GlobalState.isAdmin ? <Link href="/admin/home">Admin</Link> : null}
                     <Link href={"/"}>Index</Link>
                 </div>
             </div>

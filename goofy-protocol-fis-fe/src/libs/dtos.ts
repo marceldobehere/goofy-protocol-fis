@@ -144,3 +144,18 @@ export interface ServiceBucketQuotasDto {
     currentBucketSize: number;
     currentItemCount: number;
 }
+
+export interface MemInfoDto {
+    memUsed: number;
+    memMax: number;
+    utilized: number;
+}
+
+export interface RegistrationCodeDto {
+    code: string;
+    admin: boolean;
+    createdByHandle: string;
+    createdAt: string;
+    usedByHandle: string;
+    usedAt: string;
+}
