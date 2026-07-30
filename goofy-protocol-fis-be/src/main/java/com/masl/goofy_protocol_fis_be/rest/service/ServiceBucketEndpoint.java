@@ -21,8 +21,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.*;
 
@@ -259,20 +261,22 @@ public class ServiceBucketEndpoint {
     @GetMapping("/{idHandle}/{serviceUuid}/content/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Gets the Bucket Entry Content", description = "Get the Raw Content of a Bucket Entry with a specific File UUID")
-    public ResponseEntity<byte[]> getBucketEntryContent(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String fileUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketNotFound, ServiceBucketFileError {
+    public ResponseEntity<StreamingResponseBody> getBucketEntryContent(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String fileUuid, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceBucketNotFound {
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceBucketEntry bucketEntry = findServiceBucketEntry(idHandle, fileUuid);
         checkServiceBucketEntryReadPermissions(entry, bucketEntry, auth);
 
-        try {
-            return ResponseEntity.ok()
-                    .header("Content-Type", bucketEntry.getContentType())
-                    .header("X-Filename", bucketEntry.getFilename())
-                    .cacheControl(bucketEntry.getCacheDuration().getCacheControl())
-                    .body(userBucketService.getBucketEntry(entry, fileUuid));
-        } catch (IOException e) {
-            throw new ServiceBucketFileError();
-        }
+        StreamingResponseBody streamBody = out -> {
+            try (InputStream in = userBucketService.getBucketEntryStream(entry, fileUuid)) {
+                in.transferTo(out);
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header("Content-Type", bucketEntry.getContentType())
+                .header("X-Filename", bucketEntry.getFilename())
+                .cacheControl(bucketEntry.getCacheDuration().getCacheControl())
+                .body(streamBody);
     }
 
 

@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 @Service
 public class UserBucketService {
@@ -37,5 +38,8 @@ public class UserBucketService {
 
     public byte[] getBucketEntry(ServiceEntry entry, String fileUuid) throws IOException {
         return fileStorageService.getBucketFile(entry.getUuid(), fileUuid);
+    }
+    public InputStream getBucketEntryStream(ServiceEntry entry, String fileUuid) throws IOException {
+        return fileStorageService.getBucketFileStream(entry.getUuid(), fileUuid);
     }
 }

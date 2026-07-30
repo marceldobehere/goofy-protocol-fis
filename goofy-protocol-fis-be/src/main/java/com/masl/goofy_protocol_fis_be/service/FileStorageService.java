@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -97,6 +98,10 @@ public class FileStorageService {
     public byte[] getBucketFile(String identityUuid, String fileUuid) throws IOException {
         Path path = getBucketFolderPath(identityUuid + "/" + fileUuid);
         return Files.readAllBytes(path);
+    }
+    public InputStream getBucketFileStream(String identityUuid, String fileUuid) throws IOException {
+        Path path = getBucketFolderPath(identityUuid + "/" + fileUuid);
+        return Files.newInputStream(path);
     }
 
     public void zipDbFolder(String identityUuid, ZipOutputStream stream) throws IOException {

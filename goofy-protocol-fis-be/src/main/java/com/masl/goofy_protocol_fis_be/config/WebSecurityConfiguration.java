@@ -1,6 +1,7 @@
 package com.masl.goofy_protocol_fis_be.config;
 
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthFilter;
+import jakarta.servlet.DispatcherType;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.springframework.context.annotation.Bean;
@@ -77,6 +78,9 @@ public class WebSecurityConfiguration {
                     // H2-Console
                     http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
                 }
+
+                // Streaming Responses
+                auth.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll();
 
                 // Default values
                 auth
