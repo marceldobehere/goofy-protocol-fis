@@ -8,13 +8,12 @@ import com.masl.goofy_protocol_fis_be.dto.both.IdentityStorageEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.response.MyIdentityEntryQuotasDto;
 import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
 import com.masl.goofy_protocol_fis_be.entity.User;
-import com.masl.goofy_protocol_fis_be.entity.UserQuotas;
 import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
 import com.masl.goofy_protocol_fis_be.exception.client.*;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
-import com.masl.goofy_protocol_fis_be.repository.UserQuotasRepository;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
+import com.masl.goofy_protocol_fis_be.service.QuotaService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -31,19 +30,17 @@ import java.util.List;
 @RequestMapping("/api/identity-storage")
 @Tag(name = "Identity Storage", description = "Endpoints relating to Identity Keypair Storage for Services. <br>Users can store their identity Keypairs encrypted here and use those for Service Access")
 public class IdentityStorageEndpoint {
-    private final BaseQuotaProperties baseQuotaProperties;
     private final IdentityStorageEntryRepository identityRepository;
-    private final UserQuotasRepository userQuotasRepository;
+    private final QuotaService quotaService;
     private final UserRepository userRepository;
     private final HandleCrypto handleCrypto;
 
     private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public IdentityStorageEndpoint(BaseQuotaProperties baseQuotaProperties, IdentityStorageEntryRepository identityRepository, UserQuotasRepository userQuotasRepository, UserRepository userRepository, FisHandleCrypto handleCrypto) {
-        this.baseQuotaProperties = baseQuotaProperties;
+    public IdentityStorageEndpoint(IdentityStorageEntryRepository identityRepository, QuotaService quotaService, UserRepository userRepository, FisHandleCrypto handleCrypto) {
         this.identityRepository = identityRepository;
-        this.userQuotasRepository = userQuotasRepository;
+        this.quotaService = quotaService;
         this.userRepository = userRepository;
         this.handleCrypto = handleCrypto;
     }
@@ -53,8 +50,7 @@ public class IdentityStorageEndpoint {
     @FisEndpoint(summary = "Gets the Users Identity Entry related Quotas", description = "This Endpoint returns the maximum number of Identity Entries a user can have and how many they currently have stored.")
     public MyIdentityEntryQuotasDto getMyQuotas(@AuthenticationPrincipal GoofyAuthUser auth) {
         // Get Quotas
-        UserQuotas quotas = userQuotasRepository.findByUserHandle(auth.getHandle());
-        BaseQuotaProperties userQuotas = UserQuotas.getUserQuotas(quotas, baseQuotaProperties);
+        BaseQuotaProperties userQuotas = quotaService.getUserQuotas(auth.getHandle());
         int quota = userQuotas.getIdentity().getMaxEntries();
 
         // Set DTO
@@ -78,8 +74,7 @@ public class IdentityStorageEndpoint {
         identityRepository.deleteByCreatedByHandle_AndHandle(auth.getHandle(), entryDto.getHandle());
 
         // Get Quotas
-        UserQuotas quotas = userQuotasRepository.findByUserHandle(auth.getHandle());
-        BaseQuotaProperties userQuotas = UserQuotas.getUserQuotas(quotas, baseQuotaProperties);
+        BaseQuotaProperties userQuotas = quotaService.getUserQuotas(auth.getHandle());
         int quota = userQuotas.getIdentity().getMaxEntries();
 
         // Check count against quota

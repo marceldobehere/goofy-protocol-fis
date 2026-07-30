@@ -72,10 +72,10 @@ public class UserQuotas {
 
     // Helper Functions
 
-    public static BaseQuotaProperties getUserQuotas(UserQuotas quotas, BaseQuotaProperties base) {
+    public static BaseQuotaProperties getAppliedQuotas(UserQuotas quotas, BaseQuotaProperties specific) {
         if (quotas == null)
-            return base;
-        return quotas._getUserQuotas(base);
+            return specific;
+        return quotas._getUserQuotas(specific);
     }
 
     private static <T> T valueOrDefault(T value, T defaultValue) {

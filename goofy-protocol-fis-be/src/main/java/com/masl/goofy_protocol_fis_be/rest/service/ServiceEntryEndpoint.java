@@ -5,7 +5,6 @@ import com.masl.goofy_protocol_fis_be.dto.both.ServiceEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.response.MyServiceEntryQuotasDto;
 import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
 import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
-import com.masl.goofy_protocol_fis_be.entity.UserQuotas;
 import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
 import com.masl.goofy_protocol_fis_be.exception.client.ServiceEntryInvalid;
 import com.masl.goofy_protocol_fis_be.exception.client.ServiceEntryNotFound;
@@ -13,7 +12,7 @@ import com.masl.goofy_protocol_fis_be.exception.client.ServiceEntryQuotaExceeded
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
 import com.masl.goofy_protocol_fis_be.repository.ServiceEntryRepository;
-import com.masl.goofy_protocol_fis_be.repository.UserQuotasRepository;
+import com.masl.goofy_protocol_fis_be.service.QuotaService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,14 +29,12 @@ import java.util.UUID;
 public class ServiceEntryEndpoint {
     private final IdentityStorageEntryRepository identityRepository;
     private final ServiceEntryRepository serviceEntryRepository;
-    private final UserQuotasRepository userQuotasRepository;
-    private final BaseQuotaProperties baseQuotaProperties;
+    private final QuotaService quotaService;
 
-    public ServiceEntryEndpoint(IdentityStorageEntryRepository identityRepository, ServiceEntryRepository serviceEntryRepository, UserQuotasRepository userQuotasRepository, BaseQuotaProperties baseQuotaProperties) {
+    public ServiceEntryEndpoint(IdentityStorageEntryRepository identityRepository, ServiceEntryRepository serviceEntryRepository, QuotaService quotaService) {
         this.identityRepository = identityRepository;
         this.serviceEntryRepository = serviceEntryRepository;
-        this.userQuotasRepository = userQuotasRepository;
-        this.baseQuotaProperties = baseQuotaProperties;
+        this.quotaService = quotaService;
     }
 
     @GetMapping("/quotas")
@@ -48,8 +45,7 @@ public class ServiceEntryEndpoint {
         IdentityStorageEntry identity = identityRepository.findByHandle(auth.getHandle());
 
         // Get Quotas
-        UserQuotas quotas = userQuotasRepository.findByUserHandle(identity.getCreatedBy().getHandle());
-        BaseQuotaProperties userQuotas = UserQuotas.getUserQuotas(quotas, baseQuotaProperties);
+        BaseQuotaProperties userQuotas = quotaService.getUserQuotas(identity.getCreatedBy().getHandle());
         int quota = userQuotas.getIdentity().getMaxServiceEntries();
 
         // Set DTO
@@ -66,8 +62,7 @@ public class ServiceEntryEndpoint {
         ServiceEntry.checkForRestrictedAccess(identity.getCreatedBy());
 
         // Get Quotas
-        UserQuotas quotas = userQuotasRepository.findByUserHandle(identity.getCreatedBy().getHandle());
-        BaseQuotaProperties userQuotas = UserQuotas.getUserQuotas(quotas, baseQuotaProperties);
+        BaseQuotaProperties userQuotas = quotaService.getUserQuotas(identity.getCreatedBy().getHandle());
         int quota = userQuotas.getIdentity().getMaxServiceEntries();
 
         // Check count against quota

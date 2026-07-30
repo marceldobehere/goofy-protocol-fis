@@ -7,13 +7,12 @@ import com.masl.goofy_protocol_fis_be.dto.both.ServiceBucketPermissionDto;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceBucketQuotasDto;
 import com.masl.goofy_protocol_fis_be.entity.ServiceBucketEntry;
 import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
-import com.masl.goofy_protocol_fis_be.entity.UserQuotas;
 import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
 import com.masl.goofy_protocol_fis_be.exception.client.*;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import com.masl.goofy_protocol_fis_be.repository.ServiceBucketEntryRepository;
 import com.masl.goofy_protocol_fis_be.repository.ServiceEntryRepository;
-import com.masl.goofy_protocol_fis_be.repository.UserQuotasRepository;
+import com.masl.goofy_protocol_fis_be.service.QuotaService;
 import com.masl.goofy_protocol_fis_be.service.UserBucketService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -34,15 +33,13 @@ import java.util.*;
 public class ServiceBucketEndpoint {
     private final ServiceBucketEntryRepository bucketEntryRepository;
     private final ServiceEntryRepository serviceEntryRepository;
-    private final UserQuotasRepository userQuotasRepository;
-    private final BaseQuotaProperties baseQuotaProperties;
+    private final QuotaService quotaService;
     private final UserBucketService userBucketService;
 
-    public ServiceBucketEndpoint(ServiceBucketEntryRepository bucketEntryRepository, ServiceEntryRepository serviceEntryRepository, UserQuotasRepository userQuotasRepository, BaseQuotaProperties baseQuotaProperties, UserBucketService userBucketService) {
+    public ServiceBucketEndpoint(ServiceBucketEntryRepository bucketEntryRepository, ServiceEntryRepository serviceEntryRepository, QuotaService quotaService, UserBucketService userBucketService) {
         this.bucketEntryRepository = bucketEntryRepository;
         this.serviceEntryRepository = serviceEntryRepository;
-        this.userQuotasRepository = userQuotasRepository;
-        this.baseQuotaProperties = baseQuotaProperties;
+        this.quotaService = quotaService;
         this.userBucketService = userBucketService;
     }
 
@@ -315,8 +312,7 @@ public class ServiceBucketEndpoint {
     }
 
     private BaseQuotaProperties getServiceEntryQuotas(ServiceEntry entry) {
-        UserQuotas quotas = userQuotasRepository.findByUserHandle(entry.getCreatedBy().getHandle());
-        return UserQuotas.getUserQuotas(quotas, baseQuotaProperties);
+        return quotaService.getUserQuotas(entry.getCreatedBy().getHandle());
     }
 
     private void checkServiceEntryReadPermissions(ServiceEntry entry, GoofyAuthUser auth) throws ServiceEntryNotFound {

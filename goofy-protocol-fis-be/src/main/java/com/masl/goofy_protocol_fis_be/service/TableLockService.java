@@ -1,13 +1,11 @@
 package com.masl.goofy_protocol_fis_be.service;
 
 import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
-import com.masl.goofy_protocol_fis_be.entity.UserQuotas;
 import com.masl.goofy_protocol_fis_be.exception.client.ServiceEntryNotFound;
 import com.masl.goofy_protocol_fis_be.exception.client.ServiceTableLockInvalid;
 import com.masl.goofy_protocol_fis_be.exception.client.ServiceTableLockRequestInvalid;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import com.masl.goofy_protocol_fis_be.repository.ServiceEntryRepository;
-import com.masl.goofy_protocol_fis_be.repository.UserQuotasRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,15 +19,13 @@ public class TableLockService {
     private static final Logger log = LoggerFactory.getLogger(TableLockService.class);
 
     private final ServiceEntryRepository serviceEntryRepository;
-    private final UserQuotasRepository userQuotasRepository;
-    private final BaseQuotaProperties baseQuotaProperties;
+    private final QuotaService quotaService;
 
     private final ConcurrentHashMap<String, TableLockState> locks = new ConcurrentHashMap<>();
 
-    public TableLockService(ServiceEntryRepository serviceEntryRepository, UserQuotasRepository userQuotasRepository, BaseQuotaProperties baseQuotaProperties) {
+    public TableLockService(ServiceEntryRepository serviceEntryRepository, QuotaService quotaService) {
         this.serviceEntryRepository = serviceEntryRepository;
-        this.userQuotasRepository = userQuotasRepository;
-        this.baseQuotaProperties = baseQuotaProperties;
+        this.quotaService = quotaService;
     }
 
     public String lockServiceTableEntry(String serviceUuid, String tableUuid, boolean readLock, boolean writeLock) throws ServiceEntryNotFound, ServiceTableLockRequestInvalid {
@@ -201,7 +197,6 @@ public class TableLockService {
     }
 
     private BaseQuotaProperties getServiceEntryQuotas(ServiceEntry entry) {
-        UserQuotas quotas = userQuotasRepository.findByUserHandle(entry.getCreatedBy().getHandle());
-        return UserQuotas.getUserQuotas(quotas, baseQuotaProperties);
+        return quotaService.getUserQuotas(entry.getCreatedBy().getHandle());
     }
 }
