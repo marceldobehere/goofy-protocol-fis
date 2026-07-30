@@ -24,6 +24,9 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 
@@ -129,7 +132,7 @@ public class ServiceBucketEndpoint {
             bucketEntry.setLinkedServiceEntry(entry);
             bucketEntry.setCreatedBy(auth.getHandle());
             bucketEntry.setCreatedAt(Instant.now());
-            bucketEntry.setFilename(filename);
+            bucketEntry.setFilename(URLDecoder.decode(filename, StandardCharsets.UTF_8));
             bucketEntry.setCacheDuration(cacheDuration != null ? cacheDuration : CacheDuration.NORMAL);
 
             // Private by default
@@ -155,7 +158,7 @@ public class ServiceBucketEndpoint {
 
             // Potentially overwrite filename
             if (filename != null && !filename.isEmpty())
-                bucketEntry.setFilename(filename);
+                bucketEntry.setFilename(URLDecoder.decode(filename, StandardCharsets.UTF_8));
         }
 
         // Upload File
@@ -271,7 +274,7 @@ public class ServiceBucketEndpoint {
 
         return ResponseEntity.ok()
                 .header("Content-Type", bucketEntry.getContentType())
-                .header("X-Filename", bucketEntry.getFilename())
+                .header("X-Filename", URLEncoder.encode(bucketEntry.getFilename(), StandardCharsets.UTF_8))
                 .cacheControl(bucketEntry.getCacheDuration().getCacheControl())
                 .body(streamBody);
     }
