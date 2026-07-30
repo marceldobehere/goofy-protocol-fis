@@ -126,3 +126,29 @@ dialog {
     background-color: var(--background-secondary);
     border: 4px solid var(--border-color);
 }
+
+
+#main-loading-div {
+    animation: spin 1s infinite linear;
+    border: 2px solid rgba(30, 30, 30, 0.5);
+    border-left: 4px solid #fff;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    transition: all 150ms ease-in-out;
+
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

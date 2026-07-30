@@ -4,6 +4,7 @@ import {AsymmFullKeyPair, HttpMethod} from "@/libs/crypto-types";
 import {createSignedRequest, getHeadersFromSignedRequestWithHandle, getHeadersFromSignedRequestWithPubkey} from "@/libs/crypto";
 import {AllServerErrorCodes, FisExceptionDto, RequestError, RequestFisError} from "@/libs/dtos";
 import {getBaseServerUrl, getKeypair} from "@/libs/auth-store";
+import {SpinActivity} from "@/libs/spinner";
 
 function _isBinaryBody(body: object): body is Uint8Array {
     return body instanceof Uint8Array;
@@ -53,7 +54,7 @@ export async function _internalDoReq<T>(_path: string, method: HttpMethod, body:
         try {
             const resBody = JSON.parse(resBodyStr);
             if (resBody satisfies FisExceptionDto && (resBody as FisExceptionDto).errorCode == AllServerErrorCodes.PUBLIC_KEY_LOOKUP_FAILED ) {
-                return await _internalDoReq<T>(_path, method, body, keypair, extraHeaders, bodyBytes, rawResponse, false);
+                return await doRequestSpinner<T>(_path, method, body, keypair, extraHeaders, bodyBytes, rawResponse, false);
             }
         } catch (e) {
             if (e instanceof RequestError || e instanceof RequestFisError)
@@ -97,58 +98,65 @@ export async function _internalDoReq<T>(_path: string, method: HttpMethod, body:
     }
 }
 
+export async function doRequestSpinner<T>(_path: string, method: HttpMethod, body: object | Uint8Array | string | null, keypair: AsymmFullKeyPair | null = null, extraHeaders: Map<string, string> = new Map(), bodyBytes: boolean = false, rawResponse: boolean = false, sendHandle: boolean = true): Promise<T | Response> {
+    let res;
+    await SpinActivity(async () => {
+        res = await _internalDoReq<T>(_path, method, body, keypair, extraHeaders, bodyBytes, rawResponse, sendHandle);
+    });
+    return res as T | Response;
+}
 
 export async function getNoAuth<T>(path: string): Promise<T> {
-    return await _internalDoReq<T>(path, "GET", null) as T;
+    return await doRequestSpinner<T>(path, "GET", null) as T;
 }
 export async function getRawNoAuth(path: string): Promise<Response> {
-    return await _internalDoReq<Response>(path, "GET", null, null, new Map(), false, true) as Response;
+    return await doRequestSpinner<Response>(path, "GET", null, null, new Map(), false, true) as Response;
 }
 export async function getAuth<T>(path: string): Promise<T> {
-    return await _internalDoReq<T>(path, "GET", null, await getKeypair()) as T;
+    return await doRequestSpinner<T>(path, "GET", null, await getKeypair()) as T;
 }
 export async function getFixedAuth<T>(path: string, keypair: AsymmFullKeyPair): Promise<T> {
-    return await _internalDoReq<T>(path, "GET", null, keypair) as T;
+    return await doRequestSpinner<T>(path, "GET", null, keypair) as T;
 }
 export async function getFixedAuthBytes<T>(path: string, keypair: AsymmFullKeyPair): Promise<T> {
-    return await _internalDoReq<T>(path, "GET", null, keypair, new Map(), true) as T;
+    return await doRequestSpinner<T>(path, "GET", null, keypair, new Map(), true) as T;
 }
 
 export async function postNoAuth<T>(path: string, body: object | string ) {
-    return await _internalDoReq<T>(path, "POST", body) as T;
+    return await doRequestSpinner<T>(path, "POST", body) as T;
 }
 export async function postRawNoAuth(path: string, body: object | string ): Promise<Response> {
-    return await _internalDoReq<Response>(path, "POST", body, null, new Map(), false, true) as Response;
+    return await doRequestSpinner<Response>(path, "POST", body, null, new Map(), false, true) as Response;
 }
 export async function postAuth<T>(path: string, body: object | string ) {
-    return await _internalDoReq<T>(path, "POST", body, await getKeypair()) as T;
+    return await doRequestSpinner<T>(path, "POST", body, await getKeypair()) as T;
 }
 export async function postFixedAuth<T>(path: string, body: object | string , keypair: AsymmFullKeyPair, extraHeaders: Map<string, string> = new Map()) {
-    return await _internalDoReq<T>(path, "POST", body, keypair, extraHeaders) as T;
+    return await doRequestSpinner<T>(path, "POST", body, keypair, extraHeaders) as T;
 }
 
 export async function deleteNoAuth<T>(path: string): Promise<T> {
-    return await _internalDoReq<T>(path, "DELETE", null) as T;
+    return await doRequestSpinner<T>(path, "DELETE", null) as T;
 }
 export async function deleteRawNoAuth(path: string): Promise<Response> {
-    return await _internalDoReq<Response>(path, "DELETE", null, null, new Map(), false, true) as Response;
+    return await doRequestSpinner<Response>(path, "DELETE", null, null, new Map(), false, true) as Response;
 }
 export async function deleteAuth<T>(path: string): Promise<T> {
-    return await _internalDoReq<T>(path, "DELETE", null, await getKeypair()) as T;
+    return await doRequestSpinner<T>(path, "DELETE", null, await getKeypair()) as T;
 }
 export async function deleteFixedAuth<T>(path: string, keypair: AsymmFullKeyPair): Promise<T> {
-    return await _internalDoReq<T>(path, "DELETE", null, keypair) as T;
+    return await doRequestSpinner<T>(path, "DELETE", null, keypair) as T;
 }
 
 export async function putNoAuth<T>(path: string, body: object | string ) {
-    return await _internalDoReq<T>(path, "PUT", body) as T;
+    return await doRequestSpinner<T>(path, "PUT", body) as T;
 }
 export async function putRawNoAuth(path: string, body: object | string ): Promise<Response> {
-    return await _internalDoReq<Response>(path, "PUT", body, null, new Map(), false, true) as Response;
+    return await doRequestSpinner<Response>(path, "PUT", body, null, new Map(), false, true) as Response;
 }
 export async function putAuth<T>(path: string, body: object | string ) {
-    return await _internalDoReq<T>(path, "PUT", body, await getKeypair()) as T;
+    return await doRequestSpinner<T>(path, "PUT", body, await getKeypair()) as T;
 }
 export async function putFixedAuth<T>(path: string, body: object | string , keypair: AsymmFullKeyPair) {
-    return await _internalDoReq<T>(path, "PUT", body, keypair) as T;
+    return await doRequestSpinner<T>(path, "PUT", body, keypair) as T;
 }

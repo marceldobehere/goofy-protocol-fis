@@ -30,6 +30,7 @@ export default function RootLayout({
       <body>
       {children}
 
+      <div id={"main-loading-div"} style={{display: "none", zIndex: 150}}></div>
       <button id={styles.FloatingSettingsButton}
           // @ts-expect-error custom attributes
           command={"show-modal"} commandfor={styles.FloatingSettings}>&#x2699;</button>
