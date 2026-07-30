@@ -57,7 +57,7 @@ export default function Page() {
                 <br/><hr/><br/>
 
                 <button onClick={getMemInfo}>Get Memory Info</button><br/>
-                <button onClick={forceGc}>Force Force Force</button><br/>
+                <button onClick={forceGc}>Force GC</button><br/>
 
                 <br/><hr/><br/>
 
@@ -65,6 +65,7 @@ export default function Page() {
 
                 <button onClick={createRegisterCode}>Create Register Code</button><br/>
 
+                <br/>
                 {registerCodes.length == 0 ? <p>No registration codes found.</p> : (
                     <ul>
                         {registerCodes.map((code) => (<li key={code.code}>
