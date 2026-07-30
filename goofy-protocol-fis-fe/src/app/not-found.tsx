@@ -2,8 +2,16 @@
 
 import styles from "./not-found.module.css";
 import Link from "next/link";
+import {basePath, goPath} from "@/libs/go-path";
 
 export default function Page() {
+    // Attempt to redirect using BasePath in case it was left out
+    if (typeof window !== 'undefined') {
+        const { pathname, search, hash } = window.location;
+        if (!pathname.startsWith(basePath))
+            goPath(`${pathname}${search}${hash}`);
+    }
+
     return (
         <main>
             <div className={styles.MainCont}>

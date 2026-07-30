@@ -128,9 +128,13 @@ export default function Page() {
         if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        // Base Frontend URL + /guest/view + ?tempBackendUrl= + urlencode(currentBackend) + # + identityHandle + @ + serviceEntryUuid + @ + fileUuid
         const backend = await getBaseServerUrl();
-        const shareUrl = `${GlobalState.basePath}/guest/view?tempBackendUrl=${encodeURIComponent(backend)}#${GlobalState.identityHandle}@${GlobalState.serviceEntry.uuid}@${fileUuid}`;
+        // OLD
+        // // Base Frontend URL + /guest/view + ?tempBackendUrl= + urlencode(currentBackend) + # + identityHandle + @ + serviceEntryUuid + @ + fileUuid
+        // const shareUrl = `${basePath}/guest/view?tempBackendUrl=${encodeURIComponent(backend)}#${GlobalState.identityHandle}@${GlobalState.serviceEntry.uuid}@${fileUuid}`;
+
+        // Backend URL + /short/bucket/{idHandle}/{serviceUuid}/{fileUuid}
+        const shareUrl = `${backend}/short/bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/${fileUuid}`;
 
         // Copy to clipboard
         await navigator.clipboard.writeText(shareUrl);
