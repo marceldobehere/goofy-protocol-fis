@@ -11,10 +11,14 @@ export default function Page() {
     const [registerCodes, setRegisterCodes] = useState<RegistrationCodeDto[]>([]);
 
     useGlobalState(true, true, "NONE", async () => {
+        await refresh();
+    });
+
+    async function refresh() {
         const unused: RegistrationCodeDto[] = await getAuth("/api/admin/register/code/unused");
         const used: RegistrationCodeDto[] = await getAuth("/api/admin/register/code/used");
         setRegisterCodes([...unused, ...used]);
-    });
+    }
 
     async function getMemInfo() {
         const res: MemInfoDto = await getAuth("/api/admin/general/memory");
@@ -43,6 +47,7 @@ export default function Page() {
         const res: RegistrationCodeDto = await postAuth("/api/admin/register/code", (opt == "admin") as unknown as object);
         console.log(res);
         alert("Registered: " +JSON.stringify(res, null, 2));
+        await refresh();
     }
 
     // TODO: Styling

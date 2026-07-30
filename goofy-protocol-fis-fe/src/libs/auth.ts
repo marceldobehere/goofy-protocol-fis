@@ -55,6 +55,7 @@ export async function getUserInfo(): Promise<MyUserInfoDto | null> {
         }
         return res;
     } catch {
+        // TODO: Check if it's because the server is down or because the request is invalid or so and let the user know instead of instantly logging them out
         return null;
     }
 }
