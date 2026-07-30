@@ -1,3 +1,5 @@
+'use client';
+
 import {
     AsymmCryptoType,
     AsymmFullJsonKeypair,
@@ -116,6 +118,7 @@ export async function symmDecryptObj<T>(str: string, secret: SecretString): Prom
 
 // Handle Stuff
 
+// TODO: Cache
 export async function deriveHandleFromPublicSplitKey(pubSplitKey: AsymmPubKeyPair): Promise<Handle> {
     return await handleCrypto.deriveHandle(pubSplitKey.serialize());
 }

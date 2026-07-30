@@ -1,3 +1,5 @@
+'use client';
+
 export interface FisExceptionDto {
     errorCode: number;
     message: string;

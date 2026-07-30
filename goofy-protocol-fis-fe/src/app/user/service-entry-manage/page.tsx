@@ -2,64 +2,19 @@
 
 import styles from "./page.module.css";
 import Link from "next/link";
-import {getIdentityKeypair, getServiceEntry} from "@/libs/auth-store";
-import {useEffect, useState} from "react";
-import {goPath} from "@/libs/go-path";
-import {isUser} from "@/libs/auth";
+import {useState} from "react";
 import {deleteFixedAuth, getFixedAuth, getFixedAuthBytes, postFixedAuth, putFixedAuth} from "@/libs/req";
-import {
-    ServiceBucketEntryDto,
-    ServiceBucketPermissionDto,
-    ServiceBucketQuotasDto,
-    ServiceEntryDto
-} from "@/libs/dtos";
-import {AsymmFullKeyPair} from "@/libs/crypto-types";
+import {ServiceBucketEntryDto, ServiceBucketPermissionDto, ServiceBucketQuotasDto} from "@/libs/dtos";
 import {readFileBytes, uploadData} from "@/libs/file-utils";
+import {GlobalState, useGlobalState} from "@/libs/global-state";
 
 export default function Page() {
-    const [identityKeypair, setIdentityKeypair] = useState<AsymmFullKeyPair | null>(null);
-    const [identityHandle, setIdentityHandle] = useState<string | null>(null);
-    const [serviceEntry, setServiceEntry] = useState<ServiceEntryDto | null>(null);
-
     const [perms, setPerms] = useState<ServiceBucketPermissionDto | null>(null);
     const [quotas, setQuotas] = useState<ServiceBucketQuotasDto | null>(null);
     const [entries, setEntries] = useState<ServiceBucketEntryDto[]>([]);
 
-
-    useEffect(() => {(async () => {
-        if (identityKeypair == null) {
-            if (!(await isUser())) {
-                goPath("/guest/login");
-                return;
-            }
-
-            if (window.location.hash == "" || !window.location.hash.includes("@"))
-                goPath("/user/home");
-
-            const fragmentPart =  window.location.hash.slice(window.location.hash.lastIndexOf("#") + 1).split("@");
-            // window.location.hash = "#" + fragmentHandle;
-            const fragmentHandle = fragmentPart[0];
-            const fragmentUuid = fragmentPart[1];
-
-            try {
-                const keypair = await getIdentityKeypair(fragmentHandle);
-                const serviceEntry = await getServiceEntry(keypair, fragmentUuid);
-
-                setIdentityHandle(fragmentHandle);
-                setIdentityKeypair(keypair);
-                setServiceEntry(serviceEntry);
-            } catch (e) {
-                console.log(e);
-                alert(`Identity for ${fragmentHandle} not found`);
-                goPath("/user/home");
-                return;
-            }
-        }
-
-        if (quotas == null) {
-            await refresh();
-        }
-        })();
+    useGlobalState(true, false, "IDENTITY@SERVICE", async () => {
+        await refresh();
     });
 
     async function refresh() {
@@ -69,10 +24,10 @@ export default function Page() {
     }
 
     async function getEntries() {
-        if (identityKeypair == null || serviceEntry == null || identityHandle == null)
+        if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const entries: ServiceBucketEntryDto[] = await getFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/entry`, identityKeypair);
+        const entries: ServiceBucketEntryDto[] = await getFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry`, GlobalState.identityKeypair);
         entries.forEach(entry => {
             if (entry.createdAt != null)
                 entry.createdAtDate = new Date(entry.createdAt)
@@ -84,23 +39,23 @@ export default function Page() {
     }
 
     async function getPerms() {
-        if (identityKeypair == null || serviceEntry == null || identityHandle == null)
+        if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const perms: ServiceBucketPermissionDto = await getFixedAuth(`/api/service-bucket/${serviceEntry.uuid}/perms`, identityKeypair);
+        const perms: ServiceBucketPermissionDto = await getFixedAuth(`/api/service-bucket/${GlobalState.serviceEntry.uuid}/perms`, GlobalState.identityKeypair);
         setPerms(perms);
     }
 
     async function getQuotas() {
-        if (identityKeypair == null || serviceEntry == null || identityHandle == null)
+        if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const quotas: ServiceBucketQuotasDto = await getFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/quotas`, identityKeypair);
+        const quotas: ServiceBucketQuotasDto = await getFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/quotas`, GlobalState.identityKeypair);
         setQuotas(quotas);
     }
 
     async function uploadEntry(fileUuid: string | null = null) {
-        if (identityHandle == null || serviceEntry == null || identityKeypair == null)
+        if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
         const data: File | null = await uploadData(false) as File;
@@ -113,10 +68,10 @@ export default function Page() {
 
         try {
             const uploadUrl = fileUuid == null ?
-                `/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/upload` :
-                `/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/upload/${fileUuid}`;
+                `/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/upload` :
+                `/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/upload/${fileUuid}`;
             await postFixedAuth(uploadUrl,
-                bytes, identityKeypair, new Map([["Content-Type", dataType], ["X-Filename", encodeURIComponent(filename)], /*["X-Cache-Duration", "NONE"]*/]));
+                bytes, GlobalState.identityKeypair, new Map([["Content-Type", dataType], ["X-Filename", encodeURIComponent(filename)], /*["X-Cache-Duration", "NONE"]*/]));
         } catch (e) {
             console.log(e);
             alert("Failed to upload Bucket Entry: " + (e as Error).message);
@@ -125,11 +80,11 @@ export default function Page() {
     }
 
     async function deleteEntry(fileUuid: string) {
-        if (identityHandle == null || serviceEntry == null || identityKeypair == null)
+        if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
         try {
-            await deleteFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/entry/${fileUuid}`, identityKeypair);
+            await deleteFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
         } catch (e) {
             console.log(e);
             alert("Failed to delete Bucket Entry: " + (e as Error).message);
@@ -138,13 +93,13 @@ export default function Page() {
     }
 
     async function viewEntry(fileUuid: string) {
-        if (identityHandle == null || serviceEntry == null || identityKeypair == null)
+        if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
         try {
             // Load Data
-            const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/entry/${fileUuid}`, identityKeypair);
-            const data: Uint8Array = await getFixedAuthBytes(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/content/${fileUuid}`, identityKeypair);
+            const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
+            const data: Uint8Array = await getFixedAuthBytes(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/content/${fileUuid}`, GlobalState.identityKeypair);
 
             // Create Blob URL
             const blob = new Blob([data as BlobPart], { type: details.contentType });
@@ -163,15 +118,15 @@ export default function Page() {
     }
 
     async function getEntryDetails(fileUuid: string) {
-        if (identityHandle == null || serviceEntry == null || identityKeypair == null)
+        if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${identityHandle}/${serviceEntry.uuid}/entry/${fileUuid}`, identityKeypair);
+        const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
         alert(`Details for Bucket Entry ${fileUuid}:\n` + JSON.stringify(details));
     }
 
     async function bucketChangePerm(handle: string | null, insert: boolean, read: boolean) {
-        if (perms == null || identityHandle == null || serviceEntry == null || identityKeypair == null)
+        if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null || perms == null)
             return;
 
         if (handle == null)
@@ -194,7 +149,7 @@ export default function Page() {
         }
 
         try {
-            await putFixedAuth(`/api/service-bucket/${serviceEntry.uuid}/perms`, localPerms, identityKeypair);
+            await putFixedAuth(`/api/service-bucket/${GlobalState.serviceEntry.uuid}/perms`, localPerms, GlobalState.identityKeypair);
         } catch (e) {
             console.log(e);
             alert("Failed to edit Bucket Entry Permissions: " + (e as Error).message);
@@ -214,7 +169,7 @@ export default function Page() {
 
                 <br/>
                 <p>
-                    Checking Service Entry &quot;{serviceEntry?.name || serviceEntry?.usedService || serviceEntry?.uuid}&quot; (for {identityHandle}) <br/>
+                    Checking Service Entry &quot;{GlobalState.serviceEntry?.name || GlobalState.serviceEntry?.usedService || GlobalState.serviceEntry?.uuid}&quot; (for {GlobalState.identityHandle}) <br/>
                     Service Entry List Quota: (Count: {quotas?.currentItemCount} / {quotas?.maxItemCount}, Size: {((quotas?.currentBucketSize ?? 0) / (1000*1000)).toFixed(2)}MB / {((quotas?.maxBucketSize ?? 0) / (1000*1000)).toFixed(2)}MB) (Max Item Size: {((quotas?.maxItemSize ?? 0) / (1000*1000)).toFixed(2)}MB)<br/>
                     Here is the information for your Service Entry:
                 </p>
@@ -274,7 +229,7 @@ export default function Page() {
                 <br/><hr/><br/>
 
                 <div className={styles.MainButtons}>
-                    <Link href={`/user/service-entry-list#${identityHandle}`}>Service Entry List</Link>
+                    <Link href={`/user/service-entry-list#${GlobalState.identityHandle}`}>Service Entry List</Link>
                     <Link href="/user/identity-storage">Identity Storage</Link>
                     <Link href="/user/home">Home</Link>
                     <Link href={"/"}>Index</Link>

@@ -1,3 +1,5 @@
+'use client';
+
 import {AsymmFullKeyPair, HttpMethod} from "@/libs/crypto-types";
 import {createSignedRequest, getHeadersFromSignedRequestWithHandle, getHeadersFromSignedRequestWithPubkey} from "@/libs/crypto";
 import {AllServerErrorCodes, FisExceptionDto, RequestError, RequestFisError} from "@/libs/dtos";

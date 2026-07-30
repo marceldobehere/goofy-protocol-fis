@@ -1,3 +1,5 @@
+'use client';
+
 import {AsymmFullJsonKeypair, AsymmFullKeyPair, AsymmPrivKeyPair, AsymmPubKeyPair} from "@/libs/crypto-types";
 import {
     asymmVerifyStr, checkPublicSplitKey, parseFullKeypair,
@@ -18,11 +20,12 @@ let currentStorageMode: StorageMode;
 let currServerBase: string;
 let currKeypair: AsymmFullKeyPair | null;
 
+// TODO: Import my AsyncLock and make it use that
 let initDone = false;
 export async function init() {
     if (initDone)
         return;
-    console.log("Initializing keypair storage...");
+    console.debug("Initializing keypair storage... ");
 
     // Load Storage Mode
     currentStorageMode = await _loadStorageMode();

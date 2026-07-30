@@ -3,9 +3,7 @@
 import styles from "./page.module.css";
 import Link from "next/link";
 import {getAllUserIdentities, getKeypair} from "@/libs/auth-store";
-import {useEffect, useState} from "react";
-import {goPath} from "@/libs/go-path";
-import {getMyHandle, isUser} from "@/libs/auth";
+import {useState} from "react";
 import {deleteAuth, getAuth, postAuth} from "@/libs/req";
 import {IdentityStorageEntryDto, MyIdentityEntryQuotasDto} from "@/libs/dtos";
 import {
@@ -16,23 +14,14 @@ import {
     symmEncryptObj
 } from "@/libs/crypto";
 import {AsymmCryptoType, AsymmFullJsonKeypair} from "@/libs/crypto-types";
+import {GlobalState, useGlobalState} from "@/libs/global-state";
 
 export default function Page() {
-    const [userHandle, setUserHandle] = useState<string | null>(null);
     const [identityEntries, setIdentityEntries] = useState<IdentityStorageEntryDto[]>([]);
     const [quotas, setQuotas] = useState<MyIdentityEntryQuotasDto | null>(null);
 
-    useEffect(() => {(async () => {
-        if (userHandle == null) {
-            if (!(await isUser())) {
-                goPath("/guest/login");
-                return;
-            }
-
-            setUserHandle(await getMyHandle());
-            await refresh();
-        }
-        })();
+    useGlobalState(true, false, "NONE", async () => {
+        await refresh();
     });
 
     async function refresh() {
@@ -98,7 +87,7 @@ export default function Page() {
 
                 <br/>
                 <p>
-                    Hello, {userHandle}!<br/>
+                    Hello, {GlobalState.handle}!<br/>
                     Quota: ({quotas?.currentEntryCount} / {quotas?.maxEntryCount})<br/>
                     These are your Identities:
                 </p>

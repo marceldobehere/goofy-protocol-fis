@@ -2,30 +2,11 @@
 
 import styles from "./page.module.css";
 import Link from "next/link";
-import {saveKeypair} from "@/libs/auth-store";
-import {useEffect, useState} from "react";
-import {goPath} from "@/libs/go-path";
-import {getMyHandle, isUser} from "@/libs/auth";
+import {GlobalState, useGlobalState} from "@/libs/global-state";
+import {logout} from "@/libs/auth";
 
 export default function Page() {
-    const [userHandle, setUserHandle] = useState<string | null>(null);
-
-    useEffect(() => {(async () => {
-        if (userHandle == null) {
-            if (!(await isUser())) {
-                goPath("/guest/login");
-                return;
-            }
-
-            setUserHandle(await getMyHandle());
-        }
-        })();
-    });
-
-    async function logout() {
-        await saveKeypair(null);
-        setUserHandle(null);
-    }
+    useGlobalState(true, false, "NONE", async () => {});
 
     // TODO: Styling
     return (
@@ -34,7 +15,7 @@ export default function Page() {
                 <h2 className={styles.Title}>Home</h2>
 
                 <br/>
-                <p>Hello, {userHandle}! This is the Home Page.</p>
+                <p>Hello, {GlobalState.handle}! This is the Home Page.</p>
 
                 <br/><hr/><br/>
 

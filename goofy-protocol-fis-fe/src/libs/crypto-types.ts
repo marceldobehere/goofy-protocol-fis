@@ -1,3 +1,5 @@
+'use client';
+
 import {AsymmCryptoType as _internalAsymmCryptoType} from "@/libs/goofy-protocol-core/crypto/isolated/asymm/asymm-crypto-type.mjs";
 import {SymmCryptoType as _internalSymmCryptoType} from "@/libs/goofy-protocol-core/crypto/isolated/symm/symm-crypto-type.mjs";
 

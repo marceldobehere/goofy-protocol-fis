@@ -1,3 +1,5 @@
+'use client';
+
 import {AsymmFullJsonKeypair, AsymmFullKeyPair} from "@/libs/crypto-types";
 import {getNoAuth, postFixedAuth} from "@/libs/req";
 import {RegistrationRequestDto, RequestError, RequestFisError} from "@/libs/dtos";

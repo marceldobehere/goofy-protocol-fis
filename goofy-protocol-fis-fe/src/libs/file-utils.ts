@@ -1,3 +1,5 @@
+'use client';
+
 function downloadBase64File(base64DataStr: string, filename: string) {
     const linkSource = base64DataStr;
     const downloadLink = document.createElement("a");

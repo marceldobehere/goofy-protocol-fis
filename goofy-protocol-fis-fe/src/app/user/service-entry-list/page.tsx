@@ -2,54 +2,18 @@
 
 import styles from "./page.module.css";
 import Link from "next/link";
-import {getIdentityKeypair, getServiceEntries} from "@/libs/auth-store";
-import {useEffect, useState} from "react";
-import {goPath} from "@/libs/go-path";
-import {getMyHandle, isUser} from "@/libs/auth";
+import {getServiceEntries} from "@/libs/auth-store";
+import {useState} from "react";
 import {deleteFixedAuth, getFixedAuth, postFixedAuth, putFixedAuth} from "@/libs/req";
 import {MyServiceEntryQuotasDto, ServiceEntryDto} from "@/libs/dtos";
-import {AsymmFullKeyPair} from "@/libs/crypto-types";
+import {GlobalState, useGlobalState} from "@/libs/global-state";
 
 export default function Page() {
-    const [userHandle, setUserHandle] = useState<string | null>(null);
-    const [identityKeypair, setIdentityKeypair] = useState<AsymmFullKeyPair | null>(null);
-    const [identityHandle, setIdentityHandle] = useState<string | null>(null);
-
     const [serviceEntries, setServiceEntries] = useState<ServiceEntryDto[]>([]);
     const [quotas, setQuotas] = useState<MyServiceEntryQuotasDto | null>(null);
 
-    useEffect(() => {(async () => {
-        if (userHandle == null) {
-            if (!(await isUser())) {
-                goPath("/guest/login");
-                return;
-            }
-
-            setUserHandle(await getMyHandle());
-        }
-
-        if (identityKeypair == null) {
-            if (window.location.hash == "")
-                goPath("/user/home");
-            const fragmentHandle =  window.location.hash.slice(window.location.hash.lastIndexOf("#") + 1);
-            // window.location.hash = "#" + fragmentHandle;
-
-            try {
-                const keypair = await getIdentityKeypair(fragmentHandle);
-                setIdentityHandle(fragmentHandle);
-                setIdentityKeypair(keypair);
-            } catch (e) {
-                console.log(e);
-                alert(`Identity for ${fragmentHandle} not found`);
-                goPath("/user/home");
-                return;
-            }
-        }
-
-        if (quotas == null) {
-            await refresh();
-        }
-        })();
+    useGlobalState(true, false, "IDENTITY", async () => {
+        await refresh();
     });
 
     async function refresh() {
@@ -58,22 +22,22 @@ export default function Page() {
     }
 
     async function getQuotas() {
-        if (identityKeypair == null)
+        if (GlobalState.identityKeypair == null)
             return;
 
-        const quotas: MyServiceEntryQuotasDto = await getFixedAuth("/api/service-entry/quotas", identityKeypair);
+        const quotas: MyServiceEntryQuotasDto = await getFixedAuth("/api/service-entry/quotas", GlobalState.identityKeypair);
         setQuotas(quotas);
     }
 
     async function getEntries() {
-        if (identityKeypair == null)
+        if (GlobalState.identityKeypair == null)
             return;
 
-        setServiceEntries(await getServiceEntries(identityKeypair));
+        setServiceEntries(await getServiceEntries(GlobalState.identityKeypair));
     }
 
     async function createEntry() {
-        if (identityKeypair == null)
+        if (GlobalState.identityKeypair == null)
             return;
 
         const name = prompt("Enter a name for the Service Entry");
@@ -91,7 +55,7 @@ export default function Page() {
         }
 
         try {
-            await postFixedAuth("/api/service-entry", newEntry, identityKeypair);
+            await postFixedAuth("/api/service-entry", newEntry, GlobalState.identityKeypair);
         } catch (e) {
             console.log(e);
             alert("Failed to create Service Entry: " + (e as Error).message);
@@ -100,15 +64,15 @@ export default function Page() {
     }
 
     async function deleteEntry(uuid: string) {
-        if (identityKeypair == null)
+        if (GlobalState.identityKeypair == null)
             return;
 
-        await deleteFixedAuth("/api/service-entry/" + encodeURIComponent(uuid), identityKeypair);
+        await deleteFixedAuth("/api/service-entry/" + encodeURIComponent(uuid), GlobalState.identityKeypair);
         await refresh();
     }
 
     async function updateEntry(uuid: string, oldName: string, oldUsedService: string) {
-        if (identityKeypair == null)
+        if (GlobalState.identityKeypair == null)
             return;
 
         const name = prompt("Enter a new name for the Service Entry", oldName);
@@ -125,10 +89,9 @@ export default function Page() {
             uuid: uuid
         }
 
-        await putFixedAuth("/api/service-entry/" + encodeURIComponent(uuid), newEntry, identityKeypair);
+        await putFixedAuth("/api/service-entry/" + encodeURIComponent(uuid), newEntry, GlobalState.identityKeypair);
         await refresh();
     }
-
 
     // TODO: Styling
     return (
@@ -138,7 +101,7 @@ export default function Page() {
 
                 <br/>
                 <p>
-                    Hello, {identityHandle}! (From {userHandle})<br/>
+                    Hello, {GlobalState.identityHandle}! (From {GlobalState.handle})<br/>
                     Quota: ({quotas?.currentServiceEntryCount} / {quotas?.maxServiceEntryCount})<br/>
                     These are your Service Entries:
                 </p>
@@ -148,7 +111,7 @@ export default function Page() {
                     {serviceEntries.map((entry) => (<li key={entry.uuid}>
                             <span>{entry.name} - Service: {entry.usedService}</span> (UUID: {entry.uuid})
                             <span> </span>
-                            <Link href={`/user/service-entry-manage#${identityHandle}@${entry.uuid}`}>Manage</Link>
+                            <Link href={`/user/service-entry-manage#${GlobalState.identityHandle}@${entry.uuid}`}>Manage</Link>
                             <span> </span>
                             <button onClick={() => {updateEntry(entry.uuid, entry.name, entry.usedService ?? "").then()}}>Update</button>
                             <span> </span>

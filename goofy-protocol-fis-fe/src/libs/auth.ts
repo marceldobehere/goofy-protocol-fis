@@ -1,7 +1,10 @@
+'use client';
+
 import {MyUserInfoDto} from "@/libs/dtos";
 import {getAuth} from "@/libs/req";
-import {getKeypair, hasKeypair} from "@/libs/auth-store";
+import {getKeypair, hasKeypair, saveKeypair} from "@/libs/auth-store";
 import {deriveHandleFromPublicSplitKey} from "@/libs/crypto";
+import {goPath} from "@/libs/go-path";
 
 export async function isLoggedIn(): Promise<boolean> {
     return await hasKeypair();
@@ -37,4 +40,26 @@ export async function isAdmin(): Promise<boolean> {
     } catch {
         return false;
     }
+}
+
+export async function getUserInfo(): Promise<MyUserInfoDto | null> {
+    if (!(await isLoggedIn()))
+        return null;
+
+    try {
+        const res: MyUserInfoDto = await getAuth("/api/user/info");
+        const derivedHandle = await getMyHandle();
+        if (res.handle != derivedHandle) {
+            alert(`Derived handle ${derivedHandle} does not match server handle ${res.handle}`);
+            return null;
+        }
+        return res;
+    } catch {
+        return null;
+    }
+}
+
+export async function logout(): Promise<void> {
+    await saveKeypair(null);
+    goPath("/guest/login");
 }
