@@ -67,6 +67,9 @@ export default function Page() {
         if (GlobalState.identityKeypair == null)
             return;
 
+        if (!confirm("Are you sure you want to delete the Service Entry?"))
+            return;
+
         await deleteFixedAuth("/api/service-entry/" + encodeURIComponent(uuid), GlobalState.identityKeypair);
         await refresh();
     }

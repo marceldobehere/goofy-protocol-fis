@@ -83,6 +83,9 @@ export default function Page() {
         if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
+        if (!confirm("Are you sure you want to delete the Service Entry?"))
+            return;
+
         try {
             await deleteFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
         } catch (e) {

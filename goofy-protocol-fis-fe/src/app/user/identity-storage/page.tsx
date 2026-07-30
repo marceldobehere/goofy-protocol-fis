@@ -75,6 +75,9 @@ export default function Page() {
     }
 
     async function deleteIdentity(handle: string) {
+        if (!confirm("Are you sure you want to delete identity " + handle + "? This cannot be undone."))
+            return;
+
         await deleteAuth("/api/identity-storage/" + encodeURIComponent(handle));
         await refresh();
     }
