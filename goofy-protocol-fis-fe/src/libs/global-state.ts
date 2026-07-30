@@ -52,9 +52,14 @@ export type FragmentNeed = "NONE" | "IDENTITY" | "IDENTITY@SERVICE";
 export function useGlobalState(needLogin: boolean, needAdmin: boolean, fragment: FragmentNeed, doneCallback: Function, preCallback: Function | undefined = undefined, extraDependencies: never[] | undefined = undefined) {
     const pathName = usePathname();
     const [isDone, setIsDone] = useState(false);
-    console.debug("1> Use Global State", pathName, isDone, needLogin, needAdmin, fragment, extraDependencies);
+    if (typeof window !== "undefined")
+        console.debug("1> Use Global State", pathName, isDone, needLogin, needAdmin, fragment, extraDependencies);
     const deps = extraDependencies === undefined ? [pathName, isDone] : [pathName, isDone, ...extraDependencies];
     useEffect(() => {
+        // SSR shouldn't do anything
+        if (typeof window == "undefined")
+            return;
+
         // console.log("2> Use Global State Effect")
         runMaybeAsyncCallback(preCallback).then(() => {
             if (isDone) {
