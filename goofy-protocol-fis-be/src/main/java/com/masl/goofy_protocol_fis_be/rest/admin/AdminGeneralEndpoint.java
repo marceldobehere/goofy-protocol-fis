@@ -1,14 +1,20 @@
 package com.masl.goofy_protocol_fis_be.rest.admin;
 
+import com.masl.goofy_protocol_fis_be.dto.response.MemInfoDto;
 import com.masl.goofy_protocol_fis_be.dto.response.ReportEntryDto;
 import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
 import com.masl.goofy_protocol_fis_be.exception.client.GenericNotFound;
 import com.masl.goofy_protocol_fis_be.service.GeneralReportService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
 import java.util.List;
 
 // TODO: Test
@@ -16,10 +22,32 @@ import java.util.List;
 @RequestMapping("/api/admin/general")
 @Tag(name = "General (Admin)", description = "General Admin Endpoints regarding the FIS")
 public class AdminGeneralEndpoint {
+    private static final Logger log = LoggerFactory.getLogger(AdminGeneralEndpoint.class);
     private final GeneralReportService generalReportService;
 
     public AdminGeneralEndpoint(GeneralReportService generalReportService) {
         this.generalReportService = generalReportService;
+    }
+
+    // Get Memory Health
+    @GetMapping("/memory")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Get Memory Health", description = "This Endpoint allows an admin to retrieve the current memory usage of the FIS. <br> The response will include the amount of memory used, the maximum available memory, and the utilization percentage.")
+    public MemInfoDto getMemInfo() {
+        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+        MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();
+        double utilization = (double) heapUsage.getUsed() / heapUsage.getMax();
+        log.info("Memory Usage: Used = {} MB, Max = {} MB, Utilization = {}%", heapUsage.getUsed() / (1024*1024), heapUsage.getMax() / (1024*1024), utilization * 100);
+        return new MemInfoDto(heapUsage.getUsed(), heapUsage.getMax(), utilization);
+    }
+
+    // Force Garbage Collector
+    @PostMapping("/memory/gc")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Force Garbage Collection")
+    public void forceGc() {
+        log.info("Forcing Garbage Collection");
+        System.gc();
     }
 
     // Get all reports
