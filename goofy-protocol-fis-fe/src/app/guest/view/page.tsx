@@ -31,6 +31,9 @@ export default function Page() {
 
         setMsg(`Fetching Bucket Entry for handle: ${handle}, serviceUuid: ${serviceUuid}, fileUuid: ${fileUuid}...`);
 
+        // This is a bit painful with larger files / slower wifi, I guess the best option would be to use a service worker that catches the request and appends the signature afterwards
+        // or using some form of cookie with the signature embedded I guess / maybe request a JWT like or nonce token first and access the data afterwards.
+        // Potentially using a MediaSource could be an option for videos, dont know yet
         try {
             // Load Data
             const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${handle}/${serviceUuid}/entry/${fileUuid}`, currKeypair);
