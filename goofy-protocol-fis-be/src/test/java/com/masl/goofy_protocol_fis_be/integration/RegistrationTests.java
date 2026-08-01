@@ -73,7 +73,7 @@ class RegistrationTests {
 				.stream().filter(r -> r.getGeneralContact().equals(randomUUID))
 				.findFirst().orElse(null);
 		assertThat(request).isNotNull();
-		assertThat(request.getMesssage()).isEqualTo(requestDto.getMessage());
+		assertThat(request.getMessage()).isEqualTo(requestDto.getMessage());
 		assertThat(request.getOptEmail()).isEqualTo(requestDto.getOptEmail());
 	}
 

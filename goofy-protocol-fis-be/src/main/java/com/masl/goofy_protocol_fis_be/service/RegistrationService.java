@@ -119,7 +119,7 @@ public class RegistrationService {
     public void submitRegistrationRequest(RegistrationRequestDto requestDto, String handle) {
         log.info("Received Registration Request: {}", requestDto);
         RegistrationRequest request = new RegistrationRequest();
-        request.setMesssage(requestDto.getMessage());
+        request.setMessage(requestDto.getMessage());
         request.setGeneralContact(requestDto.getContact());
         request.setOptEmail(requestDto.getOptEmail());
         request.setCreatedAt(Instant.now());
