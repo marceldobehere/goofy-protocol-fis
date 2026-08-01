@@ -26,6 +26,7 @@ import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -396,12 +397,18 @@ public class ServiceTableEndpoint {
                 throw new ServiceTableInsertEntryInvalid("Invalid Column Value Type: " + insertEntry.getKey());
         }
 
+        // Check Db Size
+        try {
+            if (userDbService.getDbSize(entry) >= userQuotas.getTable().getMaxDbSize())
+                throw new ServiceTableQuotaExceeded("tableMaxDbSize");
+        } catch (IOException e) {
+            throw new ServiceEntryNotFound(serviceUuid);
+        }
+
         try {
             // Check Max Rows
             if (userDbService.getTableRowCount(entry, tableUuid) >= userQuotas.getTable().getMaxRows())
                 throw new ServiceTableQuotaExceeded("tableMaxRows");
-
-            // TODO: Check Max DB Size
 
             // Insert
             userDbService.insertIntoTable(entry, tableUuid, insertFields);
@@ -412,7 +419,7 @@ public class ServiceTableEndpoint {
 
     @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows-bulk")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Bulk Insert Rows into a Table Entry", description = "Inserts multiple Rows into a Table Entry based on the provided data. <br> The data must match the table's schema and constraints.")
+    @FisEndpoint(summary = "Bulk Insert Rows into a Table Entry", description = "Inserts multiple Rows into a Table Entry based on the provided data. <br> The data must match the table's schema and constraints. <br>Do keep the Maximum Query Length in mind.")
     public void insertBulkQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableMultiRowInsertDto insertDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableInsertEntryInvalid, ServiceTableSqlError {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
@@ -431,12 +438,23 @@ public class ServiceTableEndpoint {
                 throw new ServiceTableInsertEntryInvalid("Invalid Column Name: " + insertColName);
         }
 
+        // Check Insert Size against Max Query Length
+        ObjectMapper mapper = new ObjectMapper();
+        if (mapper.writeValueAsString(insertDto).length() > userQuotas.getTableQuery().getMaxQueryLength())
+            throw new ServiceTableInsertEntryInvalid("Insert Object too large");
+
+        // Check Db Size
+        try {
+            if (userDbService.getDbSize(entry) >= userQuotas.getTable().getMaxDbSize())
+                throw new ServiceTableQuotaExceeded("tableMaxDbSize");
+        } catch (IOException e) {
+            throw new ServiceEntryNotFound(serviceUuid);
+        }
+
         // Check insert Rows
         try {
             if (insertDto.getRows().size() + userDbService.getTableRowCount(entry, tableUuid) > userQuotas.getTable().getMaxRows())
                 throw new ServiceTableInsertEntryInvalid("Too many rows in insert object");
-
-            // TODO: Check Max DB Size
 
             for (var insertRow : insertDto.getRows()) {
                 if (insertRow.length != insertDto.getColNames().length)
@@ -450,8 +468,8 @@ public class ServiceTableEndpoint {
             throw new ServiceTableSqlError(tableUuid, e.getMessage());
         }
 
+        // Bulk Insert
         try {
-            // Insert Multiple
             userDbService.insertMultipleIntoTable(entry, tableUuid, insertDto);
         } catch (SQLException e) {
             throw new ServiceTableSqlError(tableUuid, e.getMessage());
@@ -488,8 +506,6 @@ public class ServiceTableEndpoint {
         ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
 
-        // TODO: Check Max DB Size
-
         // Check Update Object
         if (updateDto.getColNames().length > userQuotas.getTable().getMaxCols())
             throw new ServiceTableQueryInvalid("Too many columns in insert object");
@@ -505,8 +521,16 @@ public class ServiceTableEndpoint {
             if (updateValEntry != null && (updateValEntry instanceof Map || updateValEntry instanceof List || updateValEntry.getClass().isArray()))
                 throw new ServiceTableQueryInvalid("Invalid Column Value Type: " + updateValEntry);
 
+        // Check Db Size
         try {
-            // Update
+            if (userDbService.getDbSize(entry) >= userQuotas.getTable().getMaxDbSize())
+                throw new ServiceTableQuotaExceeded("tableMaxDbSize");
+        } catch (IOException e) {
+            throw new ServiceEntryNotFound(serviceUuid);
+        }
+
+        // Update Entry
+        try {
             return userDbService.updateQueryTable(entry, tableUuid, updateDto, userQuotas);
         } catch (SQLException e) {
             throw new ServiceTableSqlError(tableUuid, e.getMessage());
