@@ -400,6 +400,8 @@ public class ServiceTableEndpoint {
             if (userDbService.getTableRowCount(entry, tableUuid) >= userQuotas.getTable().getMaxRows())
                 throw new ServiceTableQuotaExceeded("tableMaxRows");
 
+            // TODO: Check Max DB Size
+
             // Insert
             userDbService.insertIntoTable(entry, tableUuid, insertFields);
         } catch (SQLException e) {
@@ -432,6 +434,9 @@ public class ServiceTableEndpoint {
         try {
             if (insertDto.getRows().size() + userDbService.getTableRowCount(entry, tableUuid) > userQuotas.getTable().getMaxRows())
                 throw new ServiceTableInsertEntryInvalid("Too many rows in insert object");
+
+            // TODO: Check Max DB Size
+
             for (var insertRow : insertDto.getRows()) {
                 if (insertRow.length != insertDto.getColNames().length)
                     throw new ServiceTableInsertEntryInvalid("Row length does not match column length");
@@ -481,6 +486,8 @@ public class ServiceTableEndpoint {
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
         ServiceEntry.checkForRestrictedAccess(entry.getCreatedBy());
         BaseQuotaProperties userQuotas = getServiceEntryQuotas(entry);
+
+        // TODO: Check Max DB Size
 
         // Check Update Object
         if (updateDto.getColNames().length > userQuotas.getTable().getMaxCols())
