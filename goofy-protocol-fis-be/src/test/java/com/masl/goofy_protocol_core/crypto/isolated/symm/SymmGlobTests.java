@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("crypto")
 @Execution(ExecutionMode.CONCURRENT)
 class SymmGlobTests {
-	private static final String randomSecretBase = "bla bla bla randdom secret";
+	private static final String randomSecretBase = "bla bla bla random secret";
 	private static final String testMessageStr = "This is a very crazy amazing test message";
 	private static final byte[] testMessageBytes = new byte[] {1, 2, 3, 10, 20, 30, 9, 10, 11, 0, 100, 127, -1, -100, -128, 123};
 	private final GlobSymmCrypto crypto = new GlobSymmCrypto();

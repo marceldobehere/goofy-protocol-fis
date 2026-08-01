@@ -74,6 +74,8 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
                 // Read the remaining data without storing it
                 // This is NEEDED FOR THE RESPONSE / ERROR HANDLING TO WORK PROPERLY (don't ask me why)
                 byte[] buffer = new byte[8192];
+
+                //noinspection StatementWithEmptyBody
                 while (in.read(buffer) != -1);
             }
 
@@ -99,7 +101,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
 
             // Get User Data and Create Authentication
             User user = userRepository.findByHandle(req.handle());
-            boolean isIdentity = user != null; // Could have the Role be exclusive but i'd rather explicitly check against it in the respective Endpoints to avoid misunderstandings
+            boolean isIdentity = user != null; // Could have the Role be exclusive, but I'd rather explicitly check against it in the respective Endpoints to avoid misunderstandings
             boolean isUser = user != null;
             boolean isAdmin = user != null && user.isAdmin();
             boolean isRestricted = user != null && !user.isAdmin() && user.isRestricted();

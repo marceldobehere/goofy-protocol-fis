@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(JUnitPerfInterceptor.class)
 @Disabled // Don't run this during mvn clean install/test
 class CryptoPerfTests extends BaseCryptoTestBase {
-	private static final String randomSecretBase = "bla bla bla randdom secret";
+	private static final String randomSecretBase = "bla bla bla random secret";
 	private final GlobSymmCrypto symmCrypto = new GlobSymmCrypto();
 	private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();
 	private final HandleCrypto handleCrypto = new HandleCrypto(new IsolatedHandleHelper());
@@ -67,7 +67,7 @@ class CryptoPerfTests extends BaseCryptoTestBase {
 
 
 	// Helper Util
-	ConcurrentHashMap<AsymmCryptoType, AsymmCrypto.AsymmFullKeyPair> cachedKeypairs = new ConcurrentHashMap<>();
+	final ConcurrentHashMap<AsymmCryptoType, AsymmCrypto.AsymmFullKeyPair> cachedKeypairs = new ConcurrentHashMap<>();
 	synchronized AsymmCrypto.AsymmFullKeyPair generateCachedKeypair(AsymmCryptoType type) {
 		return cachedKeypairs.computeIfAbsent(type, _ -> {
 			var keypair = asymmCrypto.generateKeypair(type);
@@ -77,7 +77,7 @@ class CryptoPerfTests extends BaseCryptoTestBase {
 	}
 
 	// Helper Util
-	ConcurrentHashMap<AsymmCryptoType, byte[]> cachedEncData = new ConcurrentHashMap<>();
+	final ConcurrentHashMap<AsymmCryptoType, byte[]> cachedEncData = new ConcurrentHashMap<>();
 	synchronized byte[] generateCachedEncData(AsymmCryptoType type) {
 		return cachedEncData.computeIfAbsent(type, _ -> {
 			// Get Keypair & Random Data
@@ -90,7 +90,7 @@ class CryptoPerfTests extends BaseCryptoTestBase {
 	}
 
 	// Helper Util
-	ConcurrentHashMap<AsymmCryptoType, byte[]> cachedSigData = new ConcurrentHashMap<>();
+	final ConcurrentHashMap<AsymmCryptoType, byte[]> cachedSigData = new ConcurrentHashMap<>();
 	synchronized byte[] generateCachedSigData(AsymmCryptoType type) {
 		return cachedSigData.computeIfAbsent(type, _ -> {
 			// Get Keypair & Random Data

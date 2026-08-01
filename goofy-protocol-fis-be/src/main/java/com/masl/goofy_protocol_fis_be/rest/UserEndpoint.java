@@ -99,8 +99,8 @@ public class UserEndpoint {
 
     // Set/Update external Handle Information (for example the domain of the user)
     // Would be good to have an extra table that has every user and identity ever registered (just the handle) + information if they have moved FIS domains
-    // Additionally support moving a singular identity handle -> shouldn't be too hard, just have to watch out in the request i guess
-    // Additionally add a custom Fis Exception everywhere where its needed to indicate an Identity/Account was moved
+    // Additionally support moving a singular identity handle -> shouldn't be too hard, just have to watch out in the request I guess
+    // Additionally add a custom Fis Exception everywhere where it's needed to indicate an Identity/Account was moved
     // Move Account (Would be the same as update external handle information?)
     // Would also need to affect all identities of the user
 
@@ -108,7 +108,7 @@ public class UserEndpoint {
 
     // Get Complete Account Export (What about Tables / Buckets)
     // Import FIS Data
-    // Should maybe be a two-step process like delete, because youd replace all your old data
+    // Should maybe be a two-step process like delete, because you'd replace all your old data
     // For clients there'll be two options of importing an export (backup or when moving FIS), either direct import using the same keypair for registration
     // - or decrypting and re-encrypting everything before importing it
 

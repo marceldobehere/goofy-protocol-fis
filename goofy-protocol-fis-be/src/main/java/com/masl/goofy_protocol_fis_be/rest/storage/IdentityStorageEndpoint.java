@@ -127,7 +127,7 @@ public class IdentityStorageEndpoint {
         )).toList();
     }
 
-    // TODO: Don't make it a two step process but enforce that the data has been exported atleast 72h before attempting to delete the entry (IF IT IS NOT EMPTY -> then it doesnt matter)
+    // TODO: Don't make it a two step process but enforce that the data has been exported at least 72h before attempting to delete the entry (IF IT IS NOT EMPTY -> then it doesnt matter)
     @DeleteMapping("/{handle}")
     @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
     @FisEndpoint(summary = "Deletes the Identity Entry of the Users Storage if it exists")
@@ -189,6 +189,7 @@ public class IdentityStorageEndpoint {
 
     // TODO: Add Export and Import?
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isValid(String json) {
         try {
             mapper.readTree(json);

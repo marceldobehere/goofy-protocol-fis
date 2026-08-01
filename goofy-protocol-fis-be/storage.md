@@ -74,7 +74,7 @@ This DTO supports:
   "offset": 0
 }
 ```
-All of the fields are optional
+All the fields are optional
 
 #### Where Condition Part
 This represents either:

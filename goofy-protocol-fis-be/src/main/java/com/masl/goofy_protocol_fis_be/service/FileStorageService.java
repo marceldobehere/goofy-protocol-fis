@@ -60,7 +60,7 @@ public class FileStorageService {
         if (potentialTempPath == null || !storageProperties.getCreateDirectories())
             return;
 
-        // Useful for when i run 1 million tests and it spams by /tmp directory
+        // Useful for when I run 1 million tests, and it spams by /tmp directory
         log.info("Cleaning up temporary storage path: {}", potentialTempPath);
         try {
             FileUtils.deleteDirectory(Path.of(potentialTempPath).toFile());
@@ -151,7 +151,8 @@ public class FileStorageService {
 
     private void zipPath(Path sourceDirPath, ZipOutputStream zipStream) throws IOException {
         try (zipStream) {
-            Files.walk(sourceDirPath)
+            try (var res = Files.walk(sourceDirPath)) {
+                res
                     .filter(path -> !Files.isDirectory(path))
                     .forEach(path -> {
                         ZipEntry zipEntry = new ZipEntry(sourceDirPath.relativize(path).toString());
@@ -163,6 +164,7 @@ public class FileStorageService {
                             log.error("Error while zipping file: {}", path, e);
                         }
                     });
+            }
         }
     }
 

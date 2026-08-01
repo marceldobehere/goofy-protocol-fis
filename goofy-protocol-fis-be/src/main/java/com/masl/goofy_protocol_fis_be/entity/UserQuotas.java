@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+@SuppressWarnings("JpaDataSourceORMInspection")
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor

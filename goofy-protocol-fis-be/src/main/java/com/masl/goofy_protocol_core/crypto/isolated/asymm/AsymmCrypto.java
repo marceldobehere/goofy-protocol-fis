@@ -49,6 +49,7 @@ public interface AsymmCrypto {
                     ENC_DELIMITER + Base64.getUrlEncoder().encodeToString(encSig);
         }
 
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         public boolean isSigValid(AsymmCrypto crypto) {
             if (Arrays.equals(sigKey, encKey))
                 return true;

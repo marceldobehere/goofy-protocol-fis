@@ -14,7 +14,7 @@ Anyone can host their own FIS instance and have their own users and identities, 
 A rough explanation on the Goofy Protocol and its pros/cons can be found [here](explanation.md).
 
 ## Notes
-This is still very WIP, and I'm only now starting to reach the stage where i will be able to host a test instance and start working on test services.
+This is still very WIP, and I'm only now starting to reach the stage where I will be able to host a test instance and start working on test services.
 
 Demo instance currently hosted here: https://demo.fis.rocc.systems
 

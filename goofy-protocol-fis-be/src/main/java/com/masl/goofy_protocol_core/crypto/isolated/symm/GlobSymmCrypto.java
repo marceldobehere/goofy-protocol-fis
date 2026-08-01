@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 import static com.masl.goofy_protocol_core.crypto.isolated.SecretUtils.ENC_DELIMITER;
 
 public class GlobSymmCrypto {
-    List<SymmCrypto> cryptoList = List.of(new SymmCryptoAES(), new SymmCryptoChaCha20());
+    final List<SymmCrypto> cryptoList = List.of(new SymmCryptoAES(), new SymmCryptoChaCha20());
 
     public List<SymmCryptoType> getTypes() {
         return cryptoList.stream().map(SymmCrypto::getTypes).flatMap(List::stream).toList();

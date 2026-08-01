@@ -147,7 +147,7 @@ class SignedRequestPerfTests {
 	}
 
 	// Helper Util
-	ConcurrentHashMap<AsymmCryptoType, AsymmCrypto.AsymmFullKeyPair> cachedKeypairs = new ConcurrentHashMap<>();
+	final ConcurrentHashMap<AsymmCryptoType, AsymmCrypto.AsymmFullKeyPair> cachedKeypairs = new ConcurrentHashMap<>();
 	synchronized AsymmCrypto.AsymmFullKeyPair generateCachedKeypair(AsymmCryptoType type) {
 		return cachedKeypairs.computeIfAbsent(type, _ -> {
 			var keypair = crypto.generateKeypair(type);
@@ -157,7 +157,7 @@ class SignedRequestPerfTests {
 	}
 
 	// Helper Util
-	ConcurrentHashMap<String, SignedRequest> cachedReqs = new ConcurrentHashMap<>();
+	final ConcurrentHashMap<String, SignedRequest> cachedReqs = new ConcurrentHashMap<>();
 	synchronized SignedRequest generateCachedReq(AsymmCryptoType type, HttpMethod method, String path) {
 		final String key = type.toString() + method.toString() + path;
 		return cachedReqs.computeIfAbsent(key, _ -> {
@@ -181,8 +181,8 @@ class SignedRequestPerfTests {
 				.andExpect(status().isOk());
 	}
 
-	// This is a better test to see how fast the server can process the requests, bc we dont need to generate keypairs or the signatures
-	// For these tests to not fail, i have set up the main filter to ignore unique id checks if it is running in the "test" profile
+	// This is a better test to see how fast the server can process the requests, bc we don't need to generate keypairs or the signatures
+	// For these tests to not fail, I have set up the main filter to ignore unique id checks if it is running in the "test" profile
 	@ParameterizedTest(name = "Check Test Endpoints as Outsider Cached Request (type={0})")
 	@EnumSource(AsymmCryptoType.class)
 	@JUnitPerfTest(threads = 4, durationMs = 15_000, rampUpPeriodMs = 2_000, warmUpMs = 5_000, maxExecutionsPerSecond = 30_000)

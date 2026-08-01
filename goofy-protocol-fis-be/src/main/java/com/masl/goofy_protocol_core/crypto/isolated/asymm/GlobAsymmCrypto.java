@@ -5,7 +5,7 @@ import java.util.Base64;
 import java.util.List;
 
 public class GlobAsymmCrypto {
-    List<AsymmCrypto> cryptoList = List.of(new AsymmCryptoRSA(), new AsymmCryptoEC_P(), new AsymmCryptoEC_X(), new AsymmCryptoMLKEMDSA());
+    final List<AsymmCrypto> cryptoList = List.of(new AsymmCryptoRSA(), new AsymmCryptoEC_P(), new AsymmCryptoEC_X(), new AsymmCryptoMLKEMDSA());
 
     public List<AsymmCryptoType> getTypes() {
         return cryptoList.stream().map(AsymmCrypto::getTypes).flatMap(List::stream).toList();
@@ -22,9 +22,7 @@ public class GlobAsymmCrypto {
             throw new IllegalArgumentException("Invalid type");
         if (!crypto.checkPubKeyPair(parsed, parsed.type()))
             return false;
-        if (!parsed.isSigValid(crypto))
-            return false;
-        return true;
+        return parsed.isSigValid(crypto);
     }
 
     public AsymmCrypto.AsymmFullKeyPair generateKeypair(AsymmCryptoType type) {
