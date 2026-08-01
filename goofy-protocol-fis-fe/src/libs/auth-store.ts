@@ -190,11 +190,11 @@ async function _storeKeypair(keypair: AsymmFullKeyPair | null, mode: StorageMode
 }
 
 export async function getAllUserIdentities(): Promise<IdentityStorageEntryDto[]> {
-    return await getAuth("/api/identity-storage");
+    return await getAuth("/fis-api/identity-storage");
 }
 
 export async function getIdentityKeypair(identityHandle: string): Promise<AsymmFullKeyPair> {
-    const entryDto: IdentityStorageEntryDto = await getAuth("/api/identity-storage/" + encodeURIComponent(identityHandle));
+    const entryDto: IdentityStorageEntryDto = await getAuth("/fis-api/identity-storage/" + encodeURIComponent(identityHandle));
 
     // Check Signature
     const sigCheck = await asymmVerifyStr(entryDto.encKeypairEntry, entryDto.encKeypairEntrySignature, parsePublicSplitKey(entryDto.pubSplitKey));
@@ -214,9 +214,9 @@ export async function getIdentityKeypair(identityHandle: string): Promise<AsymmF
 }
 
 export async function getServiceEntries(identityKeypair: AsymmFullKeyPair): Promise<ServiceEntryDto[]> {
-    return await getFixedAuth("/api/service-entry", identityKeypair);
+    return await getFixedAuth("/fis-api/service-entry", identityKeypair);
 }
 
 export async function getServiceEntry(identityKeypair: AsymmFullKeyPair, uuid: string): Promise<ServiceEntryDto> {
-    return await getFixedAuth("/api/service-entry/" + encodeURIComponent(uuid), identityKeypair);
+    return await getFixedAuth("/fis-api/service-entry/" + encodeURIComponent(uuid), identityKeypair);
 }

@@ -29,7 +29,7 @@ export default function TableView({tableUuid, extraQuery = undefined}: {tableUui
             return;
 
         try {
-            const entry: ServiceTableEntryDto = await getFixedAuth(`/api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${tableUuid}`, GlobalState.identityKeypair);
+            const entry: ServiceTableEntryDto = await getFixedAuth(`/fis-api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${tableUuid}`, GlobalState.identityKeypair);
 
             const oldRows = rows;
 
@@ -44,7 +44,7 @@ export default function TableView({tableUuid, extraQuery = undefined}: {tableUui
                     query.basicQuery.offset = append ? oldRows.length : null;
             }
 
-            const rowData: ServiceTableQueryResultDto = await postFixedAuth(`/api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${tableUuid}/query`, query, GlobalState.identityKeypair);
+            const rowData: ServiceTableQueryResultDto = await postFixedAuth(`/fis-api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${tableUuid}/query`, query, GlobalState.identityKeypair);
 
             // Update Display
             setTableName(entry.tableName!);
@@ -69,7 +69,7 @@ export default function TableView({tableUuid, extraQuery = undefined}: {tableUui
             return;
 
         try {
-            const res: ServiceBucketEntryDto = await postFixedAuth(`/api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${tableUuid}/rows`, JSON.parse(inputJson), GlobalState.identityKeypair);
+            const res: ServiceBucketEntryDto = await postFixedAuth(`/fis-api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${tableUuid}/rows`, JSON.parse(inputJson), GlobalState.identityKeypair);
             console.log(res);
             await refresh();
         } catch (e) {
@@ -101,7 +101,7 @@ export default function TableView({tableUuid, extraQuery = undefined}: {tableUui
             return;
 
         try {
-            const res: ServiceBucketEntryDto = await deleteBodyFixedAuth(`/api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${tableUuid}/rows`, JSON.parse(inputJson), GlobalState.identityKeypair);
+            const res: ServiceBucketEntryDto = await deleteBodyFixedAuth(`/fis-api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${tableUuid}/rows`, JSON.parse(inputJson), GlobalState.identityKeypair);
             console.log(res);
             await refresh();
         } catch (e) {

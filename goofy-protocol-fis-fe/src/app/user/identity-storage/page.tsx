@@ -30,7 +30,7 @@ export default function Page() {
     }
 
     async function getQuotas() {
-        const quotas: MyIdentityEntryQuotasDto = await getAuth("/api/identity-storage/quotas");
+        const quotas: MyIdentityEntryQuotasDto = await getAuth("/fis-api/identity-storage/quotas");
         setQuotas(quotas);
     }
 
@@ -66,7 +66,7 @@ export default function Page() {
         };
 
         try {
-            await postAuth("/api/identity-storage", newEntry);
+            await postAuth("/fis-api/identity-storage", newEntry);
         } catch (e) {
             console.log(e);
             alert("Failed to create identity: " + (e as Error).message);
@@ -78,7 +78,7 @@ export default function Page() {
         if (!confirm("Are you sure you want to delete identity " + handle + "? This cannot be undone."))
             return;
 
-        await deleteAuth("/api/identity-storage/" + encodeURIComponent(handle));
+        await deleteAuth("/fis-api/identity-storage/" + encodeURIComponent(handle));
         await refresh();
     }
 

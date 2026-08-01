@@ -15,13 +15,13 @@ export default function Page() {
     });
 
     async function refresh() {
-        const unused: RegistrationCodeDto[] = await getAuth("/api/admin/register/code/unused");
-        const used: RegistrationCodeDto[] = await getAuth("/api/admin/register/code/used");
+        const unused: RegistrationCodeDto[] = await getAuth("/fis-api/admin/register/code/unused");
+        const used: RegistrationCodeDto[] = await getAuth("/fis-api/admin/register/code/used");
         setRegisterCodes([...unused, ...used]);
     }
 
     async function getMemInfo() {
-        const res: MemInfoDto = await getAuth("/api/admin/general/memory");
+        const res: MemInfoDto = await getAuth("/fis-api/admin/general/memory");
         const info = {
             totalMb: res.memMax / (1024 * 1024),
             usedMb: res.memUsed / (1024 * 1024),
@@ -31,7 +31,7 @@ export default function Page() {
     }
 
     async function forceGc() {
-        await postAuth("/api/admin/general/memory/gc", {});
+        await postAuth("/fis-api/admin/general/memory/gc", {});
     }
 
     async function createRegisterCode() {
@@ -44,7 +44,7 @@ export default function Page() {
             return;
         }
 
-        const res: RegistrationCodeDto = await postAuth("/api/admin/register/code", (opt == "admin") as unknown as object);
+        const res: RegistrationCodeDto = await postAuth("/fis-api/admin/register/code", (opt == "admin") as unknown as object);
         console.log(res);
         alert("Registered: " +JSON.stringify(res, null, 2));
         await refresh();

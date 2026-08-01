@@ -23,7 +23,7 @@ export async function isUser(): Promise<boolean> {
         return false;
 
     try {
-        const res: MyUserInfoDto = await getAuth("/api/user/info");
+        const res: MyUserInfoDto = await getAuth("/fis-api/user/info");
         return res.authRole == "REGISTERED_USER" || res.authRole == "ADMIN";
     } catch {
         return false;
@@ -35,7 +35,7 @@ export async function isAdmin(): Promise<boolean> {
         return false;
 
     try {
-        const res: MyUserInfoDto = await getAuth("/api/user/info");
+        const res: MyUserInfoDto = await getAuth("/fis-api/user/info");
         return res.authRole == "ADMIN";
     } catch {
         return false;
@@ -47,7 +47,7 @@ export async function getUserInfo(throwError: boolean = false): Promise<MyUserIn
         return null;
 
     try {
-        const res: MyUserInfoDto = await getAuth("/api/user/info");
+        const res: MyUserInfoDto = await getAuth("/fis-api/user/info");
         const derivedHandle = await getMyHandle();
         if (res.handle != derivedHandle) {
             alert(`Derived handle ${derivedHandle} does not match server handle ${res.handle}`);

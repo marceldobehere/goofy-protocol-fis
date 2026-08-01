@@ -26,7 +26,7 @@ export default function Page() {
         if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const entries: ServiceTableEntryDto[] = await getFixedAuth(`/api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry`, GlobalState.identityKeypair);
+        const entries: ServiceTableEntryDto[] = await getFixedAuth(`/fis-api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry`, GlobalState.identityKeypair);
         entries.sort((a, b) => a.tableName!.localeCompare(b.tableName!) || 0);
 
         setEntries(entries);
@@ -36,7 +36,7 @@ export default function Page() {
         if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const quotas: ServiceDbQuotasDto = await getFixedAuth(`/api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/quotas`, GlobalState.identityKeypair);
+        const quotas: ServiceDbQuotasDto = await getFixedAuth(`/fis-api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/quotas`, GlobalState.identityKeypair);
         setQuotas(quotas);
     }
 
@@ -49,7 +49,7 @@ export default function Page() {
             return;
 
         try {
-            const res: ServiceTableEntryDto = await postFixedAuth(`/api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry`, JSON.parse(inputJson), GlobalState.identityKeypair);
+            const res: ServiceTableEntryDto = await postFixedAuth(`/fis-api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry`, JSON.parse(inputJson), GlobalState.identityKeypair);
             console.log(res);
             alert("Created Table Entry: " + JSON.stringify(res, null, 2));
             await refresh();
@@ -66,7 +66,7 @@ export default function Page() {
         if (!confirm("Are you sure you want to delete the Table Entry?"))
             return;
 
-        await deleteFixedAuth(`/api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${tableUuid}`, GlobalState.identityKeypair);
+        await deleteFixedAuth(`/fis-api/service-table/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${tableUuid}`, GlobalState.identityKeypair);
         if (tableUuid == currTableUuid)
             setCurrTableUuid(null);
         await refresh();

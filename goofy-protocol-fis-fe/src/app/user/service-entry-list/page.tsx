@@ -25,7 +25,7 @@ export default function Page() {
         if (GlobalState.identityKeypair == null)
             return;
 
-        const quotas: MyServiceEntryQuotasDto = await getFixedAuth("/api/service-entry/quotas", GlobalState.identityKeypair);
+        const quotas: MyServiceEntryQuotasDto = await getFixedAuth("/fis-api/service-entry/quotas", GlobalState.identityKeypair);
         setQuotas(quotas);
     }
 
@@ -55,7 +55,7 @@ export default function Page() {
         }
 
         try {
-            await postFixedAuth("/api/service-entry", newEntry, GlobalState.identityKeypair);
+            await postFixedAuth("/fis-api/service-entry", newEntry, GlobalState.identityKeypair);
         } catch (e) {
             console.log(e);
             alert("Failed to create Service Entry: " + (e as Error).message);
@@ -70,7 +70,7 @@ export default function Page() {
         if (!confirm("Are you sure you want to delete the Service Entry?"))
             return;
 
-        await deleteFixedAuth("/api/service-entry/" + encodeURIComponent(uuid), GlobalState.identityKeypair);
+        await deleteFixedAuth("/fis-api/service-entry/" + encodeURIComponent(uuid), GlobalState.identityKeypair);
         await refresh();
     }
 
@@ -92,7 +92,7 @@ export default function Page() {
             uuid: uuid
         }
 
-        await putFixedAuth("/api/service-entry/" + encodeURIComponent(uuid), newEntry, GlobalState.identityKeypair);
+        await putFixedAuth("/fis-api/service-entry/" + encodeURIComponent(uuid), newEntry, GlobalState.identityKeypair);
         await refresh();
     }
 

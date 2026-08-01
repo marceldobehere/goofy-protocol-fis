@@ -28,7 +28,7 @@ export default function Page() {
         if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const entries: ServiceBucketEntryDto[] = await getFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry`, GlobalState.identityKeypair);
+        const entries: ServiceBucketEntryDto[] = await getFixedAuth(`/fis-api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry`, GlobalState.identityKeypair);
         entries.forEach(entry => {
             if (entry.createdAt != null)
                 entry.createdAtDate = new Date(entry.createdAt)
@@ -43,7 +43,7 @@ export default function Page() {
         if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const perms: ServiceBucketPermissionDto = await getFixedAuth(`/api/service-bucket/${GlobalState.serviceEntry.uuid}/perms`, GlobalState.identityKeypair);
+        const perms: ServiceBucketPermissionDto = await getFixedAuth(`/fis-api/service-bucket/${GlobalState.serviceEntry.uuid}/perms`, GlobalState.identityKeypair);
         setPerms(perms);
     }
 
@@ -51,7 +51,7 @@ export default function Page() {
         if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const quotas: ServiceBucketQuotasDto = await getFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/quotas`, GlobalState.identityKeypair);
+        const quotas: ServiceBucketQuotasDto = await getFixedAuth(`/fis-api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/quotas`, GlobalState.identityKeypair);
         setQuotas(quotas);
     }
 
@@ -69,8 +69,8 @@ export default function Page() {
 
         try {
             const uploadUrl = fileUuid == null ?
-                `/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/upload` :
-                `/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/upload/${fileUuid}`;
+                `/fis-api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/upload` :
+                `/fis-api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/upload/${fileUuid}`;
             await postFixedAuth(uploadUrl,
                 bytes, GlobalState.identityKeypair, new Map([["Content-Type", dataType], ["X-Filename", encodeURIComponent(filename)], /*["X-Cache-Duration", "NONE"]*/]));
         } catch (e) {
@@ -88,7 +88,7 @@ export default function Page() {
             return;
 
         try {
-            await deleteFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
+            await deleteFixedAuth(`/fis-api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
         } catch (e) {
             console.log(e);
             alert("Failed to delete Bucket Entry: " + (e as Error).message);
@@ -100,7 +100,7 @@ export default function Page() {
         if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
+        const details: ServiceBucketEntryDto = await getFixedAuth(`/fis-api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
 
         if (read) {
             const newReadAccess = prompt(`Set the new read access as a list of handles separated by a space. (* for everyone)`, details.handlesWithReadPerms.join(" "));
@@ -117,7 +117,7 @@ export default function Page() {
         }
 
         try {
-            await putFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, details, GlobalState.identityKeypair);
+            await putFixedAuth(`/fis-api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, details, GlobalState.identityKeypair);
         } catch (e) {
             console.log(e);
             alert("Failed to upload Bucket Entry: " + (e as Error).message);
@@ -147,8 +147,8 @@ export default function Page() {
 
         try {
             // Load Data
-            const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
-            const data: Uint8Array = await getFixedAuthBytes(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/content/${fileUuid}`, GlobalState.identityKeypair);
+            const details: ServiceBucketEntryDto = await getFixedAuth(`/fis-api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
+            const data: Uint8Array = await getFixedAuthBytes(`/fis-api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/content/${fileUuid}`, GlobalState.identityKeypair);
 
             // Create Blob URL
             const blob = new Blob([data as BlobPart], { type: details.contentType });
@@ -170,7 +170,7 @@ export default function Page() {
         if (GlobalState.identityHandle == null || GlobalState.identityKeypair == null || GlobalState.serviceEntry == null)
             return;
 
-        const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
+        const details: ServiceBucketEntryDto = await getFixedAuth(`/fis-api/service-bucket/${GlobalState.identityHandle}/${GlobalState.serviceEntry.uuid}/entry/${fileUuid}`, GlobalState.identityKeypair);
         alert(`Details for Bucket Entry ${fileUuid}:\n` + JSON.stringify(details));
     }
 
@@ -198,7 +198,7 @@ export default function Page() {
         }
 
         try {
-            await putFixedAuth(`/api/service-bucket/${GlobalState.serviceEntry.uuid}/perms`, localPerms, GlobalState.identityKeypair);
+            await putFixedAuth(`/fis-api/service-bucket/${GlobalState.serviceEntry.uuid}/perms`, localPerms, GlobalState.identityKeypair);
         } catch (e) {
             console.log(e);
             alert("Failed to edit Bucket Entry Permissions: " + (e as Error).message);

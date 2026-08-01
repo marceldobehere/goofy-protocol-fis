@@ -36,8 +36,8 @@ export default function Page() {
         // Potentially using a MediaSource could be an option for videos, dont know yet
         try {
             // Load Data
-            const details: ServiceBucketEntryDto = await getFixedAuth(`/api/service-bucket/${handle}/${serviceUuid}/entry/${fileUuid}`, currKeypair);
-            const data: Uint8Array = await getFixedAuthBytes(`/api/service-bucket/${handle}/${serviceUuid}/content/${fileUuid}`, currKeypair);
+            const details: ServiceBucketEntryDto = await getFixedAuth(`/fis-api/service-bucket/${handle}/${serviceUuid}/entry/${fileUuid}`, currKeypair);
+            const data: Uint8Array = await getFixedAuthBytes(`/fis-api/service-bucket/${handle}/${serviceUuid}/content/${fileUuid}`, currKeypair);
 
             setMsg(`Loading Bucket Entry: ${details.filename}\" (${details.contentType}, ${Math.round(100 * (data.byteLength / (1024*1024))) / 100} MB)...`);
 

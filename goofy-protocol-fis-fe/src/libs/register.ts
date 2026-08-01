@@ -6,12 +6,12 @@ import {RegistrationRequestDto, RequestError, RequestFisError} from "@/libs/dtos
 import {parseFullKeypair, serializeFullKeypair, sha256ToText, symmDecryptObj, symmEncryptObj} from "@/libs/crypto";
 
 export async function isRegisterCodeValid(code: string): Promise<boolean> {
-    return await getNoAuth<boolean>("/api/register/valid?code=" + code);
+    return await getNoAuth<boolean>("/fis-api/register/valid?code=" + code);
 }
 
 export async function sendRegistrationRequest(request: RegistrationRequestDto, keypair: AsymmFullKeyPair): Promise<string | null> {
     try {
-        await postFixedAuth("/api/register/request", request, keypair);
+        await postFixedAuth("/fis-api/register/request", request, keypair);
         return null;
     } catch (e) {
         if (e instanceof RequestError)
@@ -24,7 +24,7 @@ export async function sendRegistrationRequest(request: RegistrationRequestDto, k
 
 export async function doRegistration(code: string, keypair: AsymmFullKeyPair): Promise<string | null> {
     try {
-        await postFixedAuth("/api/register", code, keypair);
+        await postFixedAuth("/fis-api/register", code, keypair);
         return null;
     } catch (e) {
         if (e instanceof RequestError)
@@ -43,7 +43,7 @@ export async function storeLogin(username: string, password: string, keypair: As
         const jsonKeypair = serializeFullKeypair(keypair);
         const encKeypair = await symmEncryptObj(jsonKeypair, pwHash);
 
-        await postFixedAuth("/api/login-storage/" + encodeURIComponent(usernameHash), encKeypair, keypair);
+        await postFixedAuth("/fis-api/login-storage/" + encodeURIComponent(usernameHash), encKeypair, keypair);
         return null;
     } catch (e) {
         if (e instanceof RequestError)
@@ -59,7 +59,7 @@ export async function loadLogin(username: string, password: string): Promise<Asy
         const usernameHash = await sha256ToText(username);
         const pwHash = await sha256ToText(password);
 
-        const encKeypair = await getNoAuth<string>("/api/login-storage/" + encodeURIComponent(usernameHash));
+        const encKeypair = await getNoAuth<string>("/fis-api/login-storage/" + encodeURIComponent(usernameHash));
         const jsonKeypair = await symmDecryptObj<AsymmFullJsonKeypair>(encKeypair, pwHash);
         return parseFullKeypair(jsonKeypair);
     } catch {
