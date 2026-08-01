@@ -13,7 +13,7 @@ public class GeneralProperties {
     private String name;
     private String description;
     private String contact;
-    private String version;
+    public final static String version = "0.8.2";
 
     // https://fis.rocc.systems -> fis.rocc.systems
     // http://localhost:8080 -> localhost:8080

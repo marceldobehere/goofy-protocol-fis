@@ -45,7 +45,7 @@ public class GeneralEndpoint {
                 generalProperties.getDomain(),
                 generalProperties.getName(),
                 generalProperties.getDescription(),
-                generalProperties.getVersion(),
+                GeneralProperties.version,
                 testDataKeypair.getServerKeypair().pub().serialize(),
                 testDataKeypair.getServerHandle(),
                 Arrays.stream(AsymmCryptoType.values()).map(AsymmCryptoType::name).toList(),
