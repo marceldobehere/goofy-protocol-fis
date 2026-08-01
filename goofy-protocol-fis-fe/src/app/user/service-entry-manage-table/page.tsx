@@ -78,7 +78,7 @@ export default function Page() {
     return (
         <main>
             <div className={styles.MainCont}>
-                <h2 className={styles.Title}>Manage Service Entry (Table)</h2>
+                <h2 className={styles.Title}>Manage Service Entry (DB /Tables)</h2>
 
                 <br/>
                 <p>

@@ -20,7 +20,7 @@ This is a list of open TODOs.
 * Add Config for HandleCrypto Cache/Maps (size, expiration, etc.)
 * Add Max Unresolved Registration Requests and Reports Config + Error Codes
 * Add Config for regular pruning of old unresolved Registration Requests
-* Create 2 FIS Instances (one main instance and one demo for others to try out, which is very limited but ppl can switch over or selfhost later)
+* Host my main instance on my server and host a limited (maybe periodically resetting) demo instance on my VPS
 * Create extra DB Table for known FIS Domains ?
 * Look into ML-KEM using Seed for Private key and compatibility with JS (Potentially using Rust ML-KEM compiled to WASM) (Will have to see)
 
