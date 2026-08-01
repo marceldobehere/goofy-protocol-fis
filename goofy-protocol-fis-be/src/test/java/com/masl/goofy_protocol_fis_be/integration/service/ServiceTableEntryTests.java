@@ -356,6 +356,7 @@ class ServiceTableEntryTests {
 		insertObj.put(COL_STR_2, "hello, world!");
 		insertObj.put(COL_INT_UNIQUE, 123);
 		insertObj.put(COL_BOOL, true);
+		System.out.println("Insert object: " + objectMapper.writeValueAsString(insertObj));
 
 		// Send
 		performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
@@ -416,6 +417,7 @@ class ServiceTableEntryTests {
 			insertObj.put(COL_STR_2, "hello, world!");
 			insertObj.put(COL_INT_UNIQUE, 123);
 			insertObj.put(COL_BOOL, true);
+			System.out.println("Insert object: " + objectMapper.writeValueAsString(insertObj));
 
 			// Send
 			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
