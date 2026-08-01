@@ -56,6 +56,10 @@ export function useAsyncEffect(callback: Function, deps: unknown[]) {
     }, deps);
 }
 
+export function isNetworkErrorTypeError(err: unknown): err is TypeError {
+    return err instanceof TypeError && /NetworkError/i.test(err.message);
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export function useGlobalState(needLogin: boolean, needAdmin: boolean, fragment: FragmentNeed, doneCallback: Function, preCallback: Function | undefined = undefined, extraDependencies: never[] | undefined = undefined) {
     const pathName = usePathname();
@@ -94,7 +98,20 @@ async function initGlobalState(pathName: string, needLogin: boolean, needAdmin: 
 
     // Get User State
     if (!GlobalState.gotBaseData) {
-        const userInfo: MyUserInfoDto | null = await getUserInfo();
+        let userInfo: MyUserInfoDto | null = null;
+        try {
+            userInfo = await getUserInfo(true);
+        } catch (e) {
+            if (isNetworkErrorTypeError(e)) {
+                GlobalState.loggedIn = false;
+                GlobalState.isAdmin = false;
+                GlobalState.handle = null;
+                GlobalState.gotBaseData = false;
+                console.error("3> Init failed (Network Error)", e);
+                alert("Network Error: Failed to get user info. Please check your network connection.");
+                return false;
+            }
+        }
         GlobalState.loggedIn = userInfo != null && (userInfo.authRole == "REGISTERED_USER" || userInfo.authRole == "ADMIN");
         GlobalState.isAdmin = userInfo != null && userInfo.authRole == "ADMIN";
         GlobalState.handle =  userInfo != null ? userInfo.handle : null;
@@ -110,14 +127,14 @@ async function initGlobalState(pathName: string, needLogin: boolean, needAdmin: 
     // User Check
     if (needLogin && !GlobalState.loggedIn) {
         console.log("4> Init failed (Need Login)");
-        // TODO: This might fail due to networking or being logged out, add a redirectAfter param to the url so the user gets sent back to the correct site!
-        goPath("/guest/login");
+        goPath(`/guest/login?redirectAfter=${encodeURIComponent(window.location.href)}`);
         return false;
     }
 
     // Admin Check
     if (needAdmin && !GlobalState.isAdmin) {
         console.log("4> Init failed (Need Admin)");
+        alert("Admin access required to view this page");
         goPath("/user/home");
         return false;
     }
@@ -138,9 +155,14 @@ async function initGlobalState(pathName: string, needLogin: boolean, needAdmin: 
                 GlobalState.identityKeypair = await getIdentityKeypair(fragmentHandle);
                 GlobalState.identityHandle = fragmentHandle;
             } catch (e) {
-                console.log("4> Init failed (Identity Fragment Error)", e);
-                alert(`Identity for ${fragmentHandle} not found`);
-                goPath("/user/home");
+                if (isNetworkErrorTypeError(e)) {
+                    console.error("4> Init failed (Network Error)", e);
+                    alert("Network Error: Failed to get user info");
+                } else {
+                    console.log("4> Init failed (Identity Fragment Error)", e);
+                    alert(`Identity for ${fragmentHandle} not found`);
+                    goPath("/user/home");
+                }
                 return false;
             }
         } else if (fragment == "IDENTITY@SERVICE") {
@@ -155,9 +177,14 @@ async function initGlobalState(pathName: string, needLogin: boolean, needAdmin: 
                 GlobalState.identityKeypair = await getIdentityKeypair(fragmentHandle);
                 GlobalState.serviceEntry = await getServiceEntry(GlobalState.identityKeypair, fragmentUuid);
             } catch (e) {
-                console.log("4> Init failed (Identity Fragment & Service Error)", e);
-                alert(`Identity for ${fragmentHandle} not found`);
-                goPath("/user/home");
+                if (isNetworkErrorTypeError(e)) {
+                    console.error("4> Init failed (Network Error)", e);
+                    alert("Network Error: Failed to get user info");
+                } else {
+                    console.log("4> Init failed (Identity Fragment & Service Error)", e);
+                    alert(`Identity for ${fragmentHandle} not found`);
+                    goPath("/user/home");
+                }
                 return false;
             }
         } else {

@@ -42,7 +42,7 @@ export async function isAdmin(): Promise<boolean> {
     }
 }
 
-export async function getUserInfo(): Promise<MyUserInfoDto | null> {
+export async function getUserInfo(throwError: boolean = false): Promise<MyUserInfoDto | null> {
     if (!(await isLoggedIn()))
         return null;
 
@@ -54,8 +54,9 @@ export async function getUserInfo(): Promise<MyUserInfoDto | null> {
             return null;
         }
         return res;
-    } catch {
-        // TODO: Check if it's because the server is down or because the request is invalid or so and let the user know instead of instantly logging them out
+    } catch (e) {
+        if (throwError)
+            throw e;
         return null;
     }
 }

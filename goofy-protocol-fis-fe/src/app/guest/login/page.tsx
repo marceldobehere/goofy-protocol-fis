@@ -5,11 +5,12 @@ import Link from "next/link";
 import {deriveHandleFromPublicSplitKey, parseFullKeypair} from "@/libs/crypto";
 import {AsymmFullJsonKeypair, AsymmFullKeyPair} from "@/libs/crypto-types";
 import {getStorageMode, saveKeypair, setStorageMode} from "@/libs/auth-store";
-import {useEffect, useRef, useState} from "react";
+import {useRef, useState} from "react";
 import {readJsonFile, uploadData} from "@/libs/file-utils";
 import {loadLogin} from "@/libs/register";
 import {goPath} from "@/libs/go-path";
-import {getMyHandle, isUser} from "@/libs/auth";
+import {isUser} from "@/libs/auth";
+import {GlobalState, useGlobalState} from "@/libs/global-state";
 
 export default function Page() {
     const [usernamePubKey, setUsernamePubKey] = useState<string>("");
@@ -19,16 +20,25 @@ export default function Page() {
     // Autofill checker
     const usernameRef = useRef<HTMLInputElement>(null);
     const passwordRef = useRef<HTMLInputElement>(null);
-    useEffect(() => {
-        const t = setTimeout(() => {
-            const usernameVal = usernameRef.current?.value ?? "";
-            const passwordVal = passwordRef.current?.value ?? "";
-            if ((usernameVal && !usernamePubKey) || (passwordVal && !passwordPrivKey)) {
-                console.log("Autofill detected, updating state");
-                updateUsernamePassword(usernameVal, passwordVal).catch(() => {});
-            }
-        }, 200);
-        return () => clearTimeout(t);
+
+
+    useGlobalState(false, false, "NONE", async () => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const redirect = queryParams.get("redirectAfter");
+        if (redirect != null && GlobalState.loggedIn) {
+            console.debug(`Redirecting to ${redirect} because already logged in`);
+            window.location.href = redirect;
+        } else {
+            setTimeout(() => {
+                console.debug("Checking for autofill on username/password fields");
+                const usernameVal = usernameRef.current?.value ?? "";
+                const passwordVal = passwordRef.current?.value ?? "";
+                if ((usernameVal && !usernamePubKey) || (passwordVal && !passwordPrivKey)) {
+                    console.debug("Autofill detected, updating state");
+                    updateUsernamePassword(usernameVal, passwordVal).catch(() => {});
+                }
+            }, 200);
+        }
     });
 
     // TODO: Add Check is already logged in (maybe due to a network error the user was sent here)
@@ -114,13 +124,13 @@ export default function Page() {
             if (confirm("Do you want to store your keypair in localStorage?"))
                 await setStorageMode("LOCAL_STORAGE");
 
-
-        console.log(resKeypair);
-
-        // TODO: Use redirectAfter param to the url so the user gets sent back to the correct site!
-        const handle = await getMyHandle();
-        console.log(`Logged in as ${handle}!`);
-        goPath("/user/home");
+        // Redirect to specified page or go to Home page
+        const queryParams = new URLSearchParams(window.location.search);
+        const redirect = queryParams.get("redirectAfter");
+        if (redirect != null)
+            window.location.href = redirect;
+        else
+            goPath("/user/home");
     }
 
     // TODO: Styling
