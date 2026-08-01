@@ -114,7 +114,9 @@ export default function Page() {
                     {serviceEntries.map((entry) => (<li key={entry.uuid}>
                             <span>{entry.name} - Service: {entry.usedService}</span> (UUID: {entry.uuid})
                             <span> </span>
-                            <Link href={`/user/service-entry-manage#${GlobalState.identityHandle}@${entry.uuid}`}>Manage</Link>
+                            <Link href={`/user/service-entry-manage-bucket#${GlobalState.identityHandle}@${entry.uuid}`}>Manage Bucket</Link>
+                            <span> </span>
+                            <Link href={`/user/service-entry-manage-table#${GlobalState.identityHandle}@${entry.uuid}`}>Manage Tables</Link>
                             <span> </span>
                             <button onClick={() => {updateEntry(entry.uuid, entry.name, entry.usedService ?? "").then()}}>Update</button>
                             <span> </span>

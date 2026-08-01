@@ -214,12 +214,12 @@ export default function Page() {
     return (
         <main>
             <div className={styles.MainCont}>
-                <h2 className={styles.Title}>Manage Service Entry</h2>
+                <h2 className={styles.Title}>Manage Service Entry (Bucket)</h2>
 
                 <br/>
                 <p>
                     Checking Service Entry &quot;{GlobalState.serviceEntry?.name || GlobalState.serviceEntry?.usedService || GlobalState.serviceEntry?.uuid}&quot; (for {GlobalState.identityHandle}) <br/>
-                    Service Entry List Quota: (Count: {quotas?.currentItemCount} / {quotas?.maxItemCount}, Size: {((quotas?.currentBucketSize ?? 0) / (1000*1000)).toFixed(2)}MB / {((quotas?.maxBucketSize ?? 0) / (1000*1000)).toFixed(2)}MB) (Max Item Size: {((quotas?.maxItemSize ?? 0) / (1000*1000)).toFixed(2)}MB)<br/>
+                    Bucket Quotas: (Count: {quotas?.currentItemCount} / {quotas?.maxItemCount}, Size: {((quotas?.currentBucketSize ?? 0) / (1000*1000)).toFixed(2)}MB / {((quotas?.maxBucketSize ?? 0) / (1000*1000)).toFixed(2)}MB) (Max Item Size: {((quotas?.maxItemSize ?? 0) / (1000*1000)).toFixed(2)}MB)<br/>
                     Here is the information for your Service Entry:
                 </p>
 

@@ -49,6 +49,14 @@ async function runMaybeAsyncCallback(fn: Function | undefined): Promise<void> {
 export type FragmentNeed = "NONE" | "IDENTITY" | "IDENTITY@SERVICE";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+export function useAsyncEffect(callback: Function, deps: unknown[]) {
+    useEffect(() => {
+        runMaybeAsyncCallback(callback).then();
+    // eslint-disable-next-line
+    }, deps);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export function useGlobalState(needLogin: boolean, needAdmin: boolean, fragment: FragmentNeed, doneCallback: Function, preCallback: Function | undefined = undefined, extraDependencies: never[] | undefined = undefined) {
     const pathName = usePathname();
     const [isDone, setIsDone] = useState(false);

@@ -147,6 +147,9 @@ export async function deleteAuth<T>(path: string): Promise<T> {
 export async function deleteFixedAuth<T>(path: string, keypair: AsymmFullKeyPair): Promise<T> {
     return await doRequestSpinner<T>(path, "DELETE", null, keypair) as T;
 }
+export async function deleteBodyFixedAuth<T>(path: string, body: object | string, keypair: AsymmFullKeyPair): Promise<T> {
+    return await doRequestSpinner<T>(path, "DELETE", body, keypair) as T;
+}
 
 export async function putNoAuth<T>(path: string, body: object | string ) {
     return await doRequestSpinner<T>(path, "PUT", body) as T;

@@ -1,0 +1,45 @@
+/* wrapper that scrolls */
+.TableWrap {
+    max-height: 30vh;
+    overflow-y: auto;
+    overflow-x: auto;
+    width: 100%;
+    max-width: 80vw;
+}
+
+.Table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* sticky header */
+.Table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--background);
+    white-space: nowrap;
+}
+
+.Table caption {
+    caption-side: top;
+    text-align: center;
+    font-weight: 600;
+    padding: 10px 0;
+}
+
+.Table th,
+.Table td {
+    border: 1px solid white;
+    padding: 8px 10px;
+    vertical-align: top;
+}
+
+.Table th {
+    font-weight: 700;
+    text-align: left;
+}
+
+.LoadMore {
+    text-align: center;
+}
