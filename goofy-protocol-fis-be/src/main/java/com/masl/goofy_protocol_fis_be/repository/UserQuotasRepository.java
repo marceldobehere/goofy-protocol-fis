@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserQuotasRepository extends JpaRepository<UserQuotas, String> {
     UserQuotas findByUserHandle(String userHandle);
+    void deleteByUserHandle(String userHandle);
 }

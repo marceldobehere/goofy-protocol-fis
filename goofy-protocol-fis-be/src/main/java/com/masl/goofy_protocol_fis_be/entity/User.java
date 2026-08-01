@@ -36,6 +36,7 @@ public class User {
     @Column
     private String customFrontendUrl;
 
+    // TODO: Use this somehow. Maybe use it like a lastActivity timestamp to know when a user was last interacting with the FIS
     @Column
     private Instant lastCheck;
 
@@ -47,6 +48,8 @@ public class User {
 
     @OneToMany(mappedBy="createdBy", orphanRemoval = true, cascade = CascadeType.REMOVE)
     private Set<ServiceEntry> serviceEntries;
+
+    // TODO: On delete clear cache probably
 
     @Override
     public String toString() {

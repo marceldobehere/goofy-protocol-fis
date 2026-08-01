@@ -8,6 +8,7 @@ public class AllClientErrorCodes {
     public static final int INVALID_JSON = 1_001_002;
     public static final int GENERIC_NOT_FOUND = 1_001_003;
     public static final int CONTENT_TOO_LARGE = 1_001_004;
+    public static final int HANDLE_NOT_FOUND = 1_001_005;
 
     public static final int INVALID_REGISTER_CODE = 1_002_001;
     public static final int REGISTRATION_NOT_ALLOWED = 1_002_002;

@@ -1,6 +1,7 @@
 package com.masl.goofy_protocol_fis_be.rest.storage;
 
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
+import com.masl.goofy_protocol_fis_be.dto.response.LoginStorageEntryDto;
 import com.masl.goofy_protocol_fis_be.entity.LoginStorageEntry;
 import com.masl.goofy_protocol_fis_be.entity.User;
 import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
@@ -16,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @RestController
 @RequestMapping("/fis-api/login-storage")
@@ -67,5 +69,26 @@ public class LoginStorageEndpoint {
         if (entry == null)
             throw new LoginEntryNotFound(usernameHash);
         return entry.getEncKeypair();
+    }
+
+    // Get All Login Storage Entries
+    @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Gets all Login Storage Entries")
+    public List<LoginStorageEntryDto> getAllEntries() {
+        return entryRepository.findAll().stream().map(entry -> new LoginStorageEntryDto(
+                entry.getUsernameHash(),
+                entry.getEncKeypair(),
+                entry.getCreatedBy().getHandle(),
+                entry.getCreatedAt()
+        )).toList();
+    }
+
+    // Delete Login Storage Entry
+    @DeleteMapping("/{usernameHash}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Deletes a Login Storage Entry by Username Hash")
+    public void deleteEntryByUsernameHash(@PathVariable String usernameHash) {
+        entryRepository.deleteByUsernameHash(usernameHash);
     }
 }

@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
     User findByHandle(String handle);
-    void deleteAllByHandle(String handle);
+    void deleteByHandle(String handle);
 }

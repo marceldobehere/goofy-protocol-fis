@@ -85,13 +85,13 @@ public class UserEndpoint {
         throw new PublicKeyLookupFailed(handle);
     }
 
-    // TODO: Don't make it a two step process but enforce that the data has been exported at least 72h before attempting to delete the entry
+    // TODO: Potentially enforce having done an account-export within 7 days of trying to delete the account to avoid unwanted data loss
     @DeleteMapping("/delete")
     @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
     @FisEndpoint(summary = "Deletes the current User Account", description = "This Endpoint allows a user to delete their account. It will remove all associated data and identities. <br>This is a hard delete, do NOT expect to be able to recover your account without a backup afterwards!")
     public void deleteUser(@AuthenticationPrincipal GoofyAuthUser auth) {
         log.info("User {} requested account deletion", auth.getHandle());
-        userRepository.deleteAllByHandle(auth.getHandle());
+        userRepository.deleteByHandle(auth.getHandle());
     }
 
     // Update generic User Info

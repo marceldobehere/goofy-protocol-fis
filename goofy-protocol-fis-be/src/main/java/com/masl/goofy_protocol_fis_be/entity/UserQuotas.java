@@ -73,6 +73,17 @@ public class UserQuotas {
 
     // Helper Functions
 
+    public BaseQuotaProperties convert() {
+        BaseQuotaProperties fakeSpecific = new BaseQuotaProperties();
+        fakeSpecific.setGeneral(new BaseQuotaProperties.General());
+        fakeSpecific.setIdentity(new BaseQuotaProperties.Identity());
+        fakeSpecific.setTable(new BaseQuotaProperties.Table());
+        fakeSpecific.setTableQuery(new BaseQuotaProperties.TableQuery());
+        fakeSpecific.setBucket(new BaseQuotaProperties.Bucket());
+
+        return getAppliedQuotas(this, fakeSpecific);
+    }
+
     public static BaseQuotaProperties getAppliedQuotas(UserQuotas quotas, BaseQuotaProperties specific) {
         if (quotas == null)
             return specific;

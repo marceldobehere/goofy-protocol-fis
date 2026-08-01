@@ -40,6 +40,14 @@ public class GeneralReportService {
         return generalReportRepository.findAllByResolvedAtIsNull();
     }
 
+    public GeneralReport getReportById(Long id) throws GenericNotFound {
+        return generalReportRepository.findById(id).orElseThrow(() -> new GenericNotFound(id));
+    }
+
+    public void deleteReport(Long id) {
+        generalReportRepository.deleteById(id);
+    }
+
     public void setResolvedStatus(Long id, boolean resolved) throws GenericNotFound {
         GeneralReport report = generalReportRepository.findById(id)
                 .orElseThrow(() -> new GenericNotFound(id));

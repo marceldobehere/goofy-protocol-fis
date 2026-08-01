@@ -145,5 +145,26 @@ public class ServiceEntryEndpoint {
         );
     }
 
+    // Get All Service Entries for User
+    @GetMapping("/manage/{handle}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Gets all Service Entries for a User by Handle")
+    public List<ServiceEntryDto> getAllEntriesForUser(@PathVariable String handle) {
+        List<ServiceEntry> entries = serviceEntryRepository.findAllByLinkedIdentity_Handle(handle);
+        return entries.stream().map(entry -> new ServiceEntryDto(
+                entry.getName(),
+                entry.getUsedService(),
+                entry.getUuid()
+        )).toList();
+    }
+
+    // Delete Service Entry
+    @DeleteMapping("/manage/{handle}/{uuid}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Deletes a Service Entry by UUID for a User by Handle")
+    public void deleteEntryByUuidForUser(@PathVariable String handle, @PathVariable String uuid) {
+        serviceEntryRepository.deleteByUuid_AndLinkedIdentity_Handle(uuid, handle);
+    }
+
     // TODO: Add Export
 }

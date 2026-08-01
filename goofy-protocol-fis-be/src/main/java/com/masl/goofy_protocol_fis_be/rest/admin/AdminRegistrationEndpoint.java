@@ -62,15 +62,36 @@ public class AdminRegistrationEndpoint {
                 )).toList();
     }
 
-    // TODO: Get singular Registration Request by id
+    // Get Registration Request
+    @GetMapping("/request/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Get a Specific Registration Request", description = "This Endpoint allows an admin to retrieve a specific registration request by its ID.")
+    public RegisterRequestEntryDto getRegisterRequest(@PathVariable Long id) throws GenericNotFound {
+        var req = registrationService.getRequestById(id);
+        return new RegisterRequestEntryDto(
+                req.getId(),
+                req.getMesssage(),
+                req.getGeneralContact(),
+                req.getOptEmail(),
+                req.getCreatedAt(),
+                req.getResolvedAt()
+        );
+    }
 
-    // TODO: Turn into general update method with custom notes
     // Resolve Registration
-    @PutMapping("/request/{id}/resolve")
+    @PostMapping("/request/{id}/resolve")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @FisEndpoint(summary = "Resolve a Registration Request", description = "This Endpoint allows an admin to mark a specific registration request as resolved or unresolved. <br> The request body should contain a boolean value indicating the desired resolved status (true for resolved, false for unresolved).")
     public void resolveReport(@PathVariable Long id, @Valid @RequestBody Boolean resolved) throws GenericNotFound {
         registrationService.setResolvedStatus(id, resolved);
+    }
+
+    // Delete Registration
+    @DeleteMapping("/request/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Delete a Registration Request", description = "This Endpoint allows an admin to delete a specific registration request by its ID.")
+    public void deleteRegistrationRequest(@PathVariable Long id) {
+        registrationService.deleteRegistrationRequest(id);
     }
 
     // Get Unused Registration Codes
@@ -104,7 +125,6 @@ public class AdminRegistrationEndpoint {
                         code.getUsedAt()
                 )).toList();
     }
-
 
     // Create Registration Code
     @PostMapping("/code")

@@ -135,6 +135,14 @@ public class RegistrationService {
         return registrationRequestRepository.findAllByResolvedAtIsNull();
     }
 
+    public RegistrationRequest getRequestById(Long id) throws GenericNotFound {
+        return registrationRequestRepository.findById(id).orElseThrow(() -> new GenericNotFound(id));
+    }
+
+    public void deleteRegistrationRequest(Long id) {
+        registrationRequestRepository.deleteById(id);
+    }
+
     public void setResolvedStatus(Long id, boolean resolved) throws GenericNotFound {
         RegistrationRequest req = registrationRequestRepository.findById(id)
                 .orElseThrow(() -> new GenericNotFound(id));

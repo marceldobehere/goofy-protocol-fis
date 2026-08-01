@@ -34,5 +34,4 @@ public class ReportEntryDto {
     private Instant createdAt;
 
     private Instant resolvedAt; // Also acts as boolean
-
 }

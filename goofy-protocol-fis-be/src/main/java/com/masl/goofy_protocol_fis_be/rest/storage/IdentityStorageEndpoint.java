@@ -187,6 +187,29 @@ public class IdentityStorageEndpoint {
         identityRepository.save(entry);
     }
 
+    // Get All Identity Entries for User
+    @GetMapping("/manage/{handle}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Gets all Identity Entries for a User by Handle")
+    public List<IdentityStorageEntryDto> getAllEntriesForUser(@PathVariable String handle) {
+        return identityRepository.findAllByCreatedByHandle(handle).stream().map(entry -> new IdentityStorageEntryDto(
+                entry.getHandle(),
+                entry.getName(),
+                entry.getPubSplitKey(),
+                entry.getEncKeypairEntry(),
+                entry.getEncKeypairEntrySignature(),
+                entry.getPublicDataJson()
+        )).toList();
+    }
+
+    // Delete Identity Entry
+    @DeleteMapping("/manage/{handle}/{identityHandle}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Deletes an Identity Entry by Handle for a User by Handle")
+    public void deleteEntryByHandleForUser(@PathVariable String handle, @PathVariable String identityHandle) {
+        identityRepository.deleteByCreatedByHandle_AndHandle(handle, identityHandle);
+    }
+
     // TODO: Add Export and Import?
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")

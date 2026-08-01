@@ -2,22 +2,11 @@
 This is a list of open TODOs.
 
 ## TODOs (Currently)
-* Implement Admin Endpoints
-  * User Management (List Users, Delete User, Restrict User, etc.)
-  * Manage Login Storage
-  * Manage / View User Data (Identity Handles, Service Entries, Tables & Buckets)
-    * Also delete Stuff
-  * Update Report & Register & Request Entries (Status, Notes, Delete, etc.)
-  * Full Server Export/Backup?
-  * Manage User Quotas (View, Create/Update, Delete)
 * Work on more Implementation Stuff
-  * Implement User Account Deactivation
-  * Implement User Account Deletion → Should safely delete everything and not cause DB issues (Cache too)
-    * Also potentially enforce having done an account-export within 7 days of trying to delete the account to avoid unwanted data loss
-  * Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS / Maybe using Bucket4j
   * Implement Data Export (How to treat Buckets and Tables?) (Probably export everything as a ZIP and assume the download should be ok)
   * Implement Data Import? (How to treat Buckets and Tables?)
     * When doing exports/imports of a table, don't use raw db files. Also when importing large things look into how to best do it, given the upload limits
+  * Add Speed Throttling for Large Downloads (for example for Data Export) to avoid DoS / Maybe using Bucket4j
 * Add Synchronised Block for Post & Put Operations to avoid Race Conditions (Especially for Bucket & Table Stuff and everything quota related!!)
   * Ideally have a synchronized block with a lock per relevant Object (User, Service Entry / Bucket / Table, Table Entry, etc.)
   * Should mark the Endpoints as `@Transactional` and either use a `ReentrantLock` or a general Lock for (e.g) the Service UUID or the `@Lock` annotation.

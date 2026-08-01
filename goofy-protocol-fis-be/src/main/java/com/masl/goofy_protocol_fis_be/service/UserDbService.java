@@ -36,8 +36,8 @@ public class UserDbService {
 
     public synchronized void deleteEntry(ServiceEntry entry) throws IOException {
         log.info("Deleting DB folder for entry: {}", entry.getUuid());
-        fileStorageService.deleteDbFolder(entry.getUuid());
         // TODO: Check DB Connections are closed / Close Server somehow
+        fileStorageService.deleteDbFolder(entry.getUuid());
     }
 
     public synchronized void deleteTableEntry(ServiceEntry entry, String tableUuid) throws SQLException {

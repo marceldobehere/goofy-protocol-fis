@@ -10,4 +10,5 @@ import org.springframework.stereotype.Repository;
 public interface LoginStorageEntryRepository extends JpaRepository<LoginStorageEntry, String> {
     void deleteAllByCreatedByHandle(String createdByHandle);
     LoginStorageEntry findByUsernameHash(String usernameHash);
+    void deleteByUsernameHash(String usernameHash);
 }

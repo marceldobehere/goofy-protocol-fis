@@ -84,14 +84,36 @@ public class AdminGeneralEndpoint {
                 )).toList();
     }
 
-    // TODO: Get singular Report by id
+    // Get Report by id
+    @GetMapping("/report/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Get a General Report by ID", description = "This Endpoint allows an admin to retrieve a specific general report by its ID. <br> The response will contain details of the report, including ID, title, description, contact information, optional handle, creation timestamp, and resolution timestamp.")
+    public ReportEntryDto getReportById(@PathVariable Long id) throws GenericNotFound {
+        var report = generalReportService.getReportById(id);
+        return new ReportEntryDto(
+                report.getId(),
+                report.getTitle(),
+                report.getDescription(),
+                report.getContact(),
+                report.getOptionalHandle(),
+                report.getCreatedAt(),
+                report.getResolvedAt()
+        );
+    }
 
-    // TODO: Turn into general update method with custom notes
     // Resolve Report
-    @PutMapping("/report/{id}/resolve")
+    @PostMapping("/report/{id}/resolve")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @FisEndpoint(summary = "Resolve a General Report by ID", description = "This Endpoint allows an admin to mark a general report as resolved or unresolved by its ID. <br> The request body should contain a boolean value indicating the resolved status. <br> Example: `true` for resolved, `false` for unresolved.")
     public void resolveReport(@PathVariable Long id, @Valid @RequestBody Boolean resolved) throws GenericNotFound {
         generalReportService.setResolvedStatus(id, resolved);
+    }
+
+    // Delete Report
+    @DeleteMapping("/report/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @FisEndpoint(summary = "Delete a General Report by ID", description = "This Endpoint allows an admin to delete a specific general report by its ID.")
+    public void deleteReport(@PathVariable Long id) {
+        generalReportService.deleteReport(id);
     }
 }
