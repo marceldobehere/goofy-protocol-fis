@@ -31,6 +31,8 @@ export default function Page() {
         return () => clearTimeout(t);
     });
 
+    // TODO: Add Check is already logged in (maybe due to a network error the user was sent here)
+
     async function _importKeypair(): Promise<AsymmFullKeyPair | null> {
         const importKeypairFile: File | null = await uploadData(false) as File;
         if (importKeypairFile == null)
@@ -115,6 +117,7 @@ export default function Page() {
 
         console.log(resKeypair);
 
+        // TODO: Use redirectAfter param to the url so the user gets sent back to the correct site!
         const handle = await getMyHandle();
         console.log(`Logged in as ${handle}!`);
         goPath("/user/home");

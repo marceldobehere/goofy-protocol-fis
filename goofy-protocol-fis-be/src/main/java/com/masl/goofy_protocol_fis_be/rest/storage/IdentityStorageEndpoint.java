@@ -60,8 +60,8 @@ public class IdentityStorageEndpoint {
 
     @PostMapping
     @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
-    @FisEndpoint(summary = "Sets an Identity Entry for a Handle", description = "If the handle isn't used in any other entry it will be saved in the users identity storage. <br>The entry request needs to have the encKeypair Data signed with the public key of the identity to be added to make sure it belongs to the user. <br>If the handle has an entry by the user, it will simply get updated")
-    public void setEntry(@Valid @RequestBody IdentityStorageEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws InvalidPublicKey, InvalidSignedObject, NotMatchingPublicKey, IdentityEntryAlreadyExists, IdentityEntryInvalid, IdentityEntryQuotaExceeded {
+    @FisEndpoint(summary = "Sets an Identity Entry for a Handle", description = "If the handle isn't used in any other entry it will be saved in the users identity storage. <br>The entry request needs to have the encKeypair Data signed with the public key of the identity to be added to make sure it belongs to the user. <br>If the handle has an entry by the user, it will simply get updated. <br>Creates a default Public JSON Entry of `{\"services\": {}}`, if not defined")
+    public void setEntry(@Valid @RequestBody IdentityStorageEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws InvalidPublicKey, InvalidSignedObject, NotMatchingPublicKey, IdentityEntryAlreadyExists, IdentityEntryInvalid, IdentityEntryQuotaExceeded, InvalidJson {
         // Check Handle
         IdentityStorageEntryDto.checkValidity(entryDto, handleCrypto, asymmCrypto);
 
@@ -92,12 +92,22 @@ public class IdentityStorageEndpoint {
             entry.setPubSplitKey(entryDto.getPubSplitKey());
             entry.setEncKeypairEntry(entryDto.getEncKeypairEntry());
             entry.setEncKeypairEntrySignature(entryDto.getEncKeypairEntrySignature());
-            entry.setPublicDataJson("{}"); // Default to empty JSON Object
-            entry.setPrivateDataJson("{}"); // Default to empty JSON Object
             entry.setCreatedBy(user);
             entry.setCreatedAt(Instant.now());
+
+            if (entryDto.getPublicJsonData() == null)
+                entry.setPublicDataJson("{\"services\": {}}"); // Default to JSON Object with Services Key
+            else {
+                if (!isValid(entryDto.getPublicJsonData()))
+                    throw new InvalidJson(entryDto.getPublicJsonData());
+                entry.setPublicDataJson(entryDto.getPublicJsonData());
+            }
+
             identityRepository.save(entry);
-        } catch (Exception e) {
+        } catch (InvalidJson e) {
+            throw e;
+        }
+        catch (Exception e) {
             throw new IdentityEntryInvalid();
         }
     }
@@ -113,8 +123,7 @@ public class IdentityStorageEndpoint {
                 entry.getPubSplitKey(),
                 entry.getEncKeypairEntry(),
                 entry.getEncKeypairEntrySignature(),
-                entry.getPublicDataJson(),
-                entry.getPrivateDataJson()
+                entry.getPublicDataJson()
         )).toList();
     }
 
@@ -140,8 +149,7 @@ public class IdentityStorageEndpoint {
                 entry.getPubSplitKey(),
                 entry.getEncKeypairEntry(),
                 entry.getEncKeypairEntrySignature(),
-                entry.getPublicDataJson(),
-                entry.getPrivateDataJson()
+                entry.getPublicDataJson()
         );
     }
 
@@ -161,21 +169,8 @@ public class IdentityStorageEndpoint {
                 .body(entry.getPublicDataJson());
     }
 
-    // Get Private Data
-    @GetMapping("/private/{handle}")
-    @PreAuthorize("hasRole('ROLE_REGISTERED_USER')")
-    @FisEndpoint(summary = "Gets the Private Data of an Identity Entry from a Handle if it exists", description = "This Endpoint returns the Private Data of an Identity Entry from a Handle if it exists.")
-    public ResponseEntity<String> getPrivateData(@PathVariable String handle, @AuthenticationPrincipal GoofyAuthUser auth) throws IdentityEntryNotFound {
-        IdentityStorageEntry entry = identityRepository.findByCreatedByHandle_AndHandle(auth.getHandle(), handle);
-        if (entry == null)
-            throw new IdentityEntryNotFound(handle);
-
-        return ResponseEntity
-                .ok()
-                .header("Content-Type", "application/json")
-                .body(entry.getPrivateDataJson());
-    }
-
+    // TODO: Potentially allow Identities themselves to edit the data too, not just the registered user.
+    // Might be a better flow if you don't need to go back to the FIS to manage the linked service list for example
     // Set Public Data
     @PutMapping("/public/{handle}")
     @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
@@ -189,22 +184,6 @@ public class IdentityStorageEndpoint {
             throw new InvalidJson(publicJson);
 
         entry.setPublicDataJson(publicJson);
-        identityRepository.save(entry);
-    }
-
-    // Set Private Data
-    @PutMapping("/private/{handle}")
-    @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
-    @FisEndpoint(summary = "Sets the Private Data of an Identity Entry from a Handle if it exists", description = "This Endpoint sets the Private Data of an Identity Entry from a Handle if it exists.")
-    public void setPrivateData(@PathVariable String handle, String privateJson, @AuthenticationPrincipal GoofyAuthUser auth) throws IdentityEntryNotFound, InvalidJson {
-        IdentityStorageEntry entry = identityRepository.findByCreatedByHandle_AndHandle(auth.getHandle(), handle);
-        if (entry == null)
-            throw new IdentityEntryNotFound(handle);
-
-        if (!isValid(privateJson))
-            throw new InvalidJson(privateJson);
-
-        entry.setPrivateDataJson(privateJson);
         identityRepository.save(entry);
     }
 

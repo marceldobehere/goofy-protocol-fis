@@ -1,7 +1,7 @@
 package com.masl.goofy_protocol_fis_be.service;
 
 import com.masl.goofy_protocol_fis_be.properties.StorageProperties;
-import lombok.Getter;
+import jakarta.annotation.PreDestroy;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +21,8 @@ import java.util.zip.ZipOutputStream;
 public class FileStorageService {
     private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
 
-    @Getter
-    private static FileStorageService singleton;
-
     private final StorageProperties storageProperties;
+    private final String potentialTempPath;
 
     private final Path userDbPath;
     private final Path userBucketPath;
@@ -32,16 +30,16 @@ public class FileStorageService {
     public FileStorageService(StorageProperties storageProperties) throws IOException {
         this.storageProperties = storageProperties;
         if (storageProperties.getUseTempDir()) {
-            String tmpLoc = System.getProperty("java.io.tmpdir") + "/goofy-fis-" + UUID.randomUUID();
-            userDbPath = Path.of(tmpLoc, storageProperties.getBaseUserDatabasesPath());
-            userBucketPath = Path.of(tmpLoc, storageProperties.getBaseUserBucketsPath());
+            potentialTempPath = System.getProperty("java.io.tmpdir") + "/goofy-fis-" + UUID.randomUUID();
+            userDbPath = Path.of(potentialTempPath, storageProperties.getBaseUserDatabasesPath());
+            userBucketPath = Path.of(potentialTempPath, storageProperties.getBaseUserBucketsPath());
         } else {
+            potentialTempPath = null;
             userDbPath = Path.of(storageProperties.getBaseUserDatabasesPath());
             userBucketPath = Path.of(storageProperties.getBaseUserBucketsPath());
         }
 
         init();
-        singleton = this;
         log.info("FileStorageService initialized with userDbPath: {}, userBucketPath: {}", userDbPath, userBucketPath);
     }
 
@@ -54,6 +52,20 @@ public class FileStorageService {
                 throw new IOException("User databases path does not exist or is not a directory: " + userDbPath);
             if (!Files.exists(userBucketPath) || !Files.isDirectory(userBucketPath))
                 throw new IOException("User buckets path does not exist or is not a directory: " + userBucketPath);
+        }
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        if (potentialTempPath == null || !storageProperties.getCreateDirectories())
+            return;
+
+        // Useful for when i run 1 million tests and it spams by /tmp directory
+        log.info("Cleaning up temporary storage path: {}", potentialTempPath);
+        try {
+            FileUtils.deleteDirectory(Path.of(potentialTempPath).toFile());
+        } catch (IOException e) {
+            log.error("Failed to delete temporary storage path: {}", potentialTempPath, e);
         }
     }
 

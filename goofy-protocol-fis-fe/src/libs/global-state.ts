@@ -110,6 +110,7 @@ async function initGlobalState(pathName: string, needLogin: boolean, needAdmin: 
     // User Check
     if (needLogin && !GlobalState.loggedIn) {
         console.log("4> Init failed (Need Login)");
+        // TODO: This might fail due to networking or being logged out, add a redirectAfter param to the url so the user gets sent back to the correct site!
         goPath("/guest/login");
         return false;
     }

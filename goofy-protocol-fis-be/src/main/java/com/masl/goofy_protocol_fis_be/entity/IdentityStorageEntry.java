@@ -39,10 +39,6 @@ public class IdentityStorageEntry {
     @ColumnDefault("'{}'")
     private String publicDataJson;
 
-    @Column(nullable = false, length = FieldSize.LONG_TEXT_LEN)
-    @ColumnDefault("'{}'")
-    private String privateDataJson;
-
     @ManyToOne(optional = false)
     @JoinColumn(nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)

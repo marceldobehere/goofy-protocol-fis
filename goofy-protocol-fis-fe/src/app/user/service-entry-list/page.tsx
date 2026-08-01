@@ -96,6 +96,7 @@ export default function Page() {
         await refresh();
     }
 
+    // TODO: Add Button here to download/export/copy the keypair to use for logging in to / registering for services.
     // TODO: Styling
     return (
         <main>

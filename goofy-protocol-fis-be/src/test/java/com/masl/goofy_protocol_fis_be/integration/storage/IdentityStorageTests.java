@@ -276,5 +276,5 @@ class IdentityStorageTests {
 
 	// TODO: Test Restricted User cannot insert, delete, or update entries
 
-	// TODO: Tests for Public/Private Data
+	// TODO: Tests for Public Data
 }
