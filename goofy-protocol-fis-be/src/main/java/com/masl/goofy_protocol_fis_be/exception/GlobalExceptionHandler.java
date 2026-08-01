@@ -12,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -42,6 +43,15 @@ public class GlobalExceptionHandler {
                 .status(ex.httpCode)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(res);
+    }
+
+    // Handling NoResourceFound Exceptions
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<String> handleNoResourceFoundException(NoResourceFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(ex.getMessage());
     }
 
     // Handling Runtime Exceptions
