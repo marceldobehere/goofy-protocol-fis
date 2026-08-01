@@ -40,10 +40,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test", "tests-signed-req"})
 @ContextConfiguration(initializers = IsolatedTestConfig.class)
 class SignedRequestIntegrationTests {
-	private static final String TEST_API_GUEST = "/api/test/test-guest";
-	private static final String TEST_API_OUTSIDER = "/api/test/test-outsider";
-	private static final String TEST_API_USER = "/api/test/test-user";
-	private static final String TEST_API_ADMIN = "/api/test/test-admin";
+	private static final String TEST_API_GUEST = "/fis-api/test/test-guest";
+	private static final String TEST_API_OUTSIDER = "/fis-api/test/test-outsider";
+	private static final String TEST_API_USER = "/fis-api/test/test-user";
+	private static final String TEST_API_ADMIN = "/fis-api/test/test-admin";
 
 
 	private final GlobAsymmCrypto crypto = new GlobAsymmCrypto();

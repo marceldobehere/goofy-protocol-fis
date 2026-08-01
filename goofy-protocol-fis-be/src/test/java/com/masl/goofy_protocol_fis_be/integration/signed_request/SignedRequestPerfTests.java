@@ -51,10 +51,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextConfiguration(initializers = IsolatedTestConfig.class)
 @Disabled // Don't run this during mvn clean install/test
 class SignedRequestPerfTests {
-	private static final String TEST_API_GUEST = "/api/test/test-guest";
-	private static final String TEST_API_OUTSIDER = "/api/test/test-outsider";
-	private static final String TEST_API_USER = "/api/test/test-user";
-	private static final String TEST_API_ADMIN = "/api/test/test-admin";
+	private static final String TEST_API_GUEST = "/fis-api/test/test-guest";
+	private static final String TEST_API_OUTSIDER = "/fis-api/test/test-outsider";
+	private static final String TEST_API_USER = "/fis-api/test/test-user";
+	private static final String TEST_API_ADMIN = "/fis-api/test/test-admin";
 
 	@JUnitPerfTestActiveConfig
 	private final static JUnitPerfReportingConfig PERF_CONFIG = JUnitPerfReportingConfig.builder()

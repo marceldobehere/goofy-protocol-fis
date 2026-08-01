@@ -17,7 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/register")
+@RequestMapping("/fis-api/register")
 @Tag(name = "Registration", description = "Endpoints relating to the Registration of Users")
 public class RegistrationEndpoint {
     private final RegisterProperties registerProperties;

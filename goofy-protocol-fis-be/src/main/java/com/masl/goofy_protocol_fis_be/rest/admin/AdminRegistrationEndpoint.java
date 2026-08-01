@@ -19,7 +19,7 @@ import java.util.List;
 
 // TODO: Test
 @RestController
-@RequestMapping("/api/admin/register")
+@RequestMapping("/fis-api/admin/register")
 @Tag(name = "Registration (Admin)", description = "Admin Endpoints relating to the Registration of Users")
 public class AdminRegistrationEndpoint {
     private final RegistrationService registrationService;

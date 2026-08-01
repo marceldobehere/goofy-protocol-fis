@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test", "tests-shared"})
 @ContextConfiguration(initializers = IsolatedTestConfig.class)
 class LoginStorageTests {
-	private static final String BASE = "/api/login-storage";
+	private static final String BASE = "/fis-api/login-storage";
 
 	private static final String userHash1 = "user-hash-1";
 	private static final String userHash2 = "user-hash-2";

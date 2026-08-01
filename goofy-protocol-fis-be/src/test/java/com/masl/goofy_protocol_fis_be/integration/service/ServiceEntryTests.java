@@ -40,8 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test", "tests-service-entry"})
 @ContextConfiguration(initializers = IsolatedTestConfig.class)
 class ServiceEntryTests {
-	private static final String BASE = "/api/service-entry";
-	private static final String IDENTITY_BASE = "/api/identity-storage";
+	private static final String BASE = "/fis-api/service-entry";
+	private static final String IDENTITY_BASE = "/fis-api/identity-storage";
 
 	private final HandleCrypto handleCrypto = new HandleCrypto(new IsolatedHandleHelper());
 	private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();

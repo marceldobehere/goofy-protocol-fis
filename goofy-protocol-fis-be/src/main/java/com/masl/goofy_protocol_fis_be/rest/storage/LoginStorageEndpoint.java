@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 
 @RestController
-@RequestMapping("/api/login-storage")
+@RequestMapping("/fis-api/login-storage")
 @Tag(name = "Login Storage", description = "Endpoints relating to Logging in using a username/pasword and retrieving the encrypted Keypair.<br>Each registered user can have one entry with a chosen username (if available) and can store text data in it. <br>The entry can be looked up publicly with the username as the key. The usernames should always be hashed beforehand!<br>It's intended for users to symmetrically encrypt their keypair with a password and store that in this storage.")
 public class LoginStorageEndpoint {
     private final LoginStorageEntryRepository entryRepository;

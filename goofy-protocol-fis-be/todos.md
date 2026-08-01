@@ -27,8 +27,6 @@ This is a list of open TODOs.
 ## TODOs (Later)
 * Add a simple "Notification" / Warning System that alerts Users when their storage quotas are about to be exceeded or if they have some content deleted or are restricted
 * Potentially look into having custom JWTs or something to avoid signed request overhead when accessing tables?
-* Potentially rename all Endpoints from `/api/...` to `/fis-api/...` to avoid potential conflicts/request forgeries from service that have the same endpoint/path and therefore could redirect the requestt to the FIS
-  * Shouldn't realistically happen and the client should be a bit "careful", but it would probably be a good idea anyway.
 * Change some FIS Exceptions to use more detailed HTTP Error Codes (404 for not found, etc.)
 * Add Caching to relevant Endpoints with relevant durations (Handle Lookup, General Info, Maybe redirects, etc.)
 * Look into indexing columns for performance in user DBs

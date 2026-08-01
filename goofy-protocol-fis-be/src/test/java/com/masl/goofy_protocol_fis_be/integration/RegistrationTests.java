@@ -31,9 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test", "tests-shared"})
 @ContextConfiguration(initializers = IsolatedTestConfig.class)
 class RegistrationTests {
-	private static final String TEST_API_REGISTER = "/api/register";
-	private static final String TEST_API_STATUS = "/api/register/status";
-	private static final String TEST_API_REQUEST = "/api/register/request";
+	private static final String TEST_API_REGISTER = "/fis-api/register";
+	private static final String TEST_API_STATUS = "/fis-api/register/status";
+	private static final String TEST_API_REQUEST = "/fis-api/register/request";
 
 	private final GlobAsymmCrypto crypto = new GlobAsymmCrypto();
 	private final HandleCrypto handleCrypto = new HandleCrypto(new IsolatedHandleHelper());

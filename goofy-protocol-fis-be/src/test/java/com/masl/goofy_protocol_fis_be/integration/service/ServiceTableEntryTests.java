@@ -42,9 +42,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test", "tests-service-table-entry"})
 @ContextConfiguration(initializers = IsolatedTestConfig.class)
 class ServiceTableEntryTests {
-	private static final String BASE = "/api/service-table";
-	private static final String SERVICE_BASE = "/api/service-entry";
-	private static final String IDENTITY_BASE = "/api/identity-storage";
+	private static final String BASE = "/fis-api/service-table";
+	private static final String SERVICE_BASE = "/fis-api/service-entry";
+	private static final String IDENTITY_BASE = "/fis-api/identity-storage";
 
 	private final HandleCrypto handleCrypto = new HandleCrypto(new IsolatedHandleHelper());
 	private final GlobAsymmCrypto asymmCrypto = new GlobAsymmCrypto();

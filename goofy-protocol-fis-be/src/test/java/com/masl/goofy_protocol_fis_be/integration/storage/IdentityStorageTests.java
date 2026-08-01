@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test", "tests-shared"})
 @ContextConfiguration(initializers = IsolatedTestConfig.class)
 class IdentityStorageTests {
-	private static final String BASE = "/api/identity-storage";
+	private static final String BASE = "/fis-api/identity-storage";
 
 	private static final String encryptionPassword = "test password";
 

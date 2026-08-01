@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/redirect")
+@RequestMapping("/fis-api/redirect")
 @Tag(name = "Redirects", description = "Endpoints to get Frontend URL Redirects for Service Login/Config/Access")
 public class RedirectEndpoint {
     // TODO: Think about Fis Clients and if they need federation too / what to do with the redirects then? Maybe standardize and let user save their frontend url or just say frontend is set by backend?

@@ -64,7 +64,7 @@ public class WebSecurityConfiguration {
                 // Only for integration tests
                 if (testOnly) {
                     auth
-                        .requestMatchers("/api/test/**").permitAll();
+                        .requestMatchers("/fis-api/test/**").permitAll();
                 }
 
                 // Only for dev or integration tests
@@ -86,21 +86,21 @@ public class WebSecurityConfiguration {
                 auth
                     .requestMatchers("/").permitAll() // Redirect to Frontend
                     .requestMatchers("/short/**").permitAll() // Short Frontend Redirects
-                    .requestMatchers("/api/general/**").permitAll() // General Info of FIS Server
-                    .requestMatchers("/api/register/**").permitAll() // Registration of Users
-                    .requestMatchers("/api/user/**").permitAll() // User Info, Lookup, Export, etc.
-                    .requestMatchers("/api/redirect/**").permitAll() // Redirect Links for Service Login/Config/Access
+                    .requestMatchers("/fis-api/general/**").permitAll() // General Info of FIS Server
+                    .requestMatchers("/fis-api/register/**").permitAll() // Registration of Users
+                    .requestMatchers("/fis-api/user/**").permitAll() // User Info, Lookup, Export, etc.
+                    .requestMatchers("/fis-api/redirect/**").permitAll() // Redirect Links for Service Login/Config/Access
 
-                    .requestMatchers("/api/login-storage/**").permitAll() // Password/Keypair Storage
-                    .requestMatchers("/api/identity-storage/**").hasRole(ROLES.REGISTERED_USER) // Identity Keypair Storage for Services.
+                    .requestMatchers("/fis-api/login-storage/**").permitAll() // Password/Keypair Storage
+                    .requestMatchers("/fis-api/identity-storage/**").hasRole(ROLES.REGISTERED_USER) // Identity Keypair Storage for Services.
 
-                    .requestMatchers("/api/service-entry/**").hasRole(ROLES.REGISTERED_IDENTITY) // Service Entry Configuration
+                    .requestMatchers("/fis-api/service-entry/**").hasRole(ROLES.REGISTERED_IDENTITY) // Service Entry Configuration
 
                     // TODO: Potentially change if I decide that access requests for public content do not need to be signed
-                    .requestMatchers("/api/service-bucket/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Bucket Access
-                    .requestMatchers("/api/service-table/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Table Access
+                    .requestMatchers("/fis-api/service-bucket/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Bucket Access
+                    .requestMatchers("/fis-api/service-table/**").hasRole(ROLES.OUTSIDE_ENTITY) // Service Table Access
 
-                    .requestMatchers("/api/admin/**").hasRole(ROLES.ADMIN)
+                    .requestMatchers("/fis-api/admin/**").hasRole(ROLES.ADMIN)
                     .anyRequest().hasRole(ROLES.ADMIN);
             }
         );

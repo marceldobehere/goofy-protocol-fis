@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 // Only accessible during test execution
 @RestController
 @Profile({"test"})
-@RequestMapping("/api/test")
+@RequestMapping("/fis-api/test")
 @Hidden
 public class TestEndpoint {
     @GetMapping("/test-guest")

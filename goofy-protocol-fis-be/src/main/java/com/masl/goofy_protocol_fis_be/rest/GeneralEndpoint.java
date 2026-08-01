@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 
 @RestController
-@RequestMapping("/api/general")
+@RequestMapping("/fis-api/general")
 @Tag(name = "General", description = "General Endpoints regarding the FIS")
 public class GeneralEndpoint {
     private final GeneralProperties generalProperties;

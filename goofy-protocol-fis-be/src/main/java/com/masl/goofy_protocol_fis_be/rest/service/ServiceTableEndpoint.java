@@ -32,7 +32,7 @@ import java.time.Instant;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/service-table")
+@RequestMapping("/fis-api/service-table")
 @Tag(name = "Service Table Access", description = "Endpoints related to accessing Tables.")
 public class ServiceTableEndpoint {
     private final ServiceTableEntryRepository tableEntryRepository;

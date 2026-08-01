@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 // TODO: Write tests
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/fis-api/user")
 @Tag(name = "User", description = "Endpoints relating to User Info")
 public class UserEndpoint {
     private static final Logger log = LoggerFactory.getLogger(UserEndpoint.class);

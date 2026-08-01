@@ -31,7 +31,7 @@ import java.time.Instant;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/service-bucket")
+@RequestMapping("/fis-api/service-bucket")
 @Tag(name = "Service Bucket Access", description = "Endpoints related to accessing Buckets and their contents. <br>Important Note: These Endpoints need to be signed/access using the Identity Keypair, not the User.")
 public class ServiceBucketEndpoint {
     private final ServiceBucketEntryRepository bucketEntryRepository;

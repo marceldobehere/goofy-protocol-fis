@@ -19,7 +19,7 @@ import java.util.List;
 
 // TODO: Test
 @RestController
-@RequestMapping("/api/admin/general")
+@RequestMapping("/fis-api/admin/general")
 @Tag(name = "General (Admin)", description = "General Admin Endpoints regarding the FIS")
 public class AdminGeneralEndpoint {
     private static final Logger log = LoggerFactory.getLogger(AdminGeneralEndpoint.class);

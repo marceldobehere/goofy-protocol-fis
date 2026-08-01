@@ -29,10 +29,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test", "tests-shared"})
 @ContextConfiguration(initializers = IsolatedTestConfig.class)
 class GeneralTests {
-	private static final String TEST_API_STATUS = "/api/general/status";
-	private static final String TEST_API_INFO = "/api/general/info";
-	private static final String TEST_API_CONTACT = "/api/general/contact";
-	private static final String TEST_API_REPORT = "/api/general/report";
+	private static final String TEST_API_STATUS = "/fis-api/general/status";
+	private static final String TEST_API_INFO = "/fis-api/general/info";
+	private static final String TEST_API_CONTACT = "/fis-api/general/contact";
+	private static final String TEST_API_REPORT = "/fis-api/general/report";
 
 	private final HandleCrypto handleCrypto = new HandleCrypto(new IsolatedHandleHelper());
 
