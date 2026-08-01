@@ -12,6 +12,9 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import static com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto.Type.FIXED_STRING_N;
+import static com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto.Type.VAR_STRING_N;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -90,8 +93,8 @@ public class TableColumnDto {
             t = t.substring(0, pIdx).trim();
 
         return switch (t) {
-            case "CHAR", "CHARACTER" -> Type.FIXED_STRING_N;
-            case "VARCHAR", "CHARACTER VARYING" -> Type.VAR_STRING_N;
+            case "CHAR", "CHARACTER" -> FIXED_STRING_N;
+            case "VARCHAR", "CHARACTER VARYING" -> VAR_STRING_N;
             case "BOOLEAN", "BOOL" -> Type.BOOLEAN;
 
             case "TINYINT" -> Type.TINYINT;
@@ -271,7 +274,8 @@ public class TableColumnDto {
         if (rawDefault == null) return null;
 
         String s = rawDefault.trim();
-        if (s.isEmpty()) return null;
+        if (s.isEmpty() && !(type == FIXED_STRING_N || type == VAR_STRING_N))
+            return null;
 
         if (s.startsWith("'") && s.endsWith("'") && s.length() >= 2) {
             s = s.substring(1, s.length() - 1);
