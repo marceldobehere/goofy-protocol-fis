@@ -22,7 +22,6 @@ public class QuotaService {
         this.userQuotasRepository = userQuotasRepository;
     }
 
-    // TODO: Test Admin Quotas being used correctly
     public BaseQuotaProperties getUserQuotas(String handle) {
         User user = userRepository.findByHandle(handle);
 
