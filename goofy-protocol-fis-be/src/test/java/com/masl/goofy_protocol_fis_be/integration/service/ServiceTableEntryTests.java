@@ -397,7 +397,7 @@ class ServiceTableEntryTests {
 
 		// Send
 		performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
-				.andExpect(status().is4xxClientError());
+				.andExpect(status().is5xxServerError());
 	}
 
 	@Test
@@ -451,7 +451,7 @@ class ServiceTableEntryTests {
 
 			// Send
 			performSignedRequestStr(HttpMethod.POST, BASE + "/" + identityHandle + "/" + serviceUuid + "/entry/" + entry.getTableUuid() + "/rows", objectMapper.writeValueAsString(insertObj), identity, mvc, handleCrypto)
-					.andExpect(status().is4xxClientError());
+					.andExpect(status().is5xxServerError());
 			assertThat(getTableRowCount(identity, serviceUuid, entry.getTableUuid())).isEqualTo(2);
 		}
 	}

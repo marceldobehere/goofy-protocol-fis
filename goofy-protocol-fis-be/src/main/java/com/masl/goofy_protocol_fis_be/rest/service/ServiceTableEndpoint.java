@@ -14,6 +14,7 @@ import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
 import com.masl.goofy_protocol_fis_be.entity.ServiceTableEntry;
 import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
 import com.masl.goofy_protocol_fis_be.exception.client.*;
+import com.masl.goofy_protocol_fis_be.exception.server.ServiceTableSqlError;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import com.masl.goofy_protocol_fis_be.repository.ServiceEntryRepository;
 import com.masl.goofy_protocol_fis_be.repository.ServiceTableEntryRepository;
