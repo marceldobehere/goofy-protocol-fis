@@ -197,9 +197,8 @@ class ServiceTableEntryTests {
 				}
 			assertThat(rCol).isNotNull();
 			assertThat(ogCol.getType()).isEqualTo(rCol.getType());
-			if (ogCol.getTypeSize() != 0)
-				assertThat(ogCol.getTypeSize()).isEqualTo(rCol.getTypeSize());
-			assertThat(ogCol.getConstraints().size()).isLessThanOrEqualTo(rCol.getConstraints().size()); // might add unique constraint to just primary key constraint
+			assertThat(ogCol.normalizeTypeSize()).isEqualTo(rCol.normalizeTypeSize());
+			assertThat(TableColumnDto.normalizeConstraints(ogCol.getConstraints())).isEqualTo(TableColumnDto.normalizeConstraints(rCol.getConstraints()));
 			assertThat(ogCol.getDefaultValue()).isEqualTo(rCol.getDefaultValue());
 		}
 	}
@@ -746,7 +745,7 @@ class ServiceTableEntryTests {
 
 	// TODO: Test Set Table Entry
 
-	// TODO: Test for Update Table Entry Schema
+	// TODO: Test for Update Table Entry Schema (Add Column, Delete Column, Change Column Type, Change Default Value, Change Type & Default Value)
 
 	// TODO: Access / Permission Tests
 

@@ -6,6 +6,7 @@ import com.masl.goofy_protocol_fis_be.dto.request.query.*;
 import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQueryResultDto;
 import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
+import com.masl.goofy_protocol_fis_be.rest.service.ServiceTableEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -200,6 +201,64 @@ public class UserDbService {
             // Execute
             try (Statement statement = conn.createStatement()) {
                 statement.execute(createQuery.toString());
+            }
+        }
+    }
+
+    public void updateTableEntrySchema(ServiceEntry entry, ServiceTableEntryDto tableEntryDto, ServiceTableEndpoint.SchemaComparison comparison) throws SQLException {
+        try (Connection conn = getConnection(entry.getUuid())) {
+            String tableName = getDbTableNameFromTableUuid(tableEntryDto.getTableUuid());
+
+            // Drop Columns
+            for (var col: comparison.removedCols()) {
+                try (Statement statement = conn.createStatement()) {
+                    statement.execute("ALTER TABLE \"" + tableName + "\" DROP COLUMN \"" + col.getColName() + "\";");
+                }
+            }
+
+            // Add Columns
+            for (var col: comparison.addedCols()) {
+                try (Statement statement = conn.createStatement()) {
+                    StringJoiner colDef = new StringJoiner(" ");
+                    colDef.add("\"" + col.getColName() + "\"");
+                    colDef.add(col.toSqlTypeString());
+                    colDef.add(col.toSqlConstraintsString());
+                    if (col.getDefaultValue() != null)
+                        colDef.add("DEFAULT " + col.defaultToSqlValueString());
+                    statement.executeUpdate("ALTER TABLE \"" + tableName + "\" ADD COLUMN " + colDef + ";");
+                }
+            }
+
+            // Update Columns
+            for (var newCol: comparison.updatedCols()) {
+                TableColumnDto currCol = Arrays.stream(comparison.currCols()).filter(c -> c.getColName().equals(newCol.getColName())).findFirst().orElse(null);
+                if (currCol == null)
+                    throw new SQLException("Could not find original column for updated column: " + newCol.getColName());
+
+                // Update Constraints
+                if (!TableColumnDto.normalizeConstraints(currCol.getConstraints()).equals(TableColumnDto.normalizeConstraints(newCol.getConstraints()))) {
+                    // TODO: Actually implement, looks kinda painful
+                    throw new SQLException("Cannot change constraints for column: " + newCol.getColName() + ", original: " + currCol.getConstraints() + ", new: " + newCol.getConstraints());
+                }
+
+                // Update Type
+                else if (newCol.getType() != currCol.getType() || newCol.normalizeTypeSize() != currCol.normalizeTypeSize()) {
+                    try (Statement statement = conn.createStatement()) {
+                        StringJoiner colDef = new StringJoiner(" ");
+                        colDef.add("\"" + newCol.getColName() + "\"");
+                        colDef.add(newCol.toSqlTypeString());
+                        if (newCol.getDefaultValue() != null)
+                            colDef.add("DEFAULT " + newCol.defaultToSqlValueString());
+                        statement.executeUpdate("ALTER TABLE \"" + tableName + "\" ALTER COLUMN " + colDef + ";");
+                    }
+                }
+
+                // Update Default Value
+                else if (newCol.getDefaultValue() != currCol.getDefaultValue()) {
+                    try (Statement statement = conn.createStatement()) {
+                        statement.executeUpdate("ALTER TABLE \"" + tableName + "\" ALTER COLUMN \"" + newCol.getColName() + "\" SET DEFAULT " + newCol.defaultToSqlValueString() + ";");
+                    }
+                }
             }
         }
     }

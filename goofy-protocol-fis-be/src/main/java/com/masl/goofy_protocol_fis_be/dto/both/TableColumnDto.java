@@ -49,6 +49,19 @@ public class TableColumnDto {
         PRIMARY_KEY
     }
 
+    public static String normalizeConstraints(Set<Constraint> constraints) {
+        if (constraints.contains(Constraint.PRIMARY_KEY))
+            return "PRIMARY KEY"; // contains unique & not null
+
+        String uniqueStr = constraints.contains(Constraint.UNIQUE) ? "UNIQUE" : "";
+        String notNullStr = constraints.contains(Constraint.NOT_NULL) ? "NOT NULL" : "";
+        return String.join(" ", uniqueStr, notNullStr);
+    }
+
+    public int normalizeTypeSize() {
+        return getTypeSize(type, typeSize);
+    }
+
     public static int getTypeSize(Type type, Integer optTypeSize) {
         if (optTypeSize < 0)
             throw new IllegalArgumentException("Type size must be non-negative");

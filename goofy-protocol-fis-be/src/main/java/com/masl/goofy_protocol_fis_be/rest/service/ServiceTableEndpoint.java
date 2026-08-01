@@ -156,8 +156,8 @@ public class ServiceTableEndpoint {
     // Set Table Entry Config (Name, Read Access, Write Access, Schema Version, Columns, ...)
     @PutMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Sets a Table Entry", description = "Set the Table Entry for a specific Table UUID. <br>Note: The Columns can only be changed if the schema version provided is larger and provides default values for new non-null columns.")
-    public void setTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @Valid @RequestBody ServiceTableEntryDto entryDto, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableNotFound, ServiceTableLockInvalid, ServiceTableInvalidMigration, ServiceTableQuotaExceeded {
+    @FisEndpoint(summary = "Sets a Table Entry", description = "Set the Table Entry for a specific Table UUID. <br>Note: The Columns can only be changed if the schema version provided is larger and provides default values for new non-null columns. <br>Also keep in mind that renaming a column acts as deleting the old column and adding a new one, leading to potential data loss if done carelessly!")
+    public void setTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @Valid @RequestBody ServiceTableEntryDto entryDto, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableNotFound, ServiceTableLockInvalid, ServiceTableInvalidMigration, ServiceTableQuotaExceeded, ServiceTableSqlError {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -196,14 +196,20 @@ public class ServiceTableEndpoint {
                     throw new ServiceTableQuotaExceeded("tableMaxFieldSize");
             }
 
+            var comparison = compareSchemas(tableEntry, entryDto);
             if (tableEntry.getSchemaVersion().equals(entryDto.getSchemaVersion())) {
-                // TODO: Check if the schema is identical
-                boolean identical = false;
-                if (!identical)
+                if (!comparison.identical)
                     throw new ServiceTableInvalidMigration(tableUuid, "Same Schema Version but different Columns, please increase the Schema Version to update the Columns");
             } else {
-                // TODO: Implement Schema Update
-                // Make sure that all new columns with a constraint or something have a default value
+                if (comparison.identical)
+                    throw new ServiceTableInvalidMigration(tableUuid, "Schema Version increased but Columns are identical, please only increase the Schema Version if you want to update the Columns");
+                else {
+                    try {
+                        userDbService.updateTableEntrySchema(entry, entryDto, comparison);
+                    } catch (SQLException e) {
+                        throw new ServiceTableSqlError(tableUuid, e.getMessage());
+                    }
+                }
             }
         }
 
@@ -338,6 +344,8 @@ public class ServiceTableEndpoint {
             if (TableColumnDto.getTypeSize(colDto.getType(), colDto.getTypeSize()) > userQuotas.getTable().getMaxFieldSize())
                 throw new ServiceTableQuotaExceeded("tableMaxFieldSize");
         }
+
+        // TODO: Check if name already exists?
 
         // Create Table Entry
         ServiceTableEntry tableEntry = new ServiceTableEntry();
@@ -584,5 +592,58 @@ public class ServiceTableEndpoint {
         if (!entry.getLinkedIdentity().getHandle().equals(auth.getHandle()) && !auth.getAdmin())
             if (!tableEntry.getExtraWritePerms().contains(auth.getHandle()))
                 throw new ServiceEntryNotFound(entry.getUuid());
+    }
+
+    public record SchemaComparison(boolean identical, List<TableColumnDto> removedCols, List<TableColumnDto> addedCols, Set<TableColumnDto> updatedCols, TableColumnDto[] currCols) {}
+
+    private boolean compCols(TableColumnDto first, TableColumnDto second) {
+        boolean typeSizeEq = first.normalizeTypeSize() == second.normalizeTypeSize();
+
+        boolean constraintsEq = TableColumnDto.normalizeConstraints(first.getConstraints())
+                .equals(TableColumnDto.normalizeConstraints(second.getConstraints()));
+
+        return first.getColName().equals(second.getColName()) &&
+                first.getType() == second.getType() &&
+                typeSizeEq &&
+                constraintsEq &&
+                Objects.equals(first.getDefaultValue(), second.getDefaultValue());
+    }
+
+    private SchemaComparison compareSchemas(ServiceTableEntry entry, ServiceTableEntryDto newSchema) throws ServiceTableSqlError {
+        // Columns
+        TableColumnDto[] currCols;
+        try {
+            currCols = userDbService.getAllTableColumns(entry.getLinkedServiceEntry(), entry.getTableUuid()).toArray(new TableColumnDto[0]);
+        } catch (SQLException e) {
+            throw new ServiceTableSqlError(entry.getTableUuid(), e.getMessage());
+        }
+
+        List<TableColumnDto> removedCols = new ArrayList<>();
+        List<TableColumnDto> addedCols = new ArrayList<>();
+        Set<TableColumnDto> updatedCols = new HashSet<>();
+
+        // Go through current cols
+        for (var col: currCols) {
+            TableColumnDto foundCol = Arrays.stream(newSchema.getColumns()).filter(c -> c.getColName().equals(col.getColName())).findFirst().orElse(null);
+            if (foundCol == null)
+                removedCols.add(col);
+            else if (!compCols(col, foundCol))
+                updatedCols.add(foundCol);
+        }
+
+        // Go through new cols
+        for (var col: newSchema.getColumns()) {
+            TableColumnDto foundCol = Arrays.stream(currCols).filter(c -> c.getColName().equals(col.getColName())).findFirst().orElse(null);
+            if (foundCol == null)
+                addedCols.add(col);
+        }
+
+        return new SchemaComparison(
+            removedCols.isEmpty() && addedCols.isEmpty() && updatedCols.isEmpty(),
+            removedCols,
+            addedCols,
+            updatedCols,
+            currCols
+        );
     }
 }
