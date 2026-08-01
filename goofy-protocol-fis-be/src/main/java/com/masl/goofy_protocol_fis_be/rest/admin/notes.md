@@ -57,10 +57,3 @@ Backup related things
 
 
 
-
-
-## Potential for future improvement
-
-If FISs get large there should be some moderation users with some kind of abilities but not quite administrators.
-
-Look into locking Buckets maybe?

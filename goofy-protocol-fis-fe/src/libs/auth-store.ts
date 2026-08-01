@@ -21,6 +21,7 @@ let currServerBase: string;
 let currKeypair: AsymmFullKeyPair | null;
 let tempServerOverride: string | null;
 
+// TODO: Allow Securing your Fis Frontend Client with a password too, (Encrypted Local Storage)
 // TODO: Import my AsyncLock and make it use that
 let initDone = false;
 export async function init() {

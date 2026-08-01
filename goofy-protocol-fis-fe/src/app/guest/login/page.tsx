@@ -41,13 +41,14 @@ export default function Page() {
         }
     });
 
+    // TODO: Make Shared Lib for this
     // TODO: Add Check is already logged in (maybe due to a network error the user was sent here)
-
     async function _importKeypair(): Promise<AsymmFullKeyPair | null> {
         const importKeypairFile: File | null = await uploadData(false) as File;
         if (importKeypairFile == null)
             return null;
 
+        // TODO: Add Exporting User Keypair with a password + Importing a password encrypted Keypair (For safety reasons)
         const importKeypairObj = await readJsonFile<AsymmFullJsonKeypair>(importKeypairFile);
         if (importKeypairObj == null)
             return null;
