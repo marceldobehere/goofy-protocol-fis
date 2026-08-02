@@ -129,8 +129,7 @@ public class HandleHelper implements HandleCryptoHelper {
                         .retrieve()
                         .body(HandleLookupDto.class);
 
-                assert lookupDto != null;
-                if (lookupDto.getPubKey() != null && !lookupDto.getPubKey().isBlank()) {
+                if (lookupDto != null && lookupDto.getPubKey() != null && !lookupDto.getPubKey().isBlank()) {
                     log.debug("Successfully looked up handle {} at domain {}: {}", strippedHandle, optDomain, lookupDto.getPubKey());
                     return lookupDto.getPubKey();
                 } else {
