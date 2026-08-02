@@ -9,6 +9,7 @@ import lombok.Setter;
 import java.time.Instant;
 
 @Entity
+@Table(name = "fis_reg_req")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @Setter
