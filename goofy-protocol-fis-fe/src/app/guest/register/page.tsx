@@ -171,7 +171,8 @@ export default function Page() {
         const err = await sendRegistrationRequest(req, currKeypair);
         if (err != null)
             alert("Error requesting Register Code: " + err);
-        alert("Request sent! Please wait for a response from the server.");
+        else
+            alert("Request sent! Please wait for a response from the server.");
     }
 
     async function checkRegisterCode(code: string): Promise<boolean> {
