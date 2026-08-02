@@ -7,10 +7,7 @@ import com.masl.goofy_protocol_fis_be.exception.client.GenericNotFound;
 import com.masl.goofy_protocol_fis_be.exception.client.HandleAlreadyRegistered;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidRegisterCode;
 import com.masl.goofy_protocol_fis_be.exception.client.RegistrationCodeAlreadyUsed;
-import com.masl.goofy_protocol_fis_be.repository.RegistrationCodeRepository;
-import com.masl.goofy_protocol_fis_be.repository.RegistrationRequestRepository;
-import com.masl.goofy_protocol_fis_be.repository.UserQuotasRepository;
-import com.masl.goofy_protocol_fis_be.repository.UserRepository;
+import com.masl.goofy_protocol_fis_be.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,12 +23,14 @@ public class RegistrationService {
     private final RegistrationCodeRepository registrationCodeRepository;
     private final RegistrationRequestRepository registrationRequestRepository;
     private final UserRepository userRepository;
+    private final IdentityStorageEntryRepository identityStorageEntryRepository;
     private final UserQuotasRepository userQuotasRepository;
 
-    public RegistrationService(RegistrationCodeRepository registrationCodeRepository, RegistrationRequestRepository registrationRequestRepository, UserRepository userRepository, UserQuotasRepository userQuotasRepository) {
+    public RegistrationService(RegistrationCodeRepository registrationCodeRepository, RegistrationRequestRepository registrationRequestRepository, UserRepository userRepository, IdentityStorageEntryRepository identityStorageEntryRepository, UserQuotasRepository userQuotasRepository) {
         this.registrationCodeRepository = registrationCodeRepository;
         this.registrationRequestRepository = registrationRequestRepository;
         this.userRepository = userRepository;
+        this.identityStorageEntryRepository = identityStorageEntryRepository;
         this.userQuotasRepository = userQuotasRepository;
     }
 
@@ -97,6 +96,9 @@ public class RegistrationService {
 
         // Check if Handle is already registered
         if (userRepository.findById(auth.getHandle()).isPresent())
+            throw new HandleAlreadyRegistered(auth.getHandle());
+
+        if (identityStorageEntryRepository.findByHandle(auth.getHandle()) != null)
             throw new HandleAlreadyRegistered(auth.getHandle());
 
         // Create User
