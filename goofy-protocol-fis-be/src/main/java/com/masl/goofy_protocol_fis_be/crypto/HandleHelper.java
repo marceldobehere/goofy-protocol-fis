@@ -2,9 +2,11 @@ package com.masl.goofy_protocol_fis_be.crypto;
 
 import com.masl.goofy_protocol_core.crypto.connected.GenericHandleCrypto;
 import com.masl.goofy_protocol_core.crypto.connected.HandleCryptoHelper;
+import com.masl.goofy_protocol_fis_be.dto.response.HandleLookupDto;
 import com.masl.goofy_protocol_fis_be.entity.CachedKeyHandleEntry;
 import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
 import com.masl.goofy_protocol_fis_be.entity.User;
+import com.masl.goofy_protocol_fis_be.properties.GeneralProperties;
 import com.masl.goofy_protocol_fis_be.repository.CachedKeyHandleRepository;
 import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
 import com.masl.goofy_protocol_fis_be.repository.UserRepository;
@@ -12,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -27,11 +31,16 @@ public class HandleHelper implements HandleCryptoHelper {
     private final CachedKeyHandleRepository cachedKeyHandleRepository;
     private final UserRepository userRepository;
     private final IdentityStorageEntryRepository identityRepository;
+    private final GeneralProperties generalProperties;
 
-    public HandleHelper(CachedKeyHandleRepository cachedKeyHandleRepository, UserRepository userRepository, IdentityStorageEntryRepository identityRepository) {
+    private final RestClient restClient = RestClient.create();
+    private final String[] supportedFisProtocols = new String[] { "https://", "http://" };
+
+    public HandleHelper(CachedKeyHandleRepository cachedKeyHandleRepository, UserRepository userRepository, IdentityStorageEntryRepository identityRepository, GeneralProperties generalProperties) {
         this.cachedKeyHandleRepository = cachedKeyHandleRepository;
         this.userRepository = userRepository;
         this.identityRepository = identityRepository;
+        this.generalProperties = generalProperties;
     }
 
     // Load Word List (Currently ~15000 Entries)
@@ -93,16 +102,48 @@ public class HandleHelper implements HandleCryptoHelper {
         String optDomain = GenericHandleCrypto.getPotentialDomainFromHandle(handle);
 
         // Check internal Storage / DBs for potential Mappings
-        // TODO: Also Check Identity Storage
-        // TODO: Implement
+        User maybeUser = userRepository.findByHandle(strippedHandle);
+        if (maybeUser != null)
+            return maybeUser.getPubSplitKey();
 
-        // Potential Look up
-        if (optDomain != null) {
-            // TODO: Look up, by asking the domain FIS
+        IdentityStorageEntry identity = identityRepository.findByHandle(strippedHandle);
+        if (identity != null)
+            return identity.getPubSplitKey();
+
+        // Unknown
+        if (optDomain == null)
             return null;
-        } else {
-            // TODO: Potentially ask already known FIS Servers or throw Exception
+
+        // Avoid potential loop
+        if (generalProperties.getDomain().contains(optDomain) || generalProperties.getUrl().contains(optDomain)) {
+            log.debug("Skipping external lookup for handle {} at domain {} because it is our own domain", strippedHandle, optDomain);
             return null;
         }
+
+        // Attempt Look up
+        log.debug("Attempting to look up handle {} at domain {}", strippedHandle, optDomain);
+        for (var protocol : supportedFisProtocols) {
+            try {
+                HandleLookupDto lookupDto = restClient.get()
+                        .uri(protocol + optDomain + "/fis-api/user/lookup/" + strippedHandle)
+                        .retrieve()
+                        .body(HandleLookupDto.class);
+
+                assert lookupDto != null;
+                if (lookupDto.getPubKey() != null && !lookupDto.getPubKey().isBlank()) {
+                    log.debug("Successfully looked up handle {} at domain {}: {}", strippedHandle, optDomain, lookupDto.getPubKey());
+                    return lookupDto.getPubKey();
+                } else {
+                    log.warn("Handle {} at domain {} returned no public key", strippedHandle, optDomain);
+                }
+            } catch (RestClientException e) {
+                log.info("Failed to look up handle {} at domain {}: {}", strippedHandle, optDomain, e.getMessage());
+            } catch (Exception e) {
+                log.warn("Unexpected error while looking up handle {} at domain {}: {}", strippedHandle, optDomain, e.getMessage());
+            }
+        }
+
+        // Lookup failed
+        return null;
     }
 }
