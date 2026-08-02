@@ -2,10 +2,10 @@
 
 import styles from "./page.module.css";
 import Link from "next/link";
-import {getAllUserIdentities, getKeypair} from "@/libs/auth-store";
+import {getAllUserIdentities, getBaseServerDomain, getIdentityKeypair, getKeypair} from "@/libs/auth-store";
 import {useState} from "react";
 import {deleteAuth, getAuth, postAuth} from "@/libs/req";
-import {IdentityStorageEntryDto, MyIdentityEntryQuotasDto} from "@/libs/dtos";
+import {ExportIdentityKeypair, IdentityStorageEntryDto, MyIdentityEntryQuotasDto} from "@/libs/dtos";
 import {
     asymmSignStr,
     deriveHandleFromPublicSplitKey,
@@ -15,6 +15,7 @@ import {
 } from "@/libs/crypto";
 import {AsymmCryptoType, AsymmFullJsonKeypair} from "@/libs/crypto-types";
 import {GlobalState, useGlobalState} from "@/libs/global-state";
+import {downloadObjFile} from "@/libs/file-utils";
 
 export default function Page() {
     const [identityEntries, setIdentityEntries] = useState<IdentityStorageEntryDto[]>([]);
@@ -82,6 +83,16 @@ export default function Page() {
         await refresh();
     }
 
+    async function exportLoginKeypair(entry: IdentityStorageEntryDto) {
+        const kp = await getIdentityKeypair(entry.handle);
+        const exportObj: ExportIdentityKeypair = {
+            pub: kp.pub.serialize(),
+            priv: kp.priv.serialize(),
+            handleFull: entry.handle + "@" + await getBaseServerDomain()
+        };
+        downloadObjFile(exportObj, "identity-keypair-" + entry.name + "-" + entry.handle + ".json");
+    }
+
     // TODO: Styling
     return (
         <main>
@@ -99,9 +110,11 @@ export default function Page() {
                 <ul>
                     {identityEntries.map((entry) => (<li key={entry.handle}>
                             <span>{entry.name} - {entry.handle}</span> (Size: {entry.pubSplitKey.length} / {entry.encKeypairEntry.length})
-                            <span> </span>
+                            <span> &nbsp; </span>
                             <Link href={`/user/service-entry-list#${entry.handle}`}>Manage</Link>
-                            <span> </span>
+                            <span> &nbsp; </span>
+                            <button onClick={() => {exportLoginKeypair(entry).then()}}>Export Keypair</button>
+                            <span> &nbsp; </span>
                             <button onClick={() => {deleteIdentity(entry.handle).then()}}>Delete</button>
                         </li>
                     ))}

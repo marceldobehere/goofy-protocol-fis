@@ -265,3 +265,10 @@ export interface TableSelectDto {
     colNames: string[];
     basicQuery?: TableBasicQueryDto;
 }
+
+// For Exporting/Importing
+export interface  ExportIdentityKeypair {
+    pub: string;
+    priv: string;
+    handleFull: string;
+}

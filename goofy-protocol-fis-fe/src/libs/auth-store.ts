@@ -106,6 +106,16 @@ export async function getBaseServerUrl(): Promise<string> {
     return tempServerOverride || currServerBase;
 }
 
+export async function getBaseServerDomain(): Promise<string> {
+    const baseUrl = await getBaseServerUrl();
+
+    const url = new URL(baseUrl);
+    const host = url.hostname; // e.g., "fis.rocc.systems" (no port)
+    const port = url.port;     // e.g., "8080" or "" if none
+
+    return port ? `${host}:${port}` : host;
+}
+
 export async function hasKeypair(): Promise<boolean> {
     await init();
     return currKeypair != null;
