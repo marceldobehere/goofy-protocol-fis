@@ -2,6 +2,9 @@
 This is a list of open TODOs.
 
 ## TODOs (Currently)
+* Move the Navigation to the top of the frontends + Add a Link to the Github to them!
+* Frontend, implement importing a Identity Keypair
+* HEAVILY Rate Limit Creating/Importing Identity Keypairs (like 2-5 per week)
 * Work on more Implementation Stuff
   * Implement Data Export (How to treat Buckets and Tables?) (Probably export everything as a ZIP and assume the download should be ok)
   * Implement Data Import? (How to treat Buckets and Tables?)
@@ -41,3 +44,4 @@ This is a list of open TODOs.
 * Look into indexing columns for performance in user DBs
 * Potentially overhaul the simplistic quota system and let users set quotas for specific entries too.
 * Optimize Quota & Storage Calculations in Bucket and probably Table Service
+* Add some kind of version check against the github repo that can be queried that shows if the backend is up to date.
