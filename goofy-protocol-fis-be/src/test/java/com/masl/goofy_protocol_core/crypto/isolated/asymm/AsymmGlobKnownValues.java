@@ -2,6 +2,7 @@ package com.masl.goofy_protocol_core.crypto.isolated.asymm;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -122,7 +123,7 @@ class AsymmGlobKnownValues {
 
 	public record KnownValueSet(AsymmCrypto.AsymmFullKeyPair keypair, String strOg, String strEnc, String strSig, byte[] rawDefOg, byte[] rawEnc, String defEnc, byte[] rawSig, String defSig) {
 		@Override
-		public String toString() {
+		public @NonNull String toString() {
 			return "<KnownValueSet>";
 		}
 	}

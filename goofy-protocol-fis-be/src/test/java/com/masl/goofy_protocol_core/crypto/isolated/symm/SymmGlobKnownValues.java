@@ -2,6 +2,7 @@ package com.masl.goofy_protocol_core.crypto.isolated.symm;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -54,7 +55,7 @@ class SymmGlobKnownValues {
 
 	public record KnownValueSet(String secret, String strOg, String strEnc, byte[] rawDefOg, byte[] rawEnc, String defEnc) {
 		@Override
-		public String toString() {
+		public @NonNull String toString() {
 			return "<KnownValueSet>";
 		}
 	}
