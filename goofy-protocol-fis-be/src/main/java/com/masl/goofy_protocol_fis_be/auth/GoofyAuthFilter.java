@@ -27,6 +27,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -67,20 +68,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
 
             // Cache Request So body can be read without issues
             ContentCachingRequestWrapper _wrapped = new ContentCachingRequestWrapper(request, maxRequestSizeBytes);
-            byte[] body;
-            try (var in = _wrapped.getInputStream()) {
-                body = in.readNBytes(maxRequestSizeBytes + 1);
-
-                // Read the remaining data without storing it
-                // This is NEEDED FOR THE RESPONSE / ERROR HANDLING TO WORK PROPERLY (don't ask me why)
-                byte[] buffer = new byte[8192];
-
-                //noinspection StatementWithEmptyBody
-                while (in.read(buffer) != -1);
-            }
-
-            if (body.length > maxRequestSizeBytes)
-                throw new ContentTooLarge();
+            byte[] body = getBody(_wrapped);
 
             // Parse Request
             SignedRequest req;
@@ -125,5 +113,23 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
         }
 
         SecurityContextHolder.clearContext();
+    }
+
+    private byte @NonNull [] getBody(ContentCachingRequestWrapper _wrapped) throws IOException, ContentTooLarge {
+        byte[] body;
+        try (var in = _wrapped.getInputStream()) {
+            body = in.readNBytes(maxRequestSizeBytes + 1);
+
+            // Read the remaining data without storing it
+            // This is NEEDED FOR THE RESPONSE / ERROR HANDLING TO WORK PROPERLY (don't ask me why)
+            byte[] buffer = new byte[8192];
+
+            //noinspection StatementWithEmptyBody
+            while (in.read(buffer) != -1);
+        }
+
+        if (body.length > maxRequestSizeBytes)
+            throw new ContentTooLarge();
+        return body;
     }
 }
