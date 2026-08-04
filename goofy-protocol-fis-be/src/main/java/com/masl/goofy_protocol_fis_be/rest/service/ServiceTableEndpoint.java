@@ -155,6 +155,7 @@ public class ServiceTableEndpoint {
         return fromServiceTableEntry(tableEntry, tableEntry.getLinkedIdentity().getHandle().equals(auth.getHandle()));
     }
 
+    // TODO: Rate Limit
     // Set Table Entry Config (Name, Read Access, Write Access, Schema Version, Columns, ...)
     @PutMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
@@ -232,6 +233,7 @@ public class ServiceTableEndpoint {
         tableEntryRepository.save(tableEntry);
     }
 
+    // TODO: Rate Limit
     // Delete Table Entry
     @DeleteMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
@@ -262,6 +264,7 @@ public class ServiceTableEndpoint {
         return dtos;
     }
 
+    // TODO: Rate Limit
     // Lock Table Entry
     @PostMapping("/{idHandle}/{serviceUuid}/lock/{tableUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
@@ -292,6 +295,7 @@ public class ServiceTableEndpoint {
         tableLockService.unlockServiceTableEntry(serviceUuid, tableUuid, lockToken, readLock, writeLock);
     }
 
+    // TODO: Rate Limit
     // Create Table Entry (Default, no UUID) (will be private by default)
     @PostMapping("/{idHandle}/{serviceUuid}/entry")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
@@ -374,6 +378,7 @@ public class ServiceTableEndpoint {
         return fromServiceTableEntry(tableEntry, true);
     }
 
+    // TODO: Rate Limit
     @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Inserts a Row into a Table Entry", description = "Inserts a Row into a Table Entry based on the provided data. <br> The data must match the table's schema and constraints. <br> The format is just a json object with the keys being the column names and values being the values")
@@ -417,6 +422,7 @@ public class ServiceTableEndpoint {
         }
     }
 
+    // TODO: Rate Limit
     @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows-bulk")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Bulk Insert Rows into a Table Entry", description = "Inserts multiple Rows into a Table Entry based on the provided data. <br> The data must match the table's schema and constraints. <br>Do keep the Maximum Query Length in mind.")
@@ -476,6 +482,7 @@ public class ServiceTableEndpoint {
         }
     }
 
+    // TODO: Rate Limit
     @DeleteMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Deletes Rows from a Table Entry based on a Query")
@@ -495,6 +502,7 @@ public class ServiceTableEndpoint {
         }
     }
 
+    // TODO: Rate Limit
     @PutMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Updates Rows from a Table Entry based on a Query")
@@ -537,7 +545,7 @@ public class ServiceTableEndpoint {
         }
     }
 
-
+    // TODO: Rate Limit
     @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/query")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Selects data from a Table using a Select Query.", description = "If you set the `colNames` Array to be empty, it will select all Columns.")

@@ -65,6 +65,7 @@ public class ServiceBucketEndpoint {
         );
     }
 
+    // TODO: Rate Limit
     // Set Full Bucket Permissions (Read Access, Write Access, ...)
     @PutMapping("/{serviceUuid}/perms")
     @PreAuthorize("hasRole('ROLE_REGISTERED_IDENTITY') and not hasRole('ROLE_REGISTERED_USER')")
@@ -179,6 +180,7 @@ public class ServiceBucketEndpoint {
         return fromServiceBucketEntry(bucketEntry);
     }
 
+    // TODO: Rate Limit
     // Upload Bucket Entry (Default, no UUID) (will be private by default)
     @PostMapping("/{idHandle}/{serviceUuid}/upload")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
@@ -187,6 +189,7 @@ public class ServiceBucketEndpoint {
         return uploadBucketEntry(idHandle, serviceUuid, UUID.randomUUID().toString(), filename, cacheDuration, auth, body, contentType);
     }
 
+    // TODO: Rate Limit
     // Upload/Update Bucket Entry (UUID Set) (will be private by default)
     @PostMapping("/{idHandle}/{serviceUuid}/upload/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
@@ -207,6 +210,7 @@ public class ServiceBucketEndpoint {
         return fromServiceBucketEntry(bucketEntry);
     }
 
+    // TODO: Rate Limit
     // Set Bucket Entry Config (Content-Type, Read Access, Write Access, ...)
     @PutMapping("/{idHandle}/{serviceUuid}/entry/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
@@ -233,6 +237,7 @@ public class ServiceBucketEndpoint {
         bucketEntryRepository.save(bucketEntry);
     }
 
+    // TODO: Rate Limit
     // Delete Bucket Entry
     @DeleteMapping("/{idHandle}/{serviceUuid}/entry/{fileUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")

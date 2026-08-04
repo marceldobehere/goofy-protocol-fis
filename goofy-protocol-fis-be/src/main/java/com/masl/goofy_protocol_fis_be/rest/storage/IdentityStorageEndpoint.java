@@ -58,6 +58,7 @@ public class IdentityStorageEndpoint {
         return new MyIdentityEntryQuotasDto(quota, count);
     }
 
+    // TODO: Rate Limit
     @PostMapping
     @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
     @FisEndpoint(summary = "Sets an Identity Entry for a Handle", description = "If the handle isn't used in any other entry it will be saved in the users identity storage. <br>The entry request needs to have the encKeypair Data signed with the public key of the identity to be added to make sure it belongs to the user. <br>If the handle has an entry by the user, it will simply get updated. <br>Creates a default Public JSON Entry of `{\"services\": {}}`, if not defined")
@@ -169,6 +170,7 @@ public class IdentityStorageEndpoint {
                 .body(entry.getPublicDataJson());
     }
 
+    // TODO: Rate Limit
     // TODO: Potentially allow Identities themselves to edit the data too, not just the registered user.
     // Might be a better flow if you don't need to go back to the FIS to manage the linked service list for example
     // Set Public Data

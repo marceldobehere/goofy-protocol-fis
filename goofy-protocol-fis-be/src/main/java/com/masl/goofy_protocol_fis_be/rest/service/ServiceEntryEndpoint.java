@@ -53,6 +53,7 @@ public class ServiceEntryEndpoint {
         return new MyServiceEntryQuotasDto(quota, count);
     }
 
+    // TODO: Rate Limit
     @PostMapping
     @PreAuthorize("hasRole('ROLE_REGISTERED_IDENTITY') and not hasRole('ROLE_REGISTERED_USER')")
     @FisEndpoint(summary = "Sets a Service Entry for a Identity", description = "The UUID Field should not be set.")
@@ -98,6 +99,7 @@ public class ServiceEntryEndpoint {
         )).toList();
     }
 
+    // TODO: Rate Limit
     @PutMapping("/{uuid}")
     @PreAuthorize("hasRole('ROLE_REGISTERED_IDENTITY') and not hasRole('ROLE_REGISTERED_USER')")
     @FisEndpoint(summary = "Updates a Service Entry for a Identity", description = "The UUID Field should be set. Currently you can only update the name and the used service.")

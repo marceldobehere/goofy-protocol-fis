@@ -28,7 +28,7 @@ public class RegistrationEndpoint {
         this.registrationService = registrationService;
     }
 
-    // TODO: Rate Limit?
+    // TODO: Rate Limit
     @PostMapping
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Attempt Registration", description = "To register, a registration code is required. The request needs to be signed with the keypair that wants to register.")
@@ -49,7 +49,6 @@ public class RegistrationEndpoint {
         );
     }
 
-    // TODO: Rate Limit?
     @GetMapping("/valid")
     @FisEndpoint(summary = "Check if a Registration Code is Valid without using it")
     public boolean isRegistrationCodeValid(@RequestParam String code) {
@@ -59,7 +58,7 @@ public class RegistrationEndpoint {
         return registrationService.isCodeValid(code);
     }
 
-    // TODO: Rate Limit & Maybe Remove OUTSIDE_ENTITY Role?
+    // TODO: Rate Limit
     @PostMapping("/request")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Request a Registration Code.", description = "You will either be manually contacted by a person or an automated system might send you an email/etc.")
