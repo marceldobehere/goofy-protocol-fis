@@ -23,6 +23,7 @@ This is a list of open TODOs.
 * Create a sample Endpoint / document the potential runtime errors (Mostly in Signed Request filtering / Forbidden)
 
 ## TODOs (Later)
+* Look into adding URL protocol handler registration to have it automatically redirect users to their correct FIS FE
 * Potentially add examples to the DTOs using annotations or so for swagger
 * Add a simple "Notification" / Warning System that alerts Users when their storage quotas are about to be exceeded or if they have some content deleted or are restricted
 * Potentially look into having custom JWTs or something to avoid signed request overhead when accessing tables?
