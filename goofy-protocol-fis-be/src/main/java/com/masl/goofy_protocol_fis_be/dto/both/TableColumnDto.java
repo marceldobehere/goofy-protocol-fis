@@ -63,8 +63,10 @@ public class TableColumnDto {
     }
 
     public static int getTypeSize(Type type, Integer optTypeSize) {
-        if (optTypeSize < 0)
+        if (optTypeSize != null && optTypeSize < 0)
             throw new IllegalArgumentException("Type size must be non-negative");
+        if (optTypeSize == null)
+            optTypeSize = 0;
 
         return switch (type) {
             case FIXED_STRING_N -> optTypeSize * 2;
