@@ -10,7 +10,8 @@ export default function Page() {
                 <h2 className={styles.Title}>Goofy FIS Frontend</h2>
 
                 <p className={styles.Introduction}>
-                    A reference implementation of the FIS Frontend for the Goofy Protocol.
+                    A reference implementation of the FIS Frontend for the Goofy Protocol.<br/><br/>
+                    For more information, visit <a href={"https://github.com/marceldobehere/goofy-protocol-fis"} target={"_blank"}>this page</a>!
                 </p>
 
                 <div className={styles.MainButtons}>
