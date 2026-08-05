@@ -202,14 +202,12 @@ public class ServiceTableEndpoint {
                 if (!comparison.identical)
                     throw new ServiceTableInvalidMigration(tableUuid, "Same Schema Version but different Columns, please increase the Schema Version to update the Columns");
             } else {
-                if (comparison.identical)
-                    throw new ServiceTableInvalidMigration(tableUuid, "Schema Version increased but Columns are identical, please only increase the Schema Version if you want to update the Columns");
-                else {
-                    try {
+                try {
+                    if (!comparison.identical)
                         userDbService.updateTableEntrySchema(entry, entryDto, comparison);
-                    } catch (SQLException e) {
-                        throw new ServiceTableSqlError(tableUuid, e.getMessage());
-                    }
+                    tableEntry.setSchemaVersion(entryDto.getSchemaVersion());
+                } catch (SQLException e) {
+                    throw new ServiceTableSqlError(tableUuid, e.getMessage());
                 }
             }
         }
