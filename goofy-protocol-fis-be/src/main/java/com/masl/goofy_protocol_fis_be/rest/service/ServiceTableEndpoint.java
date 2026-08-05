@@ -161,7 +161,7 @@ public class ServiceTableEndpoint {
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Sets a Table Entry", description = "Set the Table Entry for a specific Table UUID. <br>Note: The Columns can only be changed if the schema version provided is larger and provides default values for new non-null columns. <br>Also keep in mind that renaming a column acts as deleting the old column and adding a new one, leading to potential data loss if done carelessly!")
     public void setTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @Valid @RequestBody ServiceTableEntryDto entryDto, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableNotFound, ServiceTableLockInvalid, ServiceTableInvalidMigration, ServiceTableQuotaExceeded, ServiceTableSqlError {
-        tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true);
+        tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true); // TODO: Potentially remove or separate read write from metadata read write
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
@@ -191,8 +191,6 @@ public class ServiceTableEndpoint {
                     throw new ServiceTableInvalidMigration(tableUuid, "Duplicate Column Name: " + colDto.getColName());
                 else
                     colNames.add(colDto.getColName());
-                if (colDto.getConstraints().contains(TableColumnDto.Constraint.NOT_NULL) && colDto.getDefaultValue() == null)
-                    throw new ServiceTableInvalidMigration(tableUuid, "New NOT NULL Column must have a Default Value: " + colDto.getColName());
                 if (colDto.getColName().length() > userQuotas.getGeneral().getMaxNameSize())
                     throw new ServiceTableQuotaExceeded("generalMaxNameSize");
                 if (TableColumnDto.getTypeSize(colDto.getType(), colDto.getTypeSize()) > userQuotas.getTable().getMaxFieldSize())
