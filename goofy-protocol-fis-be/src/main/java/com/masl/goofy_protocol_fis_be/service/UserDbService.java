@@ -1,5 +1,8 @@
 package com.masl.goofy_protocol_fis_be.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.masl.goofy_protocol_fis_be.dto.both.ServiceTableEntryDto;
 import com.masl.goofy_protocol_fis_be.dto.both.TableColumnDto;
 import com.masl.goofy_protocol_fis_be.dto.request.query.*;
@@ -7,6 +10,8 @@ import com.masl.goofy_protocol_fis_be.dto.response.ServiceTableQueryResultDto;
 import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import com.masl.goofy_protocol_fis_be.rest.service.ServiceTableEndpoint;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,9 +41,15 @@ public class UserDbService {
     }
 
     public synchronized void deleteEntry(ServiceEntry entry) throws IOException {
-        log.info("Deleting DB folder for entry: {}", entry.getUuid());
-        // TODO: Check DB Connections are closed / Close Server somehow
-        fileStorageService.deleteDbFolder(entry.getUuid());
+        String uuid = entry.getUuid();
+        log.info("Deleting DB folder for entry: {}", uuid);
+
+        HikariDataSource ds = pools.getIfPresent(uuid);
+        if (ds != null)
+            ds.close();
+        pools.invalidate(uuid);
+
+        fileStorageService.deleteDbFolder(uuid);
     }
 
     public synchronized void deleteTableEntry(ServiceEntry entry, String tableUuid) throws SQLException {
@@ -72,12 +84,34 @@ public class UserDbService {
         }
     }
 
-    public Connection getConnection(String uuid) throws SQLException {
+    private final Cache<String, HikariDataSource> pools = Caffeine.newBuilder()
+            .maximumSize(100)
+            .expireAfterAccess(Duration.ofMinutes(15))
+            .removalListener((String uuid, HikariDataSource ds, RemovalCause cause) -> {
+                log.info("Removing expired db connection for {}, reason {}", uuid, cause);
+                ds.close();
+            })
+            .build();
+
+    private HikariDataSource createDataSource(String uuid) {
         Path dbFile = fileStorageService.getDbFolderPath(uuid).resolve("userData");
         String dbBase = dbFile.toAbsolutePath().toString();
+        String url = "jdbc:h2:file:" + dbBase; // + ";AUTO_SERVER=TRUE";?
 
-        String url = "jdbc:h2:file:" + dbBase; // + ";AUTO_SERVER=TRUE";
-        return DriverManager.getConnection(url, "sa", "");
+        HikariConfig cfg = new HikariConfig();
+        cfg.setJdbcUrl(url);
+        cfg.setUsername("sa");
+        cfg.setPassword("");
+        cfg.setMaximumPoolSize(3);
+        cfg.setMinimumIdle(1);
+        cfg.setAutoCommit(true);
+        cfg.setPoolName("h2-" + uuid);
+        return new HikariDataSource(cfg);
+    }
+
+    public Connection getConnection(String uuid) throws SQLException {
+        HikariDataSource ds = pools.get(uuid, this::createDataSource);
+        return ds.getConnection();
     }
 
     // TODO: Cache this probably, and have the cache be invalidated if the table gets modified
