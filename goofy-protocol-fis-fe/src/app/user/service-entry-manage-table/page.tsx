@@ -93,7 +93,7 @@ export default function Page() {
                 <br/>
                 <ul>
                     {entries?.map((entry) => (<li key={entry.tableUuid}>
-                        <span>{entry.tableUuid} ({entry.tableUuid?.substring(0, 16)}...) ({entry.columns?.length} Columns, Schema Version: {entry.schemaVersion})</span><br/>
+                        <span>{entry.tableName} ({entry.tableUuid?.substring(0, 16)}...) ({entry.columns?.length} Columns, Schema Version: {entry.schemaVersion})</span><br/>
                         <span> </span>
                         <button onClick={() => {setCurrTableUuid(entry.tableUuid!)}}>View</button>
                         <span> </span>
