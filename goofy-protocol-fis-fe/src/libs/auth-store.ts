@@ -136,14 +136,14 @@ export async function saveKeypair(keypair: AsymmFullKeyPair | null) {
 
 // Internal Storage Mode
 async function _loadStorageMode(): Promise<StorageMode> {
-    let mode = localStorage.getItem("StorageMode") as StorageMode ?? "NONE";
+    let mode = localStorage.getItem(basePath + "/StorageMode") as StorageMode ?? "NONE";
     if (mode == "NONE")
         mode = "SESSION_STORAGE";
-    localStorage.setItem("StorageMode", mode);
+    localStorage.setItem(basePath + "/StorageMode", mode);
     return mode;
 }
 async function _storeStorageMode(mode: StorageMode) {
-    localStorage.setItem("StorageMode", mode);
+    localStorage.setItem(basePath + "/StorageMode", mode);
 }
 
 // Load / Store
