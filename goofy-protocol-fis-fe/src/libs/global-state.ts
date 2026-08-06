@@ -36,12 +36,12 @@ export const GlobalState: {
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 async function runMaybeAsyncCallback(fn: Function | undefined): Promise<void> {
-    if (fn === undefined)
+    if (!fn)
         return;
     try {
         await fn();
     } catch (e) {
-        console.info("> Error in callback: ", e);
+        console.error("> Error in callback: ", e);
     }
 }
 

@@ -21,7 +21,7 @@ export default function Page() {
         if (setPublicServiceEntryStr != null) {
             const updateData: ServicePublicDataUpdate = JSON.parse(setPublicServiceEntryStr);
             console.log(updateData);
-            await setPublicServiceEntry(updateData.serverName, JSON.parse(updateData.newData));
+            await setPublicServiceEntry(updateData.serverName, updateData.newData);
 
             // Remove from URL
             const newUrl = new URL(window.location.href);

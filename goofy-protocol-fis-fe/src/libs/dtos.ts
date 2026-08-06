@@ -279,5 +279,5 @@ export interface IdentityPublicData {
 
 export interface ServicePublicDataUpdate {
     serverName: string;
-    newData: string;
+    newData: object;
 }
