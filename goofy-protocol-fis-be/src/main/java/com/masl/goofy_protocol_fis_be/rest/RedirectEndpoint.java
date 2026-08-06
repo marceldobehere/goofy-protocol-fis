@@ -9,13 +9,11 @@ import com.masl.goofy_protocol_fis_be.properties.GeneralProperties;
 import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import tools.jackson.databind.ObjectMapper;
 
-import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @RestController
@@ -31,11 +29,9 @@ public class RedirectEndpoint {
         this.generalProperties = generalProperties;
     }
 
-    // Example http://localhost:8080/fis-api/redirect/update-public-identity-entry/azurn_cryne_iodic_saber24685?serverName=test&newData=%7B%22test%22%3A%20%22bruh%22%2C%20%22val%22%3A%20123%7D
-    // This is a such a pain with GET Requests, having a Request Body would've been so much nicer here, ngl
-    @GetMapping("/update-public-identity-entry/{handle}")
-    @FisEndpoint(summary = "Redirects to the Frontend Page to update the Public Service Data of an Identity")
-    public ResponseEntity<String> updatePublicIdentityEntryData(@PathVariable String handle, @Valid ServicePublicDataUpdateDto updateData) throws IdentityEntryNotFound {
+    @PutMapping("/update-public-identity-entry/{handle}")
+    @FisEndpoint(summary = "Gets a Link to the Frontend Page to update the Public Service Data of an Identity")
+    public String updatePublicIdentityEntryData(@PathVariable String handle, @Valid @RequestBody ServicePublicDataUpdateDto updateData) throws IdentityEntryNotFound {
         // Find Entry
         IdentityStorageEntry entry = identityStorageEntryRepository.findByHandle(handle);
         if (entry == null)
@@ -46,16 +42,12 @@ public class RedirectEndpoint {
         String frontendUrl = user.getCustomFrontendUrl() != null ? user.getCustomFrontendUrl() : generalProperties.getFrontendUrl();
 
         // Build Redirect URI
-        URI redirectUri = UriComponentsBuilder
+        return UriComponentsBuilder
                 .fromUriString(frontendUrl + "/user/service-entry-list/")
-                .queryParam("setPublicServiceEntry", mapper.writeValueAsString(updateData), StandardCharsets.UTF_8)
+                .queryParam("setPublicServiceEntry", URLEncoder.encode(mapper.writeValueAsString(updateData), StandardCharsets.UTF_8))
                 .fragment(handle)
                 .build(false)
-                .toUri();
-
-        return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
-                .location(redirectUri)
-                .build();
+                .toUriString();
     }
 
 
