@@ -56,7 +56,11 @@ If you want to try it out, please read [this section](#how-can-i-try-it)!
   * Ability to view User Tables/Buckets (if unencrypted) and delete if necessary!
 * Easy to self-host and run locally
   * Run locally with just Java and NodeJS
-  * self-host using docker
+  * Self-host using docker
+  * Don't need crazy hardware
+    * Memory Footpring isn't crazy
+    * Storage needs aren't crazy either / set quotas
+    * Performance is good enough to run on my Raspberry PI 5
 * Taking advantage of the Goofy Protocol
   * Service and FIS Instances can be fully decentralized
   * Users have full Sovereignty over their data!
