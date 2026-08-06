@@ -4,8 +4,8 @@ import styles from "./page.module.css";
 import Link from "next/link";
 import {getServiceEntries} from "@/libs/auth-store";
 import {useState} from "react";
-import {deleteFixedAuth, getFixedAuth, postFixedAuth, putFixedAuth} from "@/libs/req";
-import {MyServiceEntryQuotasDto, ServiceEntryDto} from "@/libs/dtos";
+import {deleteFixedAuth, getAuth, getFixedAuth, postFixedAuth, putAuth, putFixedAuth} from "@/libs/req";
+import {IdentityPublicData, MyServiceEntryQuotasDto, ServiceEntryDto, ServicePublicDataUpdate} from "@/libs/dtos";
 import {GlobalState, useGlobalState} from "@/libs/global-state";
 
 export default function Page() {
@@ -14,6 +14,20 @@ export default function Page() {
 
     useGlobalState(true, false, "IDENTITY", async () => {
         await refresh();
+
+        // Example: ?setPublicServiceEntry={"serverName": "testo123", "newData": {"value": "yes", "number": 12}}
+        const queryParams = new URLSearchParams(window.location.search);
+        const setPublicServiceEntryStr = queryParams.get("setPublicServiceEntry");
+        if (setPublicServiceEntryStr != null) {
+            const updateData: ServicePublicDataUpdate = JSON.parse(setPublicServiceEntryStr);
+            console.log(updateData);
+            await setPublicServiceEntry(updateData.serverName, JSON.parse(updateData.newData));
+
+            // Remove from URL
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete("setPublicServiceEntry");
+            window.location.search = newUrl.search;
+        }
     });
 
     async function refresh() {
@@ -96,16 +110,57 @@ export default function Page() {
         await refresh();
     }
 
+    async function viewPublicData() {
+        const data: IdentityPublicData = await getAuth(`/fis-api/identity-storage/public/${GlobalState.identityHandle}`);
+        alert("Public Identity Data:\n" + JSON.stringify(data, null, 4));
+    }
+
+    async function setPublicData() {
+        const data: IdentityPublicData = await getAuth(`/fis-api/identity-storage/public/${GlobalState.identityHandle}`);
+        alert("Public Identity Data:\n" + JSON.stringify(data, null, 4));
+
+        const newDataStr = prompt("Enter new Public Identity Data as JSON", JSON.stringify(data));
+        if (newDataStr == null || newDataStr == "")
+            return;
+
+        try {
+            await putAuth(`/fis-api/identity-storage/public/${GlobalState.identityHandle}`, JSON.parse(newDataStr));
+            alert("Public Identity Data updated successfully");
+        } catch (e) {
+            console.log(e);
+            alert("Failed to update Public Identity Data: " + (e as Error).message);
+        }
+    }
+
+    async function setPublicServiceEntry(serviceName: string, newData: object) {
+        const data: IdentityPublicData = await getAuth(`/fis-api/identity-storage/public/${GlobalState.identityHandle}`);
+        if (!confirm(`A Service wants to set/update the Public Data Entry for Service \"${serviceName}\" from:\n${JSON.stringify(data.services[serviceName] ?? null)}\n to:\n${JSON.stringify(newData)}\n\nDo you want to allow this?`))
+            return;
+
+        data.services[serviceName] = newData as never;
+        try {
+            await putAuth(`/fis-api/identity-storage/public/${GlobalState.identityHandle}`, data);
+            alert("Public Identity Data updated successfully");
+        } catch (e) {
+            console.log(e);
+            alert("Failed to update Public Identity Data: " + (e as Error).message);
+        }
+    }
+
     // TODO: Add Button here to download/export/copy the keypair to use for logging in to / registering for services.
     // TODO: Styling
     return (
         <main>
             <div className={styles.MainCont}>
-                <h2 className={styles.Title}>Service Entry List</h2>
+                <h2 className={styles.Title}>Identity Storage Management - Service Entry List</h2>
 
                 <br/>
                 <p>
                     Hello, {GlobalState.identityHandle}! (From {GlobalState.handle})<br/>
+                    <button onClick={viewPublicData}>View Public Identity Data</button><span> &nbsp; </span>
+                    <button onClick={setPublicData}>Set Public Identity Data</button>
+
+                    <br/><br/>
                     Quota: ({quotas?.currentServiceEntryCount} / {quotas?.maxServiceEntryCount})<br/>
                     These are your Service Entries:
                 </p>

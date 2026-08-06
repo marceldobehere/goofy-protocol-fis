@@ -272,3 +272,12 @@ export interface  ExportIdentityKeypair {
     priv: string;
     handleFull: string;
 }
+
+export interface IdentityPublicData {
+    services: Record<string, never>;
+}
+
+export interface ServicePublicDataUpdate {
+    serverName: string;
+    newData: string;
+}
