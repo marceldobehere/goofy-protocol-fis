@@ -1,13 +1,65 @@
 package com.masl.goofy_protocol_fis_be.rest;
 
+import com.masl.goofy_protocol_fis_be.dto.request.ServicePublicDataUpdateDto;
+import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
+import com.masl.goofy_protocol_fis_be.entity.User;
+import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
+import com.masl.goofy_protocol_fis_be.exception.client.IdentityEntryNotFound;
+import com.masl.goofy_protocol_fis_be.properties.GeneralProperties;
+import com.masl.goofy_protocol_fis_be.repository.IdentityStorageEntryRepository;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+import tools.jackson.databind.ObjectMapper;
+
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/fis-api/redirect")
 @Tag(name = "Redirects", description = "Endpoints to get Frontend URL Redirects for Service Login/Config/Access")
 public class RedirectEndpoint {
+    private final IdentityStorageEntryRepository identityStorageEntryRepository;
+    private final GeneralProperties generalProperties;
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    public RedirectEndpoint(IdentityStorageEntryRepository identityStorageEntryRepository, GeneralProperties generalProperties) {
+        this.identityStorageEntryRepository = identityStorageEntryRepository;
+        this.generalProperties = generalProperties;
+    }
+
+    // Example http://localhost:8080/fis-api/redirect/update-public-identity-entry/azurn_cryne_iodic_saber24685?serverName=test&newData=%7B%22test%22%3A%20%22bruh%22%2C%20%22val%22%3A%20123%7D
+    // This is a such a pain with GET Requests, having a Request Body would've been so much nicer here, ngl
+    @GetMapping("/update-public-identity-entry/{handle}")
+    @FisEndpoint(summary = "Redirects to the Frontend Page to update the Public Service Data of an Identity")
+    public ResponseEntity<String> updatePublicIdentityEntryData(@PathVariable String handle, @Valid ServicePublicDataUpdateDto updateData) throws IdentityEntryNotFound {
+        // Find Entry
+        IdentityStorageEntry entry = identityStorageEntryRepository.findByHandle(handle);
+        if (entry == null)
+            throw new IdentityEntryNotFound(handle);
+
+        // Get Base Frontend URL
+        User user = entry.getCreatedBy();
+        String frontendUrl = user.getCustomFrontendUrl() != null ? user.getCustomFrontendUrl() : generalProperties.getFrontendUrl();
+
+        // Build Redirect URI
+        URI redirectUri = UriComponentsBuilder
+                .fromUriString(frontendUrl + "/user/service-entry-list/")
+                .queryParam("setPublicServiceEntry", mapper.writeValueAsString(updateData), StandardCharsets.UTF_8)
+                .fragment(handle)
+                .build(false)
+                .toUri();
+
+        return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
+                .location(redirectUri)
+                .build();
+    }
+
+
+
     // TODO: Think about Fis Clients and if they need federation too / what to do with the redirects then? Maybe standardize and let user save their frontend url or just say frontend is set by backend?
 
     // TODO: Look into how Services would request a user to create a service entry + tables with access + bucket access?

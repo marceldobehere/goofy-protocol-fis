@@ -5,6 +5,7 @@ import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
 import com.masl.goofy_protocol_fis_be.auth.GoofyAuthUser;
 import com.masl.goofy_protocol_fis_be.crypto.FisHandleCrypto;
 import com.masl.goofy_protocol_fis_be.dto.both.IdentityStorageEntryDto;
+import com.masl.goofy_protocol_fis_be.dto.request.IdentityPublicDataDto;
 import com.masl.goofy_protocol_fis_be.dto.response.MyIdentityEntryQuotasDto;
 import com.masl.goofy_protocol_fis_be.entity.IdentityStorageEntry;
 import com.masl.goofy_protocol_fis_be.entity.User;
@@ -20,7 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
@@ -62,7 +62,7 @@ public class IdentityStorageEndpoint {
     @PostMapping
     @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
     @FisEndpoint(summary = "Sets an Identity Entry for a Handle", description = "If the handle isn't used in any other entry it will be saved in the users identity storage. <br>The entry request needs to have the encKeypair Data signed with the public key of the identity to be added to make sure it belongs to the user. <br>If the handle has an entry by the user, it will simply get updated. <br>Creates a default Public JSON Entry of `{\"services\": {}}`, if not defined")
-    public void setEntry(@Valid @RequestBody IdentityStorageEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws InvalidPublicKey, InvalidSignedObject, NotMatchingPublicKey, IdentityEntryAlreadyExists, IdentityEntryInvalid, IdentityEntryQuotaExceeded, InvalidJson {
+    public void setEntry(@Valid @RequestBody IdentityStorageEntryDto entryDto, @AuthenticationPrincipal GoofyAuthUser auth) throws InvalidPublicKey, InvalidSignedObject, NotMatchingPublicKey, IdentityEntryAlreadyExists, IdentityEntryInvalid, IdentityEntryQuotaExceeded {
         // Check Handle
         IdentityStorageEntryDto.checkValidity(entryDto, handleCrypto, asymmCrypto);
 
@@ -97,18 +97,12 @@ public class IdentityStorageEndpoint {
             entry.setCreatedAt(Instant.now());
 
             if (entryDto.getPublicJsonData() == null)
-                entry.setPublicDataJson("{\"services\": {}}"); // Default to JSON Object with Services Key
-            else {
-                if (!isValid(entryDto.getPublicJsonData()))
-                    throw new InvalidJson(entryDto.getPublicJsonData());
-                entry.setPublicDataJson(entryDto.getPublicJsonData());
-            }
+                entry.setPublicDataJson("{\"services\": {}}");
+            else
+                entry.setPublicDataJson(mapper.writeValueAsString(entryDto.getPublicJsonData()));
 
             identityRepository.save(entry);
-        } catch (InvalidJson e) {
-            throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new IdentityEntryInvalid();
         }
     }
@@ -124,7 +118,7 @@ public class IdentityStorageEndpoint {
                 entry.getPubSplitKey(),
                 entry.getEncKeypairEntry(),
                 entry.getEncKeypairEntrySignature(),
-                entry.getPublicDataJson()
+                mapper.readValue(entry.getPublicDataJson(), IdentityPublicDataDto.class)
         )).toList();
     }
 
@@ -150,7 +144,7 @@ public class IdentityStorageEndpoint {
                 entry.getPubSplitKey(),
                 entry.getEncKeypairEntry(),
                 entry.getEncKeypairEntrySignature(),
-                entry.getPublicDataJson()
+                mapper.readValue(entry.getPublicDataJson(), IdentityPublicDataDto.class)
         );
     }
 
@@ -158,7 +152,7 @@ public class IdentityStorageEndpoint {
     // Get Public Data
     @GetMapping("/public/{handle}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
-    @FisEndpoint(summary = "Gets the Public Data of an Identity Entry from a Handle if it exists", description = "This Endpoint returns the Public Data of an Identity Entry from a Handle if it exists. <br>The Public Data is a JSON Object that can contain any information the user wants to share publicly. <br>For example, it can contain a `services` key which has an object with service names and the urls of the service instance the handle is used on.")
+    @FisEndpoint(summary = "Gets the Public Data of an Identity Entry from a Handle if it exists", description = "This Endpoint returns the Public Data of an Identity Entry from a Handle if it exists. <br>The Public Data is a JSON Object that can contain any information the user wants to share publicly. <br>It contains a `services` key which has an object with service names and an object value, for example the urls of the service instance the handle is used on.")
     public ResponseEntity<String> getPublicData(@PathVariable String handle) throws IdentityEntryNotFound {
         IdentityStorageEntry entry = identityRepository.findByHandle(handle);
         if (entry == null)
@@ -176,16 +170,13 @@ public class IdentityStorageEndpoint {
     // Set Public Data
     @PutMapping("/public/{handle}")
     @PreAuthorize("hasRole('ROLE_REGISTERED_USER') and not hasRole('ROLE_RESTRICTED')")
-    @FisEndpoint(summary = "Sets the Public Data of an Identity Entry from a Handle if it exists", description = "This Endpoint sets the Public Data of an Identity Entry from a Handle if it exists. <br>The Public Data is a JSON Object that can contain any information the user wants to share publicly. <br>For example, it can contain a `services` key which has an object with service names and the urls of the service instance the handle is used on.")
-    public void setPublicData(@PathVariable String handle, String publicJson, @AuthenticationPrincipal GoofyAuthUser auth) throws IdentityEntryNotFound, InvalidJson {
+    @FisEndpoint(summary = "Sets the Public Data of an Identity Entry from a Handle if it exists", description = "This Endpoint sets the Public Data of an Identity Entry from a Handle if it exists. <br>The Public Data is a JSON Object that can contain any information the user wants to share publicly. <br>It contains a `services` key which has an object with service names and an object value, for example the urls of the service instance the handle is used on.")
+    public void setPublicData(@PathVariable String handle, @Valid @RequestBody IdentityPublicDataDto publicData, @AuthenticationPrincipal GoofyAuthUser auth) throws IdentityEntryNotFound {
         IdentityStorageEntry entry = identityRepository.findByCreatedByHandle_AndHandle(auth.getHandle(), handle);
         if (entry == null)
             throw new IdentityEntryNotFound(handle);
 
-        if (!isValid(publicJson))
-            throw new InvalidJson(publicJson);
-
-        entry.setPublicDataJson(publicJson);
+        entry.setPublicDataJson(mapper.writeValueAsString(publicData));
         identityRepository.save(entry);
     }
 
@@ -200,7 +191,7 @@ public class IdentityStorageEndpoint {
                 entry.getPubSplitKey(),
                 entry.getEncKeypairEntry(),
                 entry.getEncKeypairEntrySignature(),
-                entry.getPublicDataJson()
+                mapper.readValue(entry.getPublicDataJson(), IdentityPublicDataDto.class)
         )).toList();
     }
 
@@ -213,14 +204,4 @@ public class IdentityStorageEndpoint {
     }
 
     // TODO: Add Export and Import?
-
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean isValid(String json) {
-        try {
-            mapper.readTree(json);
-        } catch (JacksonException e) {
-            return false;
-        }
-        return true;
-    }
 }

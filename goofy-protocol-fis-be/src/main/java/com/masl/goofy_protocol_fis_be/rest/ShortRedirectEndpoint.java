@@ -44,7 +44,7 @@ public class ShortRedirectEndpoint {
                 .fromUriString(frontendUrl + "/guest/view")
                 .queryParam("tempBackendUrl", generalProperties.getUrl())
                 .fragment(idHandle + "@" + serviceUuid + "@" + fileUuid)
-                .build(true)
+                .build(false)
                 .toUri();
 
         return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)

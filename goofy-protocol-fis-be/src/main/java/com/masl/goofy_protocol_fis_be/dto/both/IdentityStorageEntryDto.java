@@ -2,6 +2,7 @@ package com.masl.goofy_protocol_fis_be.dto.both;
 
 import com.masl.goofy_protocol_core.crypto.connected.HandleCrypto;
 import com.masl.goofy_protocol_core.crypto.isolated.asymm.GlobAsymmCrypto;
+import com.masl.goofy_protocol_fis_be.dto.request.IdentityPublicDataDto;
 import com.masl.goofy_protocol_fis_be.entity.FieldSize;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidPublicKey;
 import com.masl.goofy_protocol_fis_be.exception.client.InvalidSignedObject;
@@ -37,7 +38,7 @@ public class IdentityStorageEntryDto {
     @Size(max = FieldSize.SIGNATURE_LEN)
     private String encKeypairEntrySignature;
 
-    private String publicJsonData;
+    private IdentityPublicDataDto publicJsonData;
 
     public static void checkValidity(IdentityStorageEntryDto entry, HandleCrypto handleCrypto, GlobAsymmCrypto asymmCrypto) throws InvalidSignedObject, InvalidPublicKey, NotMatchingPublicKey {
         if (!asymmCrypto.checkPublicSplitKey(entry.getPubSplitKey()))

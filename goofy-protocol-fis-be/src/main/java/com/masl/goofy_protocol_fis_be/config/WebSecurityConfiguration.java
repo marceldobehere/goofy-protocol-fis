@@ -92,7 +92,7 @@ public class WebSecurityConfiguration {
                     .requestMatchers("/fis-api/redirect/**").permitAll() // Redirect Links for Service Login/Config/Access
 
                     .requestMatchers("/fis-api/login-storage/**").permitAll() // Password/Keypair Storage
-                    .requestMatchers("/fis-api/identity-storage/**").hasRole(ROLES.REGISTERED_USER) // Identity Keypair Storage for Services.
+                    .requestMatchers("/fis-api/identity-storage/**").hasRole(ROLES.OUTSIDE_ENTITY) // Identity Keypair Storage for Services.
 
                     .requestMatchers("/fis-api/service-entry/**").hasRole(ROLES.REGISTERED_IDENTITY) // Service Entry Configuration
 
