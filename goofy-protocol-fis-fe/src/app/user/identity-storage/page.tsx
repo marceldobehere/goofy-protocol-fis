@@ -39,6 +39,7 @@ export default function Page() {
         setIdentityEntries(await getAllUserIdentities());
     }
 
+    // TODO: Make it so that you can keep regenerating keypairs until you find one with a nice handle (like in the Register page), also ask the name first
     async function createIdentity() {
         const type = prompt("Enter type of keypair to generate:", "EC_C25519");
         if (type == null)
