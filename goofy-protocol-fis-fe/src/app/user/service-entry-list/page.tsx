@@ -134,7 +134,7 @@ export default function Page() {
 
     async function setPublicServiceEntry(serviceName: string, newData: object) {
         const data: IdentityPublicData = await getAuth(`/fis-api/identity-storage/public/${GlobalState.identityHandle}`);
-        if (!confirm(`A Service wants to set/update the Public Data Entry for Service \"${serviceName}\" from:\n${JSON.stringify(data.services[serviceName] ?? null)}\n to:\n${JSON.stringify(newData)}\n\nDo you want to allow this?`))
+        if (!confirm(`A Service wants to set/update the Public Data Entry for Service \"${serviceName}\" from:\n${JSON.stringify(data.services[serviceName] ?? null, null, 2)}\n to:\n${JSON.stringify(newData, null, 2)}\n\nDo you want to allow this?`))
             return;
 
         data.services[serviceName] = newData as never;
