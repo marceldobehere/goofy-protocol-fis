@@ -11,4 +11,5 @@ public class AllServerErrorCodes {
     public static final int SERVICE_BUCKET_FILE_ERROR = 2_007_001;
 
     public static final int SERVICE_TABLE_SQL_ERROR = 2_008_001;
+    public static final int SERVICE_TABLE_LOCKED = 2_008_002;
 }

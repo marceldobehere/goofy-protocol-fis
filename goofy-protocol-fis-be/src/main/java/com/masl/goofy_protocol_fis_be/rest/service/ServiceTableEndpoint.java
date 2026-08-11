@@ -14,6 +14,7 @@ import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
 import com.masl.goofy_protocol_fis_be.entity.ServiceTableEntry;
 import com.masl.goofy_protocol_fis_be.exception.base.swagger.FisEndpoint;
 import com.masl.goofy_protocol_fis_be.exception.client.*;
+import com.masl.goofy_protocol_fis_be.exception.server.ServiceTableLocked;
 import com.masl.goofy_protocol_fis_be.exception.server.ServiceTableSqlError;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import com.masl.goofy_protocol_fis_be.repository.ServiceEntryRepository;
@@ -50,6 +51,8 @@ public class ServiceTableEndpoint {
         this.userDbService = userDbService;
         this.tableLockService = tableLockService;
     }
+
+    // TODO: Add A Transaction based endpoint with several operations that can be done at once, using the DB Lock itself
 
 
     // --- IDENTITY ONLY ---
@@ -146,7 +149,7 @@ public class ServiceTableEndpoint {
     @GetMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Gets a Table Entry", description = "Get the Table Entry for a specific Table UUID")
-    public ServiceTableEntryDto getTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableNotFound, ServiceTableLockInvalid, ServiceTableSqlError {
+    public ServiceTableEntryDto getTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableNotFound, ServiceTableLockInvalid, ServiceTableSqlError, ServiceTableLocked {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, true, false);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -160,7 +163,7 @@ public class ServiceTableEndpoint {
     @PutMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Sets a Table Entry", description = "Set the Table Entry for a specific Table UUID. <br>Note: The Columns can only be changed if the schema version provided is larger and provides default values for new non-null columns. <br>Also keep in mind that renaming a column acts as deleting the old column and adding a new one, leading to potential data loss if done carelessly!")
-    public ServiceTableEntryDto setTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @Valid @RequestBody ServiceTableEntryDto entryDto, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableNotFound, ServiceTableLockInvalid, ServiceTableInvalidMigration, ServiceTableQuotaExceeded, ServiceTableSqlError {
+    public ServiceTableEntryDto setTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @Valid @RequestBody ServiceTableEntryDto entryDto, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableNotFound, ServiceTableLockInvalid, ServiceTableInvalidMigration, ServiceTableQuotaExceeded, ServiceTableSqlError, ServiceTableLocked {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true); // TODO: Potentially remove or separate read write from metadata read write
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -234,7 +237,7 @@ public class ServiceTableEndpoint {
     @DeleteMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Deletes a Table Entry", description = "Deletes a Table Entry based on a specific Table UUID")
-    public void deleteTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound {
+    public void deleteTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableLocked {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -265,7 +268,7 @@ public class ServiceTableEndpoint {
     @PostMapping("/{idHandle}/{serviceUuid}/lock/{tableUuid}")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Lock a Table Entry", description = "Locks a Table Entry based on a specific Table UUID and specific permissions (read / write) and returns the Lock Token. <br>Locks should be unlocked when you're done using them, but they can also time out after a maximum duration, you can check it in the Quotas.")
-    public String lockTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestParam Boolean readLock, @RequestParam Boolean writeLock, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableLockRequestInvalid {
+    public String lockTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestParam Boolean readLock, @RequestParam Boolean writeLock, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableLockRequestInvalid, ServiceTableLocked {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, null, readLock, writeLock);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -281,7 +284,6 @@ public class ServiceTableEndpoint {
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Unlock a Table Entry", description = "Unlocks a Table Entry based on a specific Table UUID, the lockToken and the specific permissions (read / write).")
     public void unlockTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestParam Boolean readLock, @RequestParam Boolean writeLock, @RequestHeader(name = "X-Lock-Token") String lockToken, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound {
-        tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, readLock, writeLock);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
         checkServiceTableEntryWritePermissions(entry, tableEntry, auth);
@@ -378,7 +380,7 @@ public class ServiceTableEndpoint {
     @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Inserts a Row into a Table Entry", description = "Inserts a Row into a Table Entry based on the provided data. <br> The data must match the table's schema and constraints. <br> The format is just a json object with the keys being the column names and values being the values")
-    public void insertQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody Map<String, Object> insertFields, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableInsertEntryInvalid, ServiceTableSqlError {
+    public void insertQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @RequestBody Map<String, Object> insertFields, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableInsertEntryInvalid, ServiceTableSqlError, ServiceTableLocked {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -422,7 +424,7 @@ public class ServiceTableEndpoint {
     @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows-bulk")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Bulk Insert Rows into a Table Entry", description = "Inserts multiple Rows into a Table Entry based on the provided data. <br> The data must match the table's schema and constraints. <br>Do keep the Maximum Query Length in mind.")
-    public void insertBulkQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableMultiRowInsertDto insertDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableInsertEntryInvalid, ServiceTableSqlError {
+    public void insertBulkQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableMultiRowInsertDto insertDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableInsertEntryInvalid, ServiceTableSqlError, ServiceTableLocked {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -482,7 +484,7 @@ public class ServiceTableEndpoint {
     @DeleteMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Deletes Rows from a Table Entry based on a Query")
-    public Integer deleteQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableBasicQueryDto deleteQuery, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableSqlError {
+    public Integer deleteQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableBasicQueryDto deleteQuery, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableSqlError, ServiceTableLocked {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, true, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -502,7 +504,7 @@ public class ServiceTableEndpoint {
     @PutMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/rows")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Updates Rows from a Table Entry based on a Query")
-    public Integer updateQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableUpdateDto updateDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableSqlError, ServiceTableQueryInvalid, ServiceTableQuotaExceeded {
+    public Integer updateQueryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableUpdateDto updateDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableSqlError, ServiceTableQueryInvalid, ServiceTableQuotaExceeded, ServiceTableLocked {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, false, true);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);
@@ -545,7 +547,7 @@ public class ServiceTableEndpoint {
     @PostMapping("/{idHandle}/{serviceUuid}/entry/{tableUuid}/query")
     @PreAuthorize("hasRole('ROLE_OUTSIDE_ENTITY')")
     @FisEndpoint(summary = "Selects data from a Table using a Select Query.", description = "If you set the `colNames` Array to be empty, it will select all Columns.")
-    public ServiceTableQueryResultDto queryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableSelectDto selectDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableQueryInvalid, ServiceTableSqlError {
+    public ServiceTableQueryResultDto queryTableEntry(@PathVariable String idHandle, @PathVariable String serviceUuid, @PathVariable String tableUuid, @RequestHeader(name = "X-Lock-Token", required = false) String lockToken, @Valid @RequestBody TableSelectDto selectDto, @AuthenticationPrincipal GoofyAuthUser auth) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableNotFound, ServiceTableQuotaExceeded, ServiceTableQueryInvalid, ServiceTableSqlError, ServiceTableLocked {
         tableLockService.checkLockServiceTableEntry(serviceUuid, tableUuid, lockToken, true, false);
         ServiceEntry entry = findServiceEntry(idHandle, serviceUuid);
         ServiceTableEntry tableEntry = findServiceTableEntry(idHandle, tableUuid);

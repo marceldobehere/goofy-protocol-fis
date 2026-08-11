@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -72,6 +73,28 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.TEXT_PLAIN)
                 .body(ex.getMessage());
+    }
+
+    // Handling IllegalArgumentException Exceptions
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleRuntimeException(IllegalArgumentException ex) {
+        log.error("IllegalArgumentException: {}", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.TEXT_PLAIN)
+                .body("Internal server error :(");
+    }
+
+    // Handling CannotCreateTransactionException Exceptions
+    @ExceptionHandler(CannotCreateTransactionException.class)
+    public ResponseEntity<String> handleRuntimeException(CannotCreateTransactionException ex) {
+        log.error("CannotCreateTransactionException: {}", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.TEXT_PLAIN)
+                .body("Internal JPA Exception, most likely related to overloaded locks.");
     }
 
     // Handling Runtime Exceptions

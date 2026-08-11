@@ -4,6 +4,7 @@ import com.masl.goofy_protocol_fis_be.entity.ServiceEntry;
 import com.masl.goofy_protocol_fis_be.exception.client.ServiceEntryNotFound;
 import com.masl.goofy_protocol_fis_be.exception.client.ServiceTableLockInvalid;
 import com.masl.goofy_protocol_fis_be.exception.client.ServiceTableLockRequestInvalid;
+import com.masl.goofy_protocol_fis_be.exception.server.ServiceTableLocked;
 import com.masl.goofy_protocol_fis_be.properties.BaseQuotaProperties;
 import com.masl.goofy_protocol_fis_be.repository.ServiceEntryRepository;
 import org.slf4j.Logger;
@@ -28,53 +29,46 @@ public class TableLockService {
         this.quotaService = quotaService;
     }
 
-    public String lockServiceTableEntry(String serviceUuid, String tableUuid, boolean readLock, boolean writeLock) throws ServiceEntryNotFound, ServiceTableLockRequestInvalid {
+    public String lockServiceTableEntry(String serviceUuid, String tableUuid, boolean readLock, boolean writeLock) throws ServiceEntryNotFound, ServiceTableLockRequestInvalid, ServiceTableLocked {
         ServiceEntry entry = findServiceEntry(serviceUuid);
         BaseQuotaProperties quotas = getServiceEntryQuotas(entry);
-        log.debug("Locking table entry: serviceUuid={}, tableUuid={}, readLock={}, writeLock={}", serviceUuid, tableUuid, readLock, writeLock);
+        log.debug(" 2> Locking table entry: serviceUuid={}, tableUuid={}, readLock={}, writeLock={}", serviceUuid, tableUuid, readLock, writeLock);
 
         TableLockState state = getTableLock(serviceUuid, tableUuid);
         if (readLock && writeLock) {
-            while (true) {
-                synchronized (state.readMon) {
-                    if (state.isFree(state.readLock)) {
-                        synchronized (state.writeMon) {
-                            if (state.isFree(state.writeLock)) {
-                                state.readLock = new LockState(quotas.getTable().getMaxLockDurationSeconds());
-                                state.writeLock = new LockState(state.readLock.token, quotas.getTable().getMaxLockDurationSeconds());
-                                log.debug("Acquired read/write lock for table entry: serviceUuid={}, tableUuid={}, token={}", serviceUuid, tableUuid, state.readLock.token);
-                                return state.readLock.token;
-                            }
+            synchronized (state.readMon) {
+                if (state.isFree(state.readLock)) {
+                    synchronized (state.writeMon) {
+                        if (state.isFree(state.writeLock)) {
+                            state.readLock = new LockState(quotas.getTable().getMaxLockDurationSeconds());
+                            state.writeLock = new LockState(state.readLock.token, quotas.getTable().getMaxLockDurationSeconds());
+                            log.debug("  3> Acquired read/write lock for table entry: serviceUuid={}, tableUuid={}, token={}", serviceUuid, tableUuid, state.readLock.token);
+                            return state.readLock.token;
                         }
                     }
                 }
-                shortSleep();
             }
         } else if (readLock) {
-            while (true) {
-                synchronized (state.readMon) {
-                    if (state.isFree(state.readLock)) {
-                        state.readLock = new LockState(quotas.getTable().getMaxLockDurationSeconds());
-                        log.debug("Acquired read lock for table entry: serviceUuid={}, tableUuid={}, token={}", serviceUuid, tableUuid, state.readLock.token);
-                        return state.readLock.token;
-                    }
+            synchronized (state.readMon) {
+                if (state.isFree(state.readLock)) {
+                    state.readLock = new LockState(quotas.getTable().getMaxLockDurationSeconds());
+                    log.debug("  3> Acquired read lock for table entry: serviceUuid={}, tableUuid={}, token={}", serviceUuid, tableUuid, state.readLock.token);
+                    return state.readLock.token;
                 }
-                shortSleep();
             }
         } else if (writeLock) {
-            while (true) {
-                synchronized (state.writeMon) {
-                    if (state.isFree(state.writeLock)) {
-                        state.writeLock = new LockState(quotas.getTable().getMaxLockDurationSeconds());
-                        log.debug("Acquired write lock for table entry: serviceUuid={}, tableUuid={}, token={}", serviceUuid, tableUuid, state.writeLock.token);
-                        return state.writeLock.token;
-                    }
+            synchronized (state.writeMon) {
+                if (state.isFree(state.writeLock)) {
+                    state.writeLock = new LockState(quotas.getTable().getMaxLockDurationSeconds());
+                    log.debug("  3> Acquired write lock for table entry: serviceUuid={}, tableUuid={}, token={}", serviceUuid, tableUuid, state.writeLock.token);
+                    return state.writeLock.token;
                 }
-                shortSleep();
             }
         } else {
             throw new ServiceTableLockRequestInvalid(tableUuid);
         }
+
+        throw new ServiceTableLocked(tableUuid);
     }
 
     public void unlockServiceTableEntry(String serviceUuid, String tableUuid, String lockToken, boolean readLock, boolean writeLock) throws ServiceEntryNotFound, ServiceTableLockInvalid {
@@ -85,7 +79,7 @@ public class TableLockService {
             synchronized (state.readMon) {
                 if (state.readLock == null || !state.readLock.token.equals(lockToken))
                     throw new ServiceTableLockInvalid(tableUuid, lockToken);
-                log.debug("Releasing read lock for table entry: serviceUuid={}, tableUuid={}, token={}", serviceUuid, tableUuid, lockToken);
+                log.debug("   4> Releasing read lock for table entry: serviceUuid={}, tableUuid={}, token={}", serviceUuid, tableUuid, lockToken);
                 state.readLock = null;
             }
 
@@ -93,43 +87,36 @@ public class TableLockService {
             synchronized (state.writeMon) {
                 if (state.writeLock == null || !state.writeLock.token.equals(lockToken))
                     throw new ServiceTableLockInvalid(tableUuid, lockToken);
-                log.debug("Releasing write lock for table entry: serviceUuid={}, tableUuid={}, token={}", serviceUuid, tableUuid, lockToken);
+                log.debug("   4> Releasing write lock for table entry: serviceUuid={}, tableUuid={}, token={}", serviceUuid, tableUuid, lockToken);
                 state.writeLock = null;
             }
     }
 
-    public void checkLockServiceTableEntry(String serviceUuid, String tableUuid, String optLockToken, boolean readPerm, boolean writePerm) throws ServiceEntryNotFound, ServiceTableLockInvalid {
+    public void checkLockServiceTableEntry(String serviceUuid, String tableUuid, String optLockToken, boolean readPerm, boolean writePerm) throws ServiceEntryNotFound, ServiceTableLockInvalid, ServiceTableLocked {
         findServiceEntry(serviceUuid);
         TableLockState state = getTableLock(serviceUuid, tableUuid);
         if (readPerm && writePerm) {
-            while (true) {
-                synchronized (state.readMon) {
-                    if (state.isAccessible(state.readLock, optLockToken)) {
-                        synchronized (state.writeMon) {
-                            if (state.isAccessible(state.writeLock, optLockToken))
-                                return;
-                        }
+            synchronized (state.readMon) {
+                if (state.isAccessible(state.readLock, optLockToken)) {
+                    synchronized (state.writeMon) {
+                        if (state.isAccessible(state.writeLock, optLockToken))
+                            return;
                     }
                 }
-                shortSleep();
             }
         } else if (readPerm) {
-            while (true) {
-                synchronized (state.readMon) {
-                    if (state.isAccessible(state.readLock, optLockToken))
-                        return;
-                }
-                shortSleep();
+            synchronized (state.readMon) {
+                if (state.isAccessible(state.readLock, optLockToken))
+                    return;
             }
         } else if (writePerm) {
-            while (true) {
-                synchronized (state.writeMon) {
-                    if (state.isAccessible(state.writeLock, optLockToken))
-                        return;
-                }
-                shortSleep();
+            synchronized (state.writeMon) {
+                if (state.isAccessible(state.writeLock, optLockToken))
+                    return;
             }
         }
+
+        throw new ServiceTableLocked(tableUuid);
     }
 
     private static final class TableLockState {
@@ -169,15 +156,6 @@ public class TableLockService {
         LockState(String token, int lockDurationSeconds) {
             this.token = token;
             this.expiresAt = Instant.now().plusSeconds(lockDurationSeconds);
-        }
-    }
-
-    private void shortSleep() {
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            log.info("Sleep interrupted: {}", e.getMessage());
-            Thread.currentThread().interrupt();
         }
     }
 
