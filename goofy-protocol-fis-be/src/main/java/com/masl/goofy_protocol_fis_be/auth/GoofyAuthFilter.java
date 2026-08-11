@@ -17,6 +17,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -34,6 +36,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class GoofyAuthFilter extends OncePerRequestFilter {
+    private static final Logger log = LoggerFactory.getLogger(GoofyAuthFilter.class);
+
     private final SignedRequestValidator validator = new BasicRequestValidator();
     private final HandleCrypto handleCrypto;
     private final UserRepository userRepository;
@@ -56,17 +60,20 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)  {
         try {
+            log.info("Incoming Request: {} {} from {}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
             Map<String, String> headers = Collections.list(request.getHeaderNames())
                     .stream().collect(Collectors.toMap(h -> h, request::getHeader));
 
             // If the Request is not signed, we don't need to check it
             if (!SignedRequest.hasAllRequestHeaders(headers)) {
+                log.info("Request is not signed, skipping authentication for: {} {}", request.getMethod(), request.getRequestURI());
                 SecurityContextHolder.getContext().setAuthentication(new GoofyAuth());
                 filterChain.doFilter(request, response);
                 return;
             }
 
             // Cache Request So body can be read without issues
+            log.info("Request is signed, reading & caching body for: {} {}", request.getMethod(), request.getRequestURI());
             ContentCachingRequestWrapper _wrapped = new ContentCachingRequestWrapper(request, maxRequestSizeBytes);
             byte[] body = getBody(_wrapped);
 
@@ -77,11 +84,13 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
             } catch (PubSplitKeyNotFound e) {
                 throw new PublicKeyLookupFailed(e.handle);
             }
+            log.info("Parsed SignedRequest: handle={}, uniqueId={}", req.handle(), req.uniqueId());
 
             // Check Validity
             SignedRequest.SignedRequestValidity valid = req.isValid(handleCrypto, validator);
             if (!valid.equals(SignedRequest.SignedRequestValidity.VALID))
                 throw new InvalidSignature(valid);
+            log.info("Request is valid, proceeding with authentication for: {} {}", request.getMethod(), request.getRequestURI());
 
             // Invalidate ID
             if (!disableUniqueIdCheck)
@@ -93,6 +102,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
             boolean isUser = user != null;
             boolean isAdmin = user != null && user.isAdmin();
             boolean isRestricted = user != null && !user.isAdmin() && user.isRestricted();
+            log.info("User Data: isIdentity={}, isUser={}, isAdmin={}, isRestricted={}", isIdentity, isUser, isAdmin, isRestricted);
 
             // Check if it's a Registered Identity
             if (!isUser) {
@@ -107,6 +117,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
             wrapped.prepareInputStream();
 
             // Continue
+            log.info("Authentication successful, proceeding with filter chain for: {} {}", request.getMethod(), request.getRequestURI());
             filterChain.doFilter(wrapped, response);
         } catch (Exception e) {
             resolver.resolveException(request, response, null, e);
