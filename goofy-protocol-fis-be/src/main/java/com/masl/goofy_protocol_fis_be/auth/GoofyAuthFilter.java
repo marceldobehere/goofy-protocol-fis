@@ -63,6 +63,7 @@ public class GoofyAuthFilter extends OncePerRequestFilter {
             log.info("Incoming Request: {} {} from {}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
             Map<String, String> headers = Collections.list(request.getHeaderNames())
                     .stream().collect(Collectors.toMap(h -> h, request::getHeader));
+            log.info("Request Headers: {}", headers);
 
             // If the Request is not signed, we don't need to check it
             if (!SignedRequest.hasAllRequestHeaders(headers)) {
