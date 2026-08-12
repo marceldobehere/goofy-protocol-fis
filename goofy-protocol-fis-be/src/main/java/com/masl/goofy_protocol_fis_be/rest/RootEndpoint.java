@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/")
@@ -22,7 +23,13 @@ public class RootEndpoint {
 
     @GetMapping
     @FisEndpoint(summary = "Redirects to the Frontend URL (should be static) <br>Also appends the `overrideBackendUrl` automatically, so the Frontend talks to the correct Backend")
-    public ResponseEntity<String> index() {
+    public ResponseEntity<String> index(@RequestHeader Map<String, String> headers) {
+        System.out.println("NEW ROOT REQUEST!!!");
+        headers.forEach((key, value) -> {
+            System.out.println("Header: " + key + " = " + value);
+        });
+        System.out.println();
+
         URI redirectUri = UriComponentsBuilder
                 .fromUriString(generalProperties.getFrontendUrl())
                 .queryParam("overrideBackendUrl", generalProperties.getUrl())
