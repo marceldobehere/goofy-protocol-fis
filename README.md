@@ -76,7 +76,7 @@ To try out the deployed demo FIS Instance, you will need a Register Code!
 
 Feel free to contact me for a code [here](https://rocc.systems/contact/). You can also Request a Register Code in the Client. (Currently I haven't implemented Notifications so I don't really see it lol)
 
-You can then just generate a keypair on the page (or import one if it matches the format), enter the Registration Code and complete the registration process!
+You can then just generate a keypair on the [FIS Register Page](https://fe.fis.rocc.systems/guest/register) (or import one if it matches the format), enter the Registration Code and complete the registration process!
 
 (Make sure to export the keypair and keep it save, as it is your only way of accessing your account)
 
