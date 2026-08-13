@@ -23,8 +23,10 @@ public class RootEndpoint {
 
     @GetMapping
     @FisEndpoint(summary = "Redirects to the Frontend URL (should be static) <br>Also appends the `overrideBackendUrl` automatically, so the Frontend talks to the correct Backend")
-    public ResponseEntity<String> index(@RequestHeader(name = "Host", required = false) String host, HttpServletRequest request) {
-        System.out.println("NEW ROOT REQUEST for: " + host + " - " + request.getServerName() + ":" + request.getServerPort() + " - " + request.getRequestURI());
+    public ResponseEntity<String> index(HttpServletRequest request) {
+        // Important due to HTTP/2 potentially reusing the connection even though it is on a different domain, therefore causing an infinite redirection loop!
+        if (!generalProperties.getDomainHost().equals(request.getServerName()))
+            return ResponseEntity.status(HttpStatus.MISDIRECTED_REQUEST).build();
 
         URI redirectUri = UriComponentsBuilder
                 .fromUriString(generalProperties.getFrontendUrl())
