@@ -22,8 +22,8 @@ public class RootEndpoint {
 
     @GetMapping
     @FisEndpoint(summary = "Redirects to the Frontend URL (should be static) <br>Also appends the `overrideBackendUrl` automatically, so the Frontend talks to the correct Backend")
-    public ResponseEntity<String> index(@RequestHeader("Host") String host) {
-        System.out.println("NEW ROOT REQUEST for: " + host);
+    public ResponseEntity<String> index(@RequestHeader(name = "Host", required = false) String host1, @RequestHeader(name = "host", required = false) String host2) {
+        System.out.println("NEW ROOT REQUEST for: " + host1 + " - " + host2);
 
         URI redirectUri = UriComponentsBuilder
                 .fromUriString(generalProperties.getFrontendUrl())
